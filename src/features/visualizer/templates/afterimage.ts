@@ -4,7 +4,9 @@ import { GradientBackground } from '../objects/background'
 import { ParticleField } from '../objects/particles'
 import { CoverCard } from '../objects/cover-card'
 import { TextLayer } from '../objects/text-layer'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { mixHex } from '../../palette/palette'
 
 /**
  * AFTERIMAGE — a capa como memória persistente: ecos em rastro com atrasos
@@ -67,11 +69,26 @@ export const AfterimageTemplate: VisualTemplate = {
     let lastTexture: THREE.Texture | null = null
     // Estado do rastro: ecos perseguem a capa com constantes de tempo distintas.
     const echoState = echoes.map(() => ({ x: 0, y: 0, scale: 1 }))
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      particles.setColor(colors.glow)
+      cover.setAccent(colors.accent, mixHex(colors.accent, colors.secondary, 0.5))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time, dt } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
@@ -98,13 +115,13 @@ export const AfterimageTemplate: VisualTemplate = {
         cover.group.position.set(mainX, mainY, 0)
         cover.group.rotation.y = Math.sin(time * 0.2) * 0.07
         cover.group.rotation.z = Math.sin(time * 0.13) * 0.02
-        cover.group.scale.setScalar(1 + bass * 0.03)
+        cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
 
         // Ecos perseguem com lag; graves abrem o espaçamento
         echoState.forEach((state, i) => {
           const tau = 0.28 + i * 0.16
           const k = 1 - Math.exp(-dt / tau)
-          const spread = 1 + bass * 0.5
+          const spread = 1 + bass * 0.5 + frame.beatPulse * 0.1
           const tx = mainX * spread
           const ty = mainY * spread * 0.6 - (i + 1) * 0.12
           state.x += (tx - state.x) * k
@@ -131,7 +148,7 @@ export const AfterimageTemplate: VisualTemplate = {
         album.mesh.position.set(0, safe.topY - 0.75, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 

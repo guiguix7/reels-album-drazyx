@@ -4,7 +4,9 @@ import { GradientBackground } from '../objects/background'
 import { FFTBars } from '../objects/bars'
 import { TextLayer } from '../objects/text-layer'
 import { radialGlowTexture } from '../objects/textures'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { mixHex, withAlpha } from '../../palette/palette'
 
 /**
  * TEMPLATE 05 — wireframe favorito do usuário: blocos empilhados à esquerda
@@ -62,11 +64,27 @@ export const Template05: VisualTemplate = {
     let viewW = ctx.viewWidth
     let viewH = ctx.viewHeight
     let lastTexture: THREE.Texture | null = null
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      discEdgeMaterial.color.set(colors.accent)
+      discGlowMaterial.color.set(colors.accent)
+      bars.setColors(colors.accent, mixHex(colors.accent, '#f2edf5', 0.55))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
@@ -90,13 +108,15 @@ export const Template05: VisualTemplate = {
         discEdge.rotation.z = disc.rotation.z
         discGlow.position.set(discX, discY, -0.4)
         discGlow.scale.setScalar(discRadius * 3.2)
-        discGlowMaterial.opacity = 0.22 + bass * 0.35 + frame.transient * 0.15
+        discGlowMaterial.opacity = 0.22 + bass * 0.35 + frame.transient * 0.15 + frame.beatPulse * 0.14
 
         // Blocos à esquerda: largura limitada para nunca invadir o disco à direita.
         const blockWidth = viewW * 0.38
         const blockX = safe.leftX + 0.05
 
-        albumBlock.set([type.showAlbum ? type.albumTitle : ''], blockWidth, {})
+        albumBlock.set([type.showAlbum ? type.albumTitle : ''], blockWidth, {
+          panel: { fill: 'rgba(17, 16, 26, 0.92)', border: withAlpha(pal.accent, 0.35), padFrac: 0.055 },
+        })
         albumBlock.setOpacity(type.showAlbum ? 0.97 : 0)
         albumBlock.mesh.position.set(blockX, safe.topY - 0.35, 0)
 
@@ -106,23 +126,29 @@ export const Template05: VisualTemplate = {
             ...(type.showArtist ? [type.artistName] : []),
           ],
           blockWidth,
-          { lineColors: ['#f2edf5', '#a99eae'] },
+          {
+            lineColors: ['#f2edf5', mixHex(pal.accent, '#f2edf5', 0.45)],
+            panel: { fill: 'rgba(24, 19, 29, 0.94)', border: withAlpha(pal.accent, 0.25), padFrac: 0.055 },
+          },
         )
         trackBlock.setOpacity(type.showTrack || type.showArtist ? 0.97 : 0)
         trackBlock.mesh.position.set(blockX, 1.3, 0)
 
-        statusBlock.set(['NOW PLAYING', 'SLOWED + REVERB'], blockWidth, { lineColors: ['#cf8aff', '#a99eae'] })
+        statusBlock.set(['NOW PLAYING', 'SLOWED + REVERB'], blockWidth, {
+          lineColors: [pal.glow, '#a99eae'],
+          panel: { fill: 'rgba(17, 16, 26, 0.88)', border: withAlpha(pal.secondary, 0.35), padFrac: 0.055 },
+        })
         statusBlock.setOpacity(0.9)
         statusBlock.mesh.position.set(blockX, -1.3, 0)
 
         // Waveform sob o disco
         const barWidth = viewW * 0.4
         const barBaseY = discY - discRadius - 0.55
-        bars.updateRow(discX - barWidth / 2, barBaseY, barWidth, frame.bars, { maxHeight: 0.75 + bass * 0.35, minHeight: 0.04 })
+        bars.updateRow(discX - barWidth / 2, barBaseY, barWidth, frame.bars, { maxHeight: 0.75 + bass * 0.35 + frame.beatPulse * 0.18, minHeight: 0.04 })
         bars.setOpacity(0.7 + frame.energy * 0.3)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 

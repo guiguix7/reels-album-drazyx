@@ -23,6 +23,22 @@ export interface VisualSettings {
   glitch: GlitchLevel
 }
 
+/** Cores aplicadas ao Stage. 'auto' acompanha a capa; 'manual' é escolha do usuário. */
+export type PaletteMode = 'auto' | 'manual'
+
+export interface CoverPalette {
+  /** Cor de destaque vibrante (barras, anéis, badge). */
+  accent: string
+  /** Cor secundária (fundos, elementos de apoio). */
+  secondary: string
+  /** Cor de brilho/texto de acento. */
+  glow: string
+}
+
+export interface PaletteSettings extends CoverPalette {
+  mode: PaletteMode
+}
+
 export interface TypeSettings {
   artistName: string
   trackTitle: string
@@ -57,6 +73,7 @@ export interface ProjectConfig {
   quality: OutputQuality
   fps: number
   templateId: TemplateId
+  palette: PaletteSettings
   clipStart: number
   /** Duração alvo do trecho em segundos (padrão 30, permitido menor para teste). */
   clipDuration: number

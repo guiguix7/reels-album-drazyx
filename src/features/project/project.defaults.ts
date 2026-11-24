@@ -1,4 +1,4 @@
-import type { ProjectConfig, TemplateId } from './project.types'
+import type { PaletteSettings, ProjectConfig, TemplateId } from './project.types'
 
 /** Nome do produto centralizado — alterável aqui. */
 export const APP_NAME = 'DRAZYX VISUALIZER STUDIO'
@@ -21,12 +21,21 @@ export const VISUAL_LIMITS = {
 
 export const TEMPLATE_IDS: TemplateId[] = ['mirage', 'afterimage', 'void', 'spectrum', 't3', 't4', 't5']
 
+/** Paleta padrão quando não há capa (identidade Drazyx). */
+export const DEFAULT_PALETTE: PaletteSettings = {
+  mode: 'auto',
+  accent: '#b84dff',
+  secondary: '#6b4a9f',
+  glow: '#cf8aff',
+}
+
 /** Preset inicial: primeiro lançamento Drazyx. */
 export const DEFAULT_PROJECT: ProjectConfig = {
   aspectRatio: '9:16',
   quality: 'full',
   fps: 30,
   templateId: 'mirage',
+  palette: { ...DEFAULT_PALETTE },
   clipStart: 0,
   clipDuration: MAX_CLIP_SECONDS,
   visual: {

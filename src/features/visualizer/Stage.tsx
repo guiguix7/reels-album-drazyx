@@ -20,6 +20,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   const clipDuration = useProjectStore((s) => s.config.clipDuration)
   const visual = useProjectStore((s) => s.config.visual)
   const type = useProjectStore((s) => s.config.type)
+  const palette = useProjectStore((s) => s.config.palette)
   const coverUrl = useProjectStore((s) => s.coverMeta?.objectUrl ?? null)
 
   // Criação única do engine
@@ -29,6 +30,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     const store = useProjectStore.getState()
     const engine = new VisualEngine(canvas, store.config.visual, store.config.type)
     engineRef.current = engine
+    engine.setPalette(store.config.palette)
     engine.setTemplate(store.config.templateId)
     engine.start()
     if (import.meta.env.DEV) {
@@ -68,6 +70,11 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   useEffect(() => {
     engineRef.current?.setConfig(visual, type)
   }, [visual, type])
+
+  // Paleta automática da capa / manual do usuário
+  useEffect(() => {
+    engineRef.current?.setPalette(palette)
+  }, [palette])
 
   // Capa
   useEffect(() => {

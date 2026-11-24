@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { getAudioEngine } from '../audio/AudioEngine'
-import type { TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
+import type { PaletteSettings, TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
+import { DEFAULT_PALETTE } from '../project/project.defaults'
 import { TEMPLATE_REGISTRY } from './templates/registry'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
@@ -30,6 +31,7 @@ export class VisualEngine {
 
   private visual: VisualSettings
   private type: TypeSettings
+  private palette: PaletteSettings = DEFAULT_PALETTE
   private clip = { start: 0, end: 30, progress: 0 }
 
   private assets: StageAssets = { coverTexture: null, hasCover: false }
@@ -80,6 +82,11 @@ export class VisualEngine {
 
   setClip(start: number, end: number): void {
     this.clip = { start, end, progress: 0 }
+  }
+
+  /** Paleta aplicada no update dos templates (sem reconstruir a cena). */
+  setPalette(palette: PaletteSettings): void {
+    this.palette = palette
   }
 
   setTemplate(id: TemplateId): void {
@@ -199,6 +206,7 @@ export class VisualEngine {
         frame,
         visual: this.visual,
         type: this.type,
+        palette: this.palette,
         clip: this.clip,
         time: this.time,
         dt,

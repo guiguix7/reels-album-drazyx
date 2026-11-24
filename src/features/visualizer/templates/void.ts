@@ -4,7 +4,8 @@ import { GradientBackground } from '../objects/background'
 import { WaveformLine } from '../objects/waveform-line'
 import { TextLayer } from '../objects/text-layer'
 import { radialGlowTexture } from '../objects/textures'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
 
 /**
  * VOID — espaço negativo, tipografia central, linha de waveform e
@@ -69,20 +70,36 @@ export const VoidTemplate: VisualTemplate = {
     let viewH = ctx.viewHeight
     let ringScale = 0.2
     let ringOpacity = 0
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      pulseGlowMaterial.color.set(colors.accent)
+      ringMaterial.color.set(colors.glow)
+      waveform.setColor(colors.glow)
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         const bass = frame.bass * visual.bassForce
         background.update(time, 0.16 + visual.glow * 0.25 + bass * 0.18, 0)
 
         pulseGlow.scale.setScalar(4.4 + bass * 1.6)
-        pulseGlowMaterial.opacity = 0.1 + bass * 0.3 + frame.energy * 0.12
+        pulseGlowMaterial.opacity = 0.1 + bass * 0.3 + frame.energy * 0.12 + frame.beatPulse * 0.1
 
-        // Anel de expansão no transiente
-        if (frame.transient > 0.92 && visual.glitch !== 'off') {
+        // Anel de expansão no transiente ou na batida detectada
+        if ((frame.transient > 0.92 || frame.beatPulse > 0.82) && visual.glitch !== 'off') {
           ringScale = 0.6
           ringOpacity = 0.85
         }
@@ -114,7 +131,7 @@ export const VoidTemplate: VisualTemplate = {
         album.mesh.position.set(0, safe.bottomY - 0.45, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 

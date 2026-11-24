@@ -69,6 +69,12 @@ export class CoverCard {
     this.glowMaterial.opacity = 0.25 + intensity * 0.65
   }
 
+  /** Cor do glow/moldura seguindo a paleta (acento da capa). */
+  setAccent(color: string, borderColor = color): void {
+    this.glowMaterial.color.set(color)
+    ;(this.border.material as THREE.LineBasicMaterial).color.set(borderColor)
+  }
+
   private setPlaceholderTexture(): void {
     if (!this.placeholder) {
       const canvas = document.createElement('canvas')

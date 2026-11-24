@@ -36,11 +36,13 @@ npm run preview    # serve o build
 2. **Template** → escolha entre MIRAGE (padrão), AFTERIMAGE, VOID, SPECTRUM e TEMPLATES 03/04/05.
    A troca é imediata e não perde o áudio carregado.
 3. **Trecho do vídeo** → defina início e duração (máximo 30 s, mínimo 5 s).
-4. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera e glitch;
+4. **Paleta** → as cores do vídeo saem automaticamente da capa (`Da capa`) ou você escolhe acento,
+   secundária e brilho no modo `Manual`. `Extrair` recalcula a partir da capa atual.
+5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera e glitch;
    textos de artista, faixa, álbum, CTA e tagline — todo texto é desenhado dentro do canvas do Stage.
-5. **Formato** → proporção (9:16 padrão), resolução (1080×1920 ou 720×1280) e FPS (30 para export).
-6. **Transporte** (barra inferior) → play/pause, seek, tempo atual e duração da faixa.
-7. **Gravação** → `Gravar trecho` inicia a captura, para sozinha no fim do trecho e libera preview + download.
+6. **Formato** → proporção (9:16 padrão), resolução (1080×1920 ou 720×1280) e FPS (30 para export).
+7. **Transporte** (barra inferior) → play/pause, seek, tempo atual e duração da faixa.
+8. **Gravação** → `Gravar trecho` inicia a captura, para sozinha no fim do trecho e libera preview + download.
 
 Atalhos: `Espaço` = play/pause (quando nenhum campo de texto está focado). A gravação exige áudio
 carregado e trecho válido.
@@ -58,6 +60,23 @@ carregado e trecho válido.
   O formato real gerado aparece no painel e define a extensão do arquivo.
 - Nome do arquivo: `Drazyx_Wake-Up_Slowed-Reverb_<Ns>_Visualizer.<ext>`.
 - Tracks, timers e Object URLs são liberados ao finalizar, cancelar ou desmontar.
+
+## Paleta e ritmo
+
+- **Paleta automática:** ao carregar a capa, ela é lida em 64×64 no canvas local; pixels transparentes,
+  quase-pretos e cinzas são descartados, o restante é agrupado por matiz e a cor dominante vira o
+  **acento** (clareada/escurecida para manter contraste no fundo escuro), a segunda matiz distante vira a
+  **secundária** e o **brilho** é o acento clareado. Nada é enviado para fora do navegador.
+- **Manual:** os três seletores de cor sobrescrevem a paleta; voltar para `Da capa` reaplica a última
+  paleta extraída. Sem capa, vale a paleta Drazyx padrão (`#b84dff` / `#6b4a9f` / `#cf8aff`).
+- **Ritmo:** após o áudio ficar pronto, o arquivo é decodificado localmente (`decodeAudioData`) e os
+  primeiros 45 s viram um envelope de onsets (RMS + fluxo). Uma autocorrelação com prior em ~110 BPM
+  estima o BPM, exibido no painel Fonte (ex.: `Ritmo detectado: 93 BPM`).
+- **Pulso de batida:** `beatPhase`/`beatPulse` são derivados do tempo do áudio e do BPM — capa, anéis,
+  barras e glow pulsam no tempo da faixa, inclusive durante a gravação. Sem BPM confiável, o movimento
+  continua vindo das bandas e dos transientes (nada aleatório).
+- A análise é opcional: se o navegador não decodificar o arquivo para análise, o app segue funcionando
+  sem BPM.
 
 ## Formatos e limitações
 
@@ -78,10 +97,11 @@ carregado e trecho válido.
 ```
 src/
   app/                  layout do estúdio (topbar, grid do Stage + painéis)
-  components/editor/    painéis (Fonte, Template, Trecho, Visual, Tipografia, Formato, Gravação)
-  components/ui/        primitivas visuais (Panel, Slider, Segmented, Button, Notice)
+  components/editor/    painéis (Fonte, Template, Paleta, Trecho, Visual, Tipografia, Formato, Gravação)
+  components/ui/        primitivas visuais (Panel, Slider, Segmented, ColorField, Button, Notice)
   features/project/     tipos, defaults do preset Drazyx e store Zustand
-  features/audio/       AudioEngine (playback, AnalyserNode, bandas, transientes, relógio)
+  features/audio/       AudioEngine (playback, AnalyserNode, bandas, transientes, relógio) + ritmo (BPM)
+  features/palette/     extração de cores da capa e utilitários de cor
   features/visualizer/  VisualEngine (Three.js), Stage, templates e pass de acabamento
   features/recording/   StageRecorder (MediaRecorder) e orquestração do fluxo
   lib/                  validação de arquivos, capacidades do navegador, formatação

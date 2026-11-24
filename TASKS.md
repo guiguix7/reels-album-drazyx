@@ -54,3 +54,15 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
 - [x] Revisão de safe areas 9:16, acessibilidade básica, prefers-reduced-motion
 - [x] QA manual do fluxo completo via navegador (playback, templates, gravação, download)
 - [x] Relatório final com limitações
+
+## Plano Retention-Driven (master prompt)
+
+- [x] Fase 0 — Baseline: auditoria, smoke no deploy, checks verdes, docs de estratégia e roadmap, commit `chore: document retention-focused implementation baseline`
+- [ ] Fase 1 — Hardening de áudio, gravação e estado do editor — commit `fix: harden audio and recording lifecycle`
+- [ ] Fase 2 — Hook Engine + Storyboard editável — commit `feat: add hook-driven storyboard engine`
+- [ ] Fase 3 — 8 layouts distintos + galeria — commit `feat: expand visual composition system to eight layouts`
+- [ ] Fase 4 — Motion engine avançado + loop visual — commit `feat: add advanced audio-reactive motion engine`
+- [ ] Fase 5 — Recipes + Batch Creator + platform profiles — commit `feat: add creative content recipes and batch exports`
+- [ ] Fase 6 — Persistência local + Retention Lab — commit `feat: add local project persistence and retention lab`
+- [ ] Fase 7 — Performance, QA visual e export — commit `perf: optimize rendering and export pipeline`
+- [ ] Fase 8 — Regressão final + documentação — commit `test: add comprehensive visualizer regression coverage`

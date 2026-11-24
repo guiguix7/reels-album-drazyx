@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import type { AspectRatioId, AudioMeta, CoverMeta, GlitchLevel, OutputQuality, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
 import { getClipEnd } from './project.types'
-import { DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
+import { DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
 
 export type AudioStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
 
@@ -11,6 +11,8 @@ interface ProjectState {
   audioMeta: AudioMeta | null
   audioError: string | null
   coverMeta: CoverMeta | null
+  /** Paleta extraída da capa (fonte para o modo automático). */
+  coverPalette: CoverPalette | null
 
   /* ações — configuração */
   setTemplate: (id: TemplateId) => void
@@ -22,6 +24,9 @@ interface ProjectState {
   setVisual: (patch: Partial<VisualSettings>) => void
   setGlitch: (level: GlitchLevel) => void
   setType: (patch: Partial<TypeSettings>) => void
+  setPalette: (patch: Partial<CoverPalette>) => void
+  setPaletteMode: (mode: PaletteMode) => void
+  setCoverPalette: (palette: CoverPalette | null) => void
   resetVisualToTemplateDefault: () => void
 
   /* ações — assets */
@@ -49,6 +54,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   audioMeta: null,
   audioError: null,
   coverMeta: null,
+  coverPalette: null,
 
   setTemplate: (id) =>
     set((state) => {
@@ -90,6 +96,34 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   setType: (patch) => set((state) => ({ config: { ...state.config, type: { ...state.config.type, ...patch } } })),
 
+  /** Ajuste manual de cor: qualquer cor escolhida à mão assume o controle da paleta. */
+  setPalette: (patch) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        palette: { ...state.config.palette, ...patch, mode: 'manual' },
+      },
+    })),
+
+  setPaletteMode: (mode) =>
+    set((state) => {
+      if (mode === 'manual') {
+        return { config: { ...state.config, palette: { ...state.config.palette, mode } } }
+      }
+      const base = state.coverPalette ?? DEFAULT_PALETTE
+      return { config: { ...state.config, palette: { mode: 'auto', ...base } } }
+    }),
+
+  setCoverPalette: (palette) =>
+    set((state) => {
+      const next = palette
+        ? state.config.palette.mode === 'auto'
+          ? { mode: 'auto' as const, ...palette }
+          : state.config.palette
+        : state.config.palette
+      return { coverPalette: palette, config: { ...state.config, palette: next } }
+    }),
+
   resetVisualToTemplateDefault: () => {
     const id = get().config.templateId
     const defaults = TEMPLATE_DEFAULT_VISUAL[id]
@@ -119,7 +153,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   clearCover: () => {
     const previous = get().coverMeta
     revoke(previous?.objectUrl)
-    set({ coverMeta: null })
+    set((state) => {
+      const palette = state.config.palette.mode === 'auto' ? { ...DEFAULT_PALETTE } : state.config.palette
+      return { coverMeta: null, coverPalette: null, config: { ...state.config, palette } }
+    })
   },
 }))
 

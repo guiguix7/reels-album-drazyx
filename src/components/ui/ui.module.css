@@ -72,6 +72,38 @@
   min-width: 0;
 }
 
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.colorInput {
+  width: 38px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--surface-line-strong);
+  border-radius: var(--radius-s);
+  background: transparent;
+  cursor: pointer;
+}
+
+.colorInput::-webkit-color-swatch-wrapper {
+  padding: 3px;
+}
+
+.colorInput::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.colorValue {
+  font: 500 11px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
 .fieldRow {
   display: flex;
   align-items: center;

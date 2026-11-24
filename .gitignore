@@ -11,4 +11,4 @@ Thumbs.db
 # Mídia local de teste (não versionar: arquivos grandes e material do usuário)
 src/tests/song/
 src/tests/img/
-teste-ui-*.png
+teste-*.png

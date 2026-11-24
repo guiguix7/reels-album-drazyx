@@ -8,6 +8,7 @@ import {
   spectralFlux,
   TransientDetector,
 } from './audio.utils'
+import { detectRhythmFromBuffer } from './rhythm'
 import type { AudioEngineMeta, AudioFrame } from './audio.types'
 import { BAR_COUNT } from './audio.types'
 
@@ -45,6 +46,9 @@ export class AudioEngine {
     treble: 0,
     energy: 0,
     transient: 0,
+    bpm: 0,
+    beatPhase: 0,
+    beatPulse: 0,
     frequency: null,
     waveform: null,
     bars: this.barSmoothed,
@@ -61,6 +65,7 @@ export class AudioEngine {
     status: 'idle',
     fileName: null,
     duration: 0,
+    bpm: 0,
     error: null,
     monitorVolume: 0.8,
     playing: false,
@@ -180,7 +185,10 @@ export class AudioEngine {
       return false
     }
     this.ensureContext()
-    this.patchMeta({ status: 'loading', error: null, fileName: file.name })
+    this.rhythmToken++
+    this.frame.bpm = 0
+    this.frame.beatPulse = 0
+    this.patchMeta({ status: 'loading', error: null, fileName: file.name, bpm: 0 })
     const oldUrl = this.objectUrl
     this.objectUrl = URL.createObjectURL(file)
     this.audio.src = this.objectUrl
@@ -194,6 +202,8 @@ export class AudioEngine {
       this.patchMeta({ status: 'ready', duration: this.audio.duration })
       this.frame.duration = this.audio.duration
       this.frame.time = 0
+      // Ritmo é assíncrono e opcional: não bloqueia o play nem a gravação.
+      void this.detectRhythm()
       return true
     } catch {
       this.patchMeta({
@@ -227,6 +237,30 @@ export class AudioEngine {
         reject(new Error('timeout'))
       }, 8000)
     })
+  }
+
+  /**
+   * Decodifica o arquivo local e estima o BPM (primeiros 45 s).
+   * Roda depois do ready; falhas só deixam o visual sem pulso de batida.
+   */
+  private async detectRhythm(): Promise<void> {
+    const ctx = this.ctx
+    const url = this.objectUrl
+    if (!ctx || !url) return
+    const token = ++this.rhythmToken
+    try {
+      const response = await fetch(url)
+      const data = await response.arrayBuffer()
+      const buffer = await ctx.decodeAudioData(data)
+      if (token !== this.rhythmToken) return
+      const result = detectRhythmFromBuffer(buffer)
+      if (result.bpm > 0) {
+        this.frame.bpm = result.bpm
+        this.patchMeta({ bpm: result.bpm })
+      }
+    } catch {
+      // BPM é um refinamento: o visual continua reagindo por bandas/transientes.
+    }
   }
 
   private onElementError(): void {
@@ -297,6 +331,7 @@ export class AudioEngine {
   }
 
   private clipEndCallback: (() => void) | null = null
+  private rhythmToken = 0
 
   isReady(): boolean {
     return this.meta.status === 'ready' || this.meta.status === 'playing' || this.meta.status === 'paused'
@@ -337,6 +372,9 @@ export class AudioEngine {
       this.frame.treble = envelope(this.frame.treble, 0, 0.05, 0.25, dt)
       this.frame.energy = envelope(this.frame.energy, 0, 0.05, 0.3, dt)
       this.frame.transient = Math.max(0, this.frame.transient - dt * 3)
+      this.frame.bpm = 0
+      this.frame.beatPhase = 0
+      this.frame.beatPulse = 0
       for (let i = 0; i < BAR_COUNT; i++) this.barSmoothed[i] = envelope(this.barSmoothed[i], 0, 0.05, 0.2, dt)
       return
     }
@@ -361,6 +399,9 @@ export class AudioEngine {
     const rms = Math.sqrt(rmsSum / (this.waveform.length / 2))
     this.frame.energy = envelope(this.frame.energy, Math.min(1, rms * 1.6), 0.08, 0.35, dt)
 
+    // Pulso de batida derivado do BPM (fonte de verdade = tempo do áudio).
+    this.updateBeat(time)
+
     const flux = spectralFlux(this.frequency, this.previousFrequency, binForFrequency(4000, sampleRate, FFT_SIZE))
     if (this.transientDetector.maybeFire(flux, now)) this.frame.transient = 1
     else this.frame.transient = Math.max(0, this.frame.transient - dt * 9)
@@ -376,9 +417,25 @@ export class AudioEngine {
     }
   }
 
+  /** Fase e envelope do pulso de batida, sincronizados ao relógio da faixa. */
+  private updateBeat(time: number): void {
+    const bpm = this.frame.bpm
+    if (bpm <= 0) {
+      this.frame.beatPhase = 0
+      this.frame.beatPulse = 0
+      return
+    }
+    const beats = time * (bpm / 60)
+    const phase = beats - Math.floor(beats)
+    this.frame.beatPhase = phase
+    // Ataque em 1 e queda acentuada: sensação de tempo sem "piscar" a cada quadro.
+    this.frame.beatPulse = this.frame.playing ? Math.pow(1 - phase, 5) * (0.55 + this.frame.energy * 0.45) : 0
+  }
+
   /* ---------- limpeza ---------- */
 
   destroy(): void {
+    this.rhythmToken++
     if (this.rafHandle != null) cancelAnimationFrame(this.rafHandle)
     this.rafHandle = null
     this.audio.pause()

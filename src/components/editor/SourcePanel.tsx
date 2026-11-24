@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useAudioEngineMeta } from '../../features/audio/useAudioEngine'
 import { useProjectStore } from '../../features/project/project.store'
 import { validateImageFile } from '../../lib/file-validation'
+import { extractPaletteFromUrl } from '../../features/palette/palette'
 import { formatTime } from '../../lib/format-time'
 import { Button, Notice, Panel } from '../ui/ui'
 import styles from './panels.module.css'
@@ -18,6 +19,7 @@ export function SourcePanel(): JSX.Element {
   const setAudioStatus = useProjectStore((s) => s.setAudioStatus)
   const clearAudio = useProjectStore((s) => s.clearAudio)
   const setCoverMeta = useProjectStore((s) => s.setCoverMeta)
+  const setCoverPalette = useProjectStore((s) => s.setCoverPalette)
   const clearCover = useProjectStore((s) => s.clearCover)
   const [coverError, setCoverError] = useState<string | null>(null)
 
@@ -42,7 +44,12 @@ export function SourcePanel(): JSX.Element {
       return
     }
     setCoverError(null)
-    setCoverMeta({ fileName: file.name, objectUrl: URL.createObjectURL(file) })
+    const objectUrl = URL.createObjectURL(file)
+    setCoverMeta({ fileName: file.name, objectUrl })
+    // Paleta automática: lê a capa em segundo plano e aplica se o modo for 'auto'.
+    void extractPaletteFromUrl(objectUrl)
+      .then((palette) => setCoverPalette(palette))
+      .catch(() => setCoverPalette(null))
   }
 
   const statusMessage =
@@ -114,7 +121,10 @@ export function SourcePanel(): JSX.Element {
         <Notice tone={audioStatus === 'error' ? 'error' : 'info'}>{statusMessage}</Notice>
       ) : null}
       {audioStatus === 'ready' || audioStatus === 'playing' || audioStatus === 'paused' ? (
-        <Notice tone="ok">Áudio pronto. Duração {formatTime(meta.duration)}.</Notice>
+        <Notice tone="ok">
+          Áudio pronto. Duração {formatTime(meta.duration)}.
+          {meta.bpm > 0 ? ` Ritmo detectado: ${meta.bpm} BPM.` : ''}
+        </Notice>
       ) : null}
     </Panel>
   )

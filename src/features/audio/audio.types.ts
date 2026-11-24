@@ -15,6 +15,12 @@ export interface AudioFrame {
   energy: number
   /** Envelope de transiente: 1 no disparo, decai rápido. */
   transient: number
+  /** BPM estimado da faixa (0 quando não detectado). */
+  bpm: number
+  /** Fase dentro da batida atual (0–1). Serve para pulsos sincronizados. */
+  beatPhase: number
+  /** Pulso da batida: 1 no ataque, decai até a próxima (0–1). */
+  beatPulse: number
   /** Espectro bruto do analyser (buffer compartilhado; null sem arquivo). */
   frequency: Uint8Array | null
   /** Forma de onda bruta (buffer compartilhado; null sem arquivo). */
@@ -29,6 +35,8 @@ export interface AudioEngineMeta {
   status: AudioEngineStatus
   fileName: string | null
   duration: number
+  /** BPM estimado (0 = não detectado). */
+  bpm: number
   error: string | null
   monitorVolume: number
   playing: boolean

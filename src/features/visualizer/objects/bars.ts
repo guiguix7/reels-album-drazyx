@@ -12,6 +12,7 @@ export class FFTBars {
   private colorB: THREE.Color
   private thickness: number
   private gap: number
+  private colorKey = ''
 
   constructor(
     count: number,
@@ -50,6 +51,22 @@ export class FFTBars {
     const material = this.mesh.material as THREE.MeshBasicMaterial
     material.opacity = opacity
     this.mesh.visible = opacity > 0.01
+  }
+
+  /** Troca o gradiente das barras (paleta da capa); recalcula só quando muda. */
+  setColors(colorA: string, colorB: string): void {
+    const key = `${colorA}|${colorB}`
+    if (key === this.colorKey) return
+    this.colorKey = key
+    this.colorA.set(colorA)
+    this.colorB.set(colorB)
+    const color = new THREE.Color()
+    for (let i = 0; i < this.count; i++) {
+      const t = this.count === 1 ? 0 : i / (this.count - 1)
+      color.copy(this.colorA).lerp(this.colorB, t)
+      this.mesh.setColorAt(i, color)
+    }
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
   }
 
   private reset(): void {
@@ -122,6 +139,7 @@ export class SpectrumRing {
   readonly mesh: THREE.InstancedMesh
   private count: number
   private dummy = new THREE.Object3D()
+  private colorKey = ''
 
   constructor(count: number, options: { radius: number; thickness: number; color: string }) {
     this.count = Math.max(8, Math.round(count))
@@ -131,6 +149,13 @@ export class SpectrumRing {
     this.mesh.renderOrder = 18
     void options.radius
     void options.thickness
+  }
+
+  /** Cor do anel (paleta da capa); aplica só quando muda. */
+  setColor(color: string): void {
+    if (color === this.colorKey) return
+    this.colorKey = color
+    ;(this.mesh.material as THREE.MeshBasicMaterial).color.set(color)
   }
 
   /** radius base + barHeight por bin; rotação lenta opcional. */

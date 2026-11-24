@@ -1,10 +1,12 @@
 # PROGRESS — DRAZYX VISUALIZER STUDIO
 
-Última atualização: 2026-11-23
+Última atualização: 2026-11-24
 
 ## Estado atual
 
-Fases 0–5 implementadas. Aplicação executável com `npm run dev`.
+MVP original (Fases 0–5) implementado. Evolução retention-driven iniciada: Fase 0
+do novo master prompt concluída com baseline documentado na branch
+`feat/retention-driven-visualizer`.
 
 ## Plano de riscos identificado na Fase 0
 
@@ -22,6 +24,8 @@ Fases 0–5 implementadas. Aplicação executável com `npm run dev`.
 - Áudio: elemento `<audio>` único + MediaElementSource único; grafo: source → analyser → monitorGain → destination e source → recDest (MediaStreamAudioDestinationNode). Gravação sempre pós-mix pré-monitor (mudo no monitor não silencia o arquivo).
 - Gravação: MediaRecorder com codec detection; tempo de áudio como fonte de verdade; auto-stop no fim do trecho.
 - UI: CSS Modules + tokens.css; sem biblioteca de componentes.
+- Paleta: modos `auto` (extraída da capa) e `manual`; a cor é aplicada por frame nos materiais/templates, sem reconstruir a cena a cada ajuste.
+- Ritmo: BPM estimado por autocorrelação de onsets com prior em ~110 BPM (evita erro de oitava); `beatPhase`/`beatPulse` no `AudioFrame` alimentam os templates junto com bandas e transientes.
 
 ## Log de execução
 
@@ -31,4 +35,6 @@ Fases 0–5 implementadas. Aplicação executável com `npm run dev`.
 - 2026-11-13 — Fase 3 concluída: VisualEngine Three.js + 7 templates (MIRAGE, AFTERIMAGE, VOID, SPECTRUM, T3, T4, T5) + pass de acabamento + troca de template na UI.
 - 2026-11-13 — Fase 4 concluída: Recorder com MediaRecorder + canvas stream + audio stream, auto-stop, preview, download.
 - 2026-11-13 — Fase 5 concluída: testes Vitest, lint/typecheck/test/build verdes, README.md, QA manual via navegador, relatório final.
+- 2026-11-24 — Paleta automática da capa + modo manual de cores e detecção de ritmo (BPM): novos módulos `features/palette/palette.ts` e `features/audio/rhythm.ts`, painel Paleta, pulso de batida nos 7 templates, BPM exibido no painel Fonte, 14 testes novos (60 no total). QA: capa real (paleta dessaturada coerente), capa sintética azul/magenta (`#628CE7`/`#AE1F64`), troca manual para verde, volta ao automático; BPM 93 detectado no WAV "Wake Up".
 - 2026-11-23 — Revisão e correções: painéis do editor encolhiam e cortavam conteúdo (flex-shrink); relógio do transporte e auto-stop do trecho deixaram de depender de rAF (aba oculta); setClipDuration não trava mais depois de uma redução; duração do preview WebM; README preenchido; tipografia do T4 e painéis do T5 sem sobreposição; capa fantasma do T3 mais discreta; estado vazio do Stage compacto. QA real: áudio WAV 02:27 + capa JPG, gravação de 5s gerando WebM 1080×1920 com VP9+Opus.
+- 2026-11-24 — Fase 0 retention-driven concluída: auditoria do repo e templates, smoke no app de produção (carrega com canvas e sem erros de console), branch `feat/retention-driven-visualizer`, `npm ci` + lint + typecheck + test (60/60) + build verdes, `docs/RETENTION_STRATEGY.md` e `docs/IMPLEMENTATION_ROADMAP.md` criados, TASKS/DECISIONS atualizados; commit de baseline `chore: document retention-focused implementation baseline`.

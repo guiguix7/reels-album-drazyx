@@ -6,7 +6,7 @@ import { APP_NAME } from '../features/project/project.defaults'
 import { SourcePanel } from '../components/editor/SourcePanel'
 import { TemplateGallery } from '../components/editor/TemplateGallery'
 import { ClipPanel } from '../components/editor/ClipPanel'
-import { VisualPanel, TextPanel } from '../components/editor/VisualPanel'
+import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/VisualPanel'
 import { FormatPanel } from '../components/editor/FormatPanel'
 import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
@@ -50,6 +50,7 @@ export function EditorLayout(): JSX.Element {
         <aside className={styles.panelCol} aria-label="Painéis do editor">
           <SourcePanel />
           <TemplateGallery />
+          <PalettePanel />
           <ClipPanel />
           <VisualPanel />
           <TextPanel />
