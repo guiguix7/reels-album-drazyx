@@ -4,9 +4,9 @@
 
 ## Estado atual
 
-MVP original (Fases 0–5) implementado. Evolução retention-driven iniciada: Fase 0
-do novo master prompt concluída com baseline documentado na branch
-`feat/retention-driven-visualizer`.
+MVP original (Fases 0–5) implementado. Evolução retention-driven: Fases 0 e 1 do
+novo master prompt concluídas na branch `feat/retention-driven-visualizer`
+(baseline documentado + hardening de áudio, gravação e estado do editor).
 
 ## Plano de riscos identificado na Fase 0
 
@@ -38,3 +38,4 @@ do novo master prompt concluída com baseline documentado na branch
 - 2026-11-24 — Paleta automática da capa + modo manual de cores e detecção de ritmo (BPM): novos módulos `features/palette/palette.ts` e `features/audio/rhythm.ts`, painel Paleta, pulso de batida nos 7 templates, BPM exibido no painel Fonte, 14 testes novos (60 no total). QA: capa real (paleta dessaturada coerente), capa sintética azul/magenta (`#628CE7`/`#AE1F64`), troca manual para verde, volta ao automático; BPM 93 detectado no WAV "Wake Up".
 - 2026-11-23 — Revisão e correções: painéis do editor encolhiam e cortavam conteúdo (flex-shrink); relógio do transporte e auto-stop do trecho deixaram de depender de rAF (aba oculta); setClipDuration não trava mais depois de uma redução; duração do preview WebM; README preenchido; tipografia do T4 e painéis do T5 sem sobreposição; capa fantasma do T3 mais discreta; estado vazio do Stage compacto. QA real: áudio WAV 02:27 + capa JPG, gravação de 5s gerando WebM 1080×1920 com VP9+Opus.
 - 2026-11-24 — Fase 0 retention-driven concluída: auditoria do repo e templates, smoke no app de produção (carrega com canvas e sem erros de console), branch `feat/retention-driven-visualizer`, `npm ci` + lint + typecheck + test (60/60) + build verdes, `docs/RETENTION_STRATEGY.md` e `docs/IMPLEMENTATION_ROADMAP.md` criados, TASKS/DECISIONS atualizados; commit de baseline `chore: document retention-focused implementation baseline`.
+- 2026-11-24 — Fase 1 retention-driven concluída: AudioEngine ganhou `clear()`/`resetAnalysis()`/timer de auto-stop limpo no destroy, remoção real de áudio e falha de decode consistente; StageRecorder exige track de áudio live e não vaza tracks; `useRecordingFlow` protege cancelamento e start concorrente; store re-clampa o trecho ao trocar de áudio; painéis e transporte bloqueados durante REC. Checks: lint + typecheck + test (61/61) + build verdes. Manual QA de gravação fica para a Fase 8 (matriz de regressão).

@@ -23,13 +23,13 @@ export interface RecorderStartOptions {
  */
 export class StageRecorder {
   private recorder: MediaRecorder | null = null
-  private stream: MediaStream | null = null
   private chunks: Blob[] = []
   private stopPromise: Promise<void> | null = null
   private startAt = 0
   private width = 1080
   private height = 1920
   private active = false
+  private mimeType = 'video/webm'
 
   get isActive(): boolean {
     return this.active
@@ -55,6 +55,10 @@ export class StageRecorder {
     if (!preferred) {
       return { ok: false, error: 'Nenhum codec de vídeo suportado foi encontrado neste navegador.' }
     }
+    // Sem track de áudio não existe export válido — nunca gravar vídeo mudo como sucesso.
+    if (!options.audioTrack || options.audioTrack.readyState !== 'live') {
+      return { ok: false, error: 'O áudio não está pronto para gravação. Toque em reproduzir e tente novamente.' }
+    }
 
     let canvasStream: MediaStream
     try {
@@ -65,12 +69,11 @@ export class StageRecorder {
 
     // Track de áudio clonada — a original permanece no MediaStreamDestination do engine.
     const stream = new MediaStream(canvasStream.getVideoTracks())
-    if (options.audioTrack && options.audioTrack.readyState === 'live') {
-      try {
-        stream.addTrack(options.audioTrack.clone())
-      } catch (err) {
-        return { ok: false, error: `Falha ao anexar áudio na gravação: ${err instanceof Error ? err.message : 'erro desconhecido'}` }
-      }
+    try {
+      stream.addTrack(options.audioTrack.clone())
+    } catch (err) {
+      stream.getTracks().forEach((t) => t.stop())
+      return { ok: false, error: `Falha ao anexar áudio na gravação: ${err instanceof Error ? err.message : 'erro desconhecido'}` }
     }
 
     const hasVideo = stream.getVideoTracks().length > 0
@@ -92,10 +95,10 @@ export class StageRecorder {
     }
 
     this.recorder = recorder
-    this.stream = stream
     this.chunks = []
     this.active = true
     this.startAt = performance.now()
+    this.mimeType = preferred.mimeType
     // Dimensões reais do vídeo, quando a track informa.
     const videoTrack = stream.getVideoTracks()[0]
     const settings = videoTrack.getSettings()
@@ -108,7 +111,6 @@ export class StageRecorder {
       const finalize = (): void => {
         stream.getTracks().forEach((track) => track.stop())
         this.recorder = null
-        this.stream = null
         this.stopPromise = null
         resolve()
       }
@@ -146,7 +148,7 @@ export class StageRecorder {
     await stopPromise
 
     if (this.chunks.length === 0) return null
-    const mimeType = recorder.mimeType || this.stream?.getVideoTracks()[0].label || 'video/webm'
+    const mimeType = recorder.mimeType || this.mimeType
     const blob = new Blob(this.chunks, { type: mimeType.split(';')[0] })
     const chunks = this.chunks
     chunks.length = 0

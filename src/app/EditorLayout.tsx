@@ -14,7 +14,7 @@ import styles from './app.module.css'
 
 export function EditorLayout(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const { startRecording, cancelRecording } = useRecordingFlow(canvasRef)
+  const { startRecording, cancelRecording, recording } = useRecordingFlow(canvasRef)
   const audioMeta = useProjectStore((s) => s.audioMeta)
   const audioLoading = useProjectStore((s) => s.audioStatus === 'loading')
 
@@ -48,13 +48,15 @@ export function EditorLayout(): JSX.Element {
         </section>
 
         <aside className={styles.panelCol} aria-label="Painéis do editor">
-          <SourcePanel />
-          <TemplateGallery />
-          <PalettePanel />
-          <ClipPanel />
-          <VisualPanel />
-          <TextPanel />
-          <FormatPanel />
+          <fieldset className={styles.panelFieldset} disabled={recording}>
+            <SourcePanel />
+            <TemplateGallery />
+            <PalettePanel />
+            <ClipPanel />
+            <VisualPanel />
+            <TextPanel />
+            <FormatPanel />
+          </fieldset>
           <RecordPanel onStart={startRecording} onCancel={cancelRecording} />
         </aside>
       </main>

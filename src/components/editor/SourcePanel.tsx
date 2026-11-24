@@ -32,7 +32,11 @@ export function SourcePanel(): JSX.Element {
       const duration = engine.getMeta().duration
       setAudioMeta({ fileName: file.name, objectUrl: engine.getObjectUrl() ?? '', duration })
     } else {
-      setAudioStatus('error', engine.getMeta().error ?? 'Falha ao carregar o áudio.')
+      // Erro de decode não pode manter o arquivo anterior "pronto" na interface.
+      const message = engine.getMeta().error ?? 'Falha ao carregar o áudio.'
+      engine.clear()
+      clearAudio()
+      setAudioStatus('error', message)
     }
   }
 
@@ -74,7 +78,14 @@ export function SourcePanel(): JSX.Element {
           {audioMeta ? <span className={styles.fileInfo}>{formatTime(audioMeta.duration)}</span> : null}
         </div>
         {audioMeta ? (
-          <button type="button" className={styles.linkButton} onClick={() => clearAudio()}>
+          <button
+            type="button"
+            className={styles.linkButton}
+            onClick={() => {
+              engine.clear()
+              clearAudio()
+            }}
+          >
             Remover
           </button>
         ) : null}

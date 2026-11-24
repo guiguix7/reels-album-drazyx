@@ -20,6 +20,7 @@ export function useRecordingFlow(
 } {
   const recorderRef = useRef<StageRecorder | null>(null)
   if (!recorderRef.current) recorderRef.current = new StageRecorder()
+  const cancelledRef = useRef(false)
 
   const startRecording = useCallback(async (): Promise<void> => {
     const recStore = useRecorderStore.getState()
@@ -28,6 +29,9 @@ export function useRecordingFlow(
     const meta = engine.getMeta()
     const canvas = canvasRef.current
 
+    if (recStore.status === 'preparing' || recStore.status === 'recording' || recStore.status === 'processing') {
+      return
+    }
     if (!canvas) {
       recStore.setError('O Stage não está pronto. Recarregue a página.')
       return
@@ -49,14 +53,15 @@ export function useRecordingFlow(
       return
     }
 
-    recStore.setStatus('preparing', 'Preparando gravação...')
     recStore.reset() // limpa preview anterior, se houver
     recStore.setStatus('preparing', 'Preparando gravação...')
+    cancelledRef.current = false
 
     // Garante AudioContext + track de áudio ANTES de capturar (gesto do usuário já aconteceu).
     let audioTrack: MediaStreamTrack | null = null
     try {
       audioTrack = engine.getRecordingTrack()
+      if (!audioTrack) throw new Error('track de áudio indisponível')
       if (engine.getMeta().status !== 'playing') {
         // contexto criado sob gesto: garanta resume para o áudio fluir na gravação
         await engine.ensureRunning()
@@ -80,9 +85,11 @@ export function useRecordingFlow(
     }
 
     const finish = async (): Promise<void> => {
+      if (cancelledRef.current) return
       recStore.setStatus('processing', 'Finalizando arquivo...')
       try {
         const result = await recorderRef.current?.stop()
+        if (cancelledRef.current) return
         if (!result || result.blob.size === 0) {
           recStore.setError('A gravação terminou sem conteúdo. Verifique se o Stage estava visível e tente novamente.')
           return
@@ -106,6 +113,7 @@ export function useRecordingFlow(
   }, [canvasRef])
 
   const cancelRecording = useCallback(async (): Promise<void> => {
+    cancelledRef.current = true
     const recStore = useRecorderStore.getState()
     getAudioEngine().pause()
     await recorderRef.current?.cancel()

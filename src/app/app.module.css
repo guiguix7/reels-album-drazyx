@@ -119,6 +119,21 @@
   padding-right: 2px;
 }
 
+/* Durante REC as configurações ficam travadas; o painel de gravação segue ativo.
+   display:contents mantém os painéis no fluxo flex do panelCol. */
+.panelFieldset {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.panelFieldset:disabled > * {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* Tablet: painel mais compacto sem espremer o palco. */
 @media (max-width: 1180px) {
   .grid {

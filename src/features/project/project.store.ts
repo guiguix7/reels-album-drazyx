@@ -133,7 +133,23 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setAudioMeta: (meta) => {
     const previous = get().audioMeta
     revoke(previous?.objectUrl)
-    set({ audioMeta: meta, audioError: null, audioStatus: 'ready' })
+    set((state) => {
+      const config = state.config
+      const duration = Number.isFinite(meta.duration) && meta.duration > 0 ? meta.duration : 0
+      if (!duration) {
+        return { audioMeta: meta, audioError: null, audioStatus: 'ready' }
+      }
+      // Áudio novo pode ser mais curto: o trecho antigo não pode continuar fora da faixa.
+      const clipStart = clamp(config.clipStart, 0, Math.max(0, duration - 1))
+      const available = Math.max(1, Math.min(MAX_CLIP_SECONDS, duration - clipStart))
+      const clipDuration = clamp(config.clipDuration, 1, available)
+      return {
+        audioMeta: meta,
+        audioError: null,
+        audioStatus: 'ready',
+        config: { ...config, clipStart, clipDuration },
+      }
+    })
   },
 
   setAudioStatus: (status, error = null) => set({ audioStatus: status, audioError: error ?? null }),
@@ -141,7 +157,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   clearAudio: () => {
     const previous = get().audioMeta
     revoke(previous?.objectUrl)
-    set({ audioMeta: null, audioStatus: 'idle', audioError: null, config: { ...get().config, clipStart: 0 } })
+    set({
+      audioMeta: null,
+      audioStatus: 'idle',
+      audioError: null,
+      config: { ...get().config, clipStart: 0, clipDuration: MAX_CLIP_SECONDS },
+    })
   },
 
   setCoverMeta: (meta) => {

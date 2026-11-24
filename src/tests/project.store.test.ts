@@ -45,6 +45,24 @@ describe('project.store', () => {
     expect(useProjectStore.getState().config.clipDuration).toBe(30)
   })
 
+  it('setAudioMeta re-clampa o trecho quando o áudio novo é mais curto', () => {
+    const s = useProjectStore.getState()
+    s.setClipDuration(30, 300)
+    s.setAudioMeta({ fileName: 'short.wav', objectUrl: '', duration: 12 })
+    let config = useProjectStore.getState().config
+    expect(config.clipStart).toBe(0)
+    expect(config.clipDuration).toBe(12)
+
+    s.setClipStart(20, 300)
+    s.setAudioMeta({ fileName: 'shorter.wav', objectUrl: '', duration: 12 })
+    config = useProjectStore.getState().config
+    expect(config.clipStart).toBeLessThanOrEqual(11)
+    expect(config.clipStart + config.clipDuration).toBeLessThanOrEqual(12)
+
+    useProjectStore.getState().clearAudio()
+    expect(useProjectStore.getState().config.clipDuration).toBe(30)
+  })
+
   it('setVisual aplica patch parcial', () => {
     const s = useProjectStore.getState()
     s.setVisual({ intensity: 0.9 })

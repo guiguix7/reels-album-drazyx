@@ -31,6 +31,12 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
 - Análise normalizada com smoothing/attack-release e cooldown de transientes.
 - BPM é estimativa (autocorrelação de onsets, prior ~110 BPM), não verdade absoluta;
   paleta pode ser automática (extraída da capa) ou manual, sem reconstruir a cena.
+- Troca de áudio reseta análise e meta, revoga a Object URL anterior e, em falha de
+  decode, limpa o engine (não deixa arquivo antigo “pronto” na UI). Remover áudio
+  chama `engine.clear()` + `clearAudio()`; `setAudioMeta` re-clampa o trecho ao novo
+  duration e `clearAudio` volta ao default de 30 s.
+- `destroy()` desconecta todos os nós e limpa o timer de auto-stop; o resume do
+  AudioContext acontece dentro do gesto (`ensureRunning()` antes de `play()`).
 
 ## Visual
 
@@ -51,6 +57,12 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
   alternativas suportadas. Nunca assumir MP4; extensão e MIME sempre reais.
 - Gravação sem track de áudio não é sucesso; stop precisa finalizar o arquivo.
 - Auto-stop pelo tempo do áudio; preview e download usam URL temporária revogada.
+- `StageRecorder.start()` rejeita gravação sem track de áudio live e, se o clone da
+  track falhar, encerra todas as tracks do stream de canvas antes de retornar erro.
+- `useRecordingFlow` ignora start concorrente, aborta a finalização após cancelamento
+  e o cancelar pausa o áudio e descarta o recorder. Durante REC os painéis de
+  configuração ficam desabilitados (fieldset) e o transporte bloqueado; o painel de
+  gravação permanece ativo para permitir cancelar.
 - 9:16 1080×1920 e 30 fps padrão; 720p e 60 fps como opções.
 
 ## Próximas decisões planejadas

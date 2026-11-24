@@ -58,6 +58,7 @@ export class AudioEngine {
   private lastAnalysisTime = performance.now() / 1000
   private objectUrl: string | null = null
   private rafHandle: number | null = null
+  private clipTimer: number | null = null
   private armedEnd: number | null = null
   private clipEndFired = false
   private listeners = new Set<() => void>()
@@ -81,13 +82,18 @@ export class AudioEngine {
       this.frame.duration = duration
     })
     this.audio.addEventListener('play', () => this.patchMeta({ playing: true, status: 'playing' }))
-    this.audio.addEventListener('pause', () => this.patchMeta({ playing: false, status: this.meta.status === 'error' ? 'error' : 'paused' }))
+    this.audio.addEventListener('pause', () => {
+      // Eventos de pause também chegam ao trocar/limpar o src; não podem sobrescrever
+      // os estados loading/idle/error da troca de arquivo.
+      const keep = !this.meta.fileName || this.meta.status === 'loading' || this.meta.status === 'error'
+      this.patchMeta({ playing: false, status: keep ? this.meta.status : 'paused' })
+    })
     this.audio.addEventListener('error', () => this.onElementError())
     // Auto-stop do trecho não pode depender de requestAnimationFrame: o navegador
     // pausa rAF em abas ocultas e a gravação nunca terminaria. timeupdate + timer
     // leem o relógio do próprio áudio (fonte de verdade) e disparam o fim.
     this.audio.addEventListener('timeupdate', () => this.checkClipEnd())
-    window.setInterval(() => this.checkClipEnd(), 250)
+    this.clipTimer = window.setInterval(() => this.checkClipEnd(), 250)
     this.startLoop()
   }
 
@@ -186,9 +192,13 @@ export class AudioEngine {
     }
     this.ensureContext()
     this.rhythmToken++
-    this.frame.bpm = 0
-    this.frame.beatPulse = 0
-    this.patchMeta({ status: 'loading', error: null, fileName: file.name, bpm: 0 })
+    // Troca de arquivo: para o trecho armado e zera a análise antes do novo decode.
+    this.audio.pause()
+    this.armedEnd = null
+    this.clipEndCallback = null
+    this.clipEndFired = false
+    this.resetAnalysis()
+    this.patchMeta({ status: 'loading', error: null, fileName: file.name, duration: 0, bpm: 0, playing: false })
     const oldUrl = this.objectUrl
     this.objectUrl = URL.createObjectURL(file)
     this.audio.src = this.objectUrl
@@ -206,12 +216,56 @@ export class AudioEngine {
       void this.detectRhythm()
       return true
     } catch {
+      // Arquivo inválido não pode deixar um src quebrado nem metadados antigos na UI.
+      this.clear()
       this.patchMeta({
         status: 'error',
         error: 'O navegador não conseguiu decodificar este áudio. Tente MP3, WAV ou OGG.',
       })
       return false
     }
+  }
+
+  /** Remove o áudio atual (playback, src, object URL e análise) mantendo o grafo de áudio. */
+  clear(): void {
+    this.rhythmToken++
+    this.armedEnd = null
+    this.clipEndCallback = null
+    this.clipEndFired = false
+    this.audio.pause()
+    this.audio.removeAttribute('src')
+    this.audio.load()
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl)
+      this.objectUrl = null
+    }
+    this.resetAnalysis()
+    this.patchMeta({
+      status: 'idle',
+      fileName: null,
+      duration: 0,
+      bpm: 0,
+      error: null,
+      playing: false,
+    })
+  }
+
+  private resetAnalysis(): void {
+    this.frame.time = 0
+    this.frame.duration = 0
+    this.frame.playing = false
+    this.frame.bass = 0
+    this.frame.mid = 0
+    this.frame.treble = 0
+    this.frame.energy = 0
+    this.frame.transient = 0
+    this.frame.bpm = 0
+    this.frame.beatPhase = 0
+    this.frame.beatPulse = 0
+    this.barSmoothed.fill(0)
+    this.barPeaks.fill(0)
+    this.previousFrequency?.fill(0)
+    this.transientDetector = new TransientDetector()
   }
 
   private waitForMetadata(): Promise<void> {
@@ -272,15 +326,19 @@ export class AudioEngine {
   /* ---------- transporte ---------- */
 
   async play(): Promise<void> {
-    this.ensureContext()
     try {
+      // Resume o AudioContext no mesmo gesto do play; sem isso o elemento toca mudo.
+      await this.ensureRunning()
       await this.audio.play()
     } catch (error) {
       const name = (error as { name?: string } | undefined)?.name
       if (name === 'NotAllowedError') {
         this.patchMeta({ status: 'paused', error: 'Reprodução bloqueada pelo navegador. Clique em play novamente.' })
       } else {
-        this.patchMeta({ status: 'error', error: 'Não foi possível reproduzir o áudio.' })
+        this.patchMeta({
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Não foi possível reproduzir o áudio.',
+        })
       }
     }
   }
@@ -438,6 +496,8 @@ export class AudioEngine {
     this.rhythmToken++
     if (this.rafHandle != null) cancelAnimationFrame(this.rafHandle)
     this.rafHandle = null
+    if (this.clipTimer != null) window.clearInterval(this.clipTimer)
+    this.clipTimer = null
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
@@ -445,6 +505,14 @@ export class AudioEngine {
       URL.revokeObjectURL(this.objectUrl)
       this.objectUrl = null
     }
+    this.sourceNode?.disconnect()
+    this.analyser?.disconnect()
+    this.monitorGain?.disconnect()
+    this.recDest?.disconnect()
+    this.sourceNode = null
+    this.analyser = null
+    this.monitorGain = null
+    this.recDest = null
     void this.ctx?.close()
     this.ctx = null
     this.listeners.clear()
