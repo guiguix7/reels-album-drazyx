@@ -10,6 +10,8 @@ import { StoryboardPanel } from '../components/editor/StoryboardPanel'
 import { ClipPanel } from '../components/editor/ClipPanel'
 import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/VisualPanel'
 import { FormatPanel } from '../components/editor/FormatPanel'
+import { ProjectPanel } from '../components/editor/ProjectPanel'
+import { RetentionLabPanel } from '../components/editor/RetentionLabPanel'
 import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
 import { RecipePanel } from '../components/editor/RecipePanel'
@@ -63,6 +65,8 @@ export function EditorLayout(): JSX.Element {
             <VisualPanel />
             <TextPanel />
             <FormatPanel />
+            <ProjectPanel />
+            <RetentionLabPanel />
           </fieldset>
           <RecordPanel onStart={startRecording} onCancel={cancelRecording} />
           <BatchPanel onStart={startBatch} onCancel={cancelBatch} />

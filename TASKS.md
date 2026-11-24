@@ -65,6 +65,7 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
 - [x] Fase 4 — Motion engine avançado + loop visual — perfis DREAM/PULSE/CINEMATIC/FRAGMENT/ORGANIC/INTENSE/MINIMAL, curvas por progresso, seed determinística, tempo do visual no relógio do áudio e fechamento de loop — commit `feat: add advanced audio-reactive motion engine`
 - [x] Fase 5 — Recipes + Batch Creator + platform profiles — recipes ATMOSFERA/PROCESSO/COMUNIDADE, perfis TikTok/Reels/Shorts aplicados ao formato e CTA, fila de 3–5 peças gravada em sequência com download por job — commit `feat: add creative content recipes and batch exports`
   - O lote baixa um arquivo por vez (link por job); não há ZIP nem download automático em massa.
-- [ ] Fase 6 — Persistência local + Retention Lab — commit `feat: add local project persistence and retention lab`
+- [x] Fase 6 — Persistência local + Retention Lab — IndexedDB (projetos/exports/métricas), JSON versionado, manifest por export, entrada manual e CSV de métricas com taxas de denominador real — commit `feat: add local project persistence and retention lab`
+  - Áudio e capa não são salvos: são Object URLs da sessão; recarregue após abrir um projeto.
 - [ ] Fase 7 — Performance, QA visual e export — commit `perf: optimize rendering and export pipeline`
 - [ ] Fase 8 — Regressão final + documentação — commit `test: add comprehensive visualizer regression coverage`

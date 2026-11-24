@@ -5,6 +5,8 @@ import { getClipEnd, getOutputDimensions } from '../project/project.types'
 import { MIN_CLIP_SECONDS } from '../project/project.defaults'
 import { StageRecorder } from '../recording/recorder'
 import { buildBatchFileName } from './batch.utils'
+import { buildExportManifest } from '../persistence/manifest.types'
+import { saveExportManifest } from '../persistence/db'
 import { useBatchStore } from './batch.store'
 
 const waitFrame = (): Promise<void> =>
@@ -144,6 +146,17 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
             },
             fileName,
           )
+          void saveExportManifest(
+            buildExportManifest({
+              config,
+              fileName,
+              mimeType: result.mimeType,
+              sizeBytes: result.blob.size,
+              width: result.width,
+              height: result.height,
+              durationSeconds: result.durationSeconds,
+            }),
+          ).catch(() => undefined)
         } catch (error) {
           await recorder.cancel()
           store.patchJob(job.id, {

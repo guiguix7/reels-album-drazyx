@@ -74,14 +74,20 @@ Pendências registradas: fila limitada a 5 peças (arquitetura suporta mais, UI 
 expõe 20–30), sem ZIP/download em massa e sem pausa entre jobs além do
 auto-stop do áudio.
 
-## Fase 6 — Persistência local + Retention Lab
+## Fase 6 — Persistência local + Retention Lab *(concluída)*
 
-- IndexedDB: salvar/carregar/duplicar/renomear/excluir, export/import de projeto.
-- Manifest por export (variante, projeto, faixa, trecho, hook, layout, estilo,
-  motion, CTA, plataforma, resolução, fps, data).
-- Entrada manual/CSV de métricas e dashboard comparativo com definições claras.
-- Sem dados inventados, sem misturar denominadores, sem alegar causalidade.
+- [x] IndexedDB (projetos, exports, métricas): salvar/carregar/duplicar/renomear/excluir.
+- [x] Export/import de projeto em JSON com schema versionado e merge de defaults.
+- [x] Manifest por export com variante, hook, layouts, motion, CTA, plataforma,
+  resolução, fps, trecho e data; gravado na gravação individual e em cada job do lote.
+- [x] Retention Lab com entrada manual e CSV (`,`/`;`, cabeçalhos PT/EN), taxas
+  calculadas só com denominador real e tempo médio ponderado por views.
+- [x] Sem coleta automática, sem dados inventados e sem afirmar causalidade.
 - Commit: `feat: add local project persistence and retention lab`.
+
+Limitações registradas: áudio/capa não são persistidos (Object URLs da sessão),
+não há gráficos históricos nem filtros avançados, e o CSV não carrega contexto de
+plataforma/hook/layout — o contexto vem do projeto no momento da importação.
 
 ## Fase 7 — Performance, qualidade visual e export
 

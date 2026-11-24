@@ -6,6 +6,8 @@ import { MIN_CLIP_SECONDS } from '../project/project.defaults'
 import { StageRecorder } from './recorder'
 import { useRecorderStore } from './recording.store'
 import { buildRecordingFileName } from './file-name'
+import { buildExportManifest } from '../persistence/manifest.types'
+import { saveExportManifest } from '../persistence/db'
 
 /**
  * Orquestra o fluxo de gravação:
@@ -101,6 +103,18 @@ export function useRecordingFlow(
           extension: result.extension,
         })
         recStore.setResult(result, fileName)
+        // Manifest local por export (auxiliar): falha de IndexedDB não invalida o arquivo.
+        void saveExportManifest(
+          buildExportManifest({
+            config,
+            fileName,
+            mimeType: result.mimeType,
+            sizeBytes: result.blob.size,
+            width: result.width,
+            height: result.height,
+            durationSeconds: result.durationSeconds,
+          }),
+        ).catch(() => undefined)
       } catch (err) {
         recStore.setError(`Falha ao finalizar a gravação: ${err instanceof Error ? err.message : 'erro desconhecido'}`)
       }
