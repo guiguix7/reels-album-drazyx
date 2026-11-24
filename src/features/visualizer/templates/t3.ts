@@ -10,14 +10,15 @@ import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
 
 /**
- * TEMPLATE 03 — wireframe favorito do usuário: badge circular + título no
- * topo-esquerda, capa grande à direita e waveform na base. Estética de
- * player-card sobre fundo escuro com a capa ampliada bem sutil.
+ * LAYOUT 03 — OFFSET CINEMA
+ * Composição editorial assimétrica: badge + título no topo-esquerda, capa
+ * grande à direita e espectro na base. A capa ampliada ao fundo cria
+ * profundidade sem competir com o texto.
  */
 export const Template03: VisualTemplate = {
   id: 't3',
-  name: 'TEMPLATE 03',
-  description: 'Badge + título no topo, capa grande à direita, waveform na base.',
+  name: '03 — OFFSET CINEMA',
+  description: 'Badge + título à esquerda, capa grande à direita, espectro na base.',
   build(ctx: StageContext): TemplateInstance {
     const disposables: Array<{ dispose(): void }> = []
     const track = <T extends { dispose(): void }>(item: T): T => {

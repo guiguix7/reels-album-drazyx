@@ -4,9 +4,14 @@ import { MirageTemplate } from './mirage'
 import { AfterimageTemplate } from './afterimage'
 import { VoidTemplate } from './void'
 import { SpectrumTemplate } from './spectrum'
+import { Layout01 } from './layout01'
+import { Layout02 } from './layout02'
 import { Template03 } from './t3'
 import { Template04 } from './t4'
 import { Template05 } from './t5'
+import { Layout06 } from './layout06'
+import { Layout07 } from './layout07'
+import { Layout08 } from './layout08'
 
 /** Registro de todos os templates selecionáveis no Studio. */
 export const TEMPLATE_REGISTRY: Record<TemplateId, VisualTemplate> = {
@@ -14,17 +19,46 @@ export const TEMPLATE_REGISTRY: Record<TemplateId, VisualTemplate> = {
   afterimage: AfterimageTemplate,
   void: VoidTemplate,
   spectrum: SpectrumTemplate,
+  t1: Layout01,
+  t2: Layout02,
   t3: Template03,
   t4: Template04,
   t5: Template05,
+  t6: Layout06,
+  t7: Layout07,
+  t8: Layout08,
 }
 
-export const TEMPLATE_LIST: Array<{ id: TemplateId; name: string; description: string }> = [
-  { id: 'mirage', name: MirageTemplate.name, description: MirageTemplate.description },
-  { id: 'afterimage', name: AfterimageTemplate.name, description: AfterimageTemplate.description },
-  { id: 'void', name: VoidTemplate.name, description: VoidTemplate.description },
-  { id: 'spectrum', name: SpectrumTemplate.name, description: SpectrumTemplate.description },
-  { id: 't3', name: Template03.name, description: Template03.description },
-  { id: 't4', name: Template04.name, description: Template04.description },
-  { id: 't5', name: Template05.name, description: Template05.description },
+export interface TemplateEntry {
+  id: TemplateId
+  name: string
+  description: string
+}
+
+const entry = (template: VisualTemplate): TemplateEntry => ({
+  id: template.id,
+  name: template.name,
+  description: template.description,
+})
+
+/** Os oito layouts de composição (T1–T8). */
+export const LAYOUT_LIST: TemplateEntry[] = [
+  entry(Layout01),
+  entry(Layout02),
+  entry(Template03),
+  entry(Template04),
+  entry(Template05),
+  entry(Layout06),
+  entry(Layout07),
+  entry(Layout08),
 ]
+
+/** Estilos/presets artísticos originais, preservados como cenas alternativas. */
+export const STYLE_LIST: TemplateEntry[] = [
+  entry(MirageTemplate),
+  entry(AfterimageTemplate),
+  entry(VoidTemplate),
+  entry(SpectrumTemplate),
+]
+
+export const TEMPLATE_LIST: TemplateEntry[] = [...LAYOUT_LIST, ...STYLE_LIST]

@@ -9,12 +9,13 @@ import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
 
 /**
- * TEMPLATE 04 — wireframe favorito do usuário: coluna de waveform à esquerda
- * com texto abaixo, e capa grande ocupando a direita.
+ * LAYOUT 04 — EDITORIAL COVER
+ * Espaço negativo forte: coluna de waveform e texto à esquerda, capa grande
+ * à direita. Composição contida, sem elementos competindo com a arte.
  */
 export const Template04: VisualTemplate = {
   id: 't4',
-  name: 'TEMPLATE 04',
+  name: '04 — EDITORIAL COVER',
   description: 'Waveform vertical + texto à esquerda, capa grande à direita.',
   build(ctx: StageContext): TemplateInstance {
     const disposables: Array<{ dispose(): void }> = []

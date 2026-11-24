@@ -6,8 +6,23 @@ export type AspectRatioId = '9:16' | '1:1' | '16:9'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
 
-/** Templates selecionáveis no Stage (presets visuais + T3/T4/T5 favoritos do usuário). */
-export type TemplateId = 'mirage' | 'afterimage' | 'void' | 'spectrum' | 't3' | 't4' | 't5'
+/**
+ * Layouts T1–T8 são composições espaciais distintas; MIRAGE/AFTERIMAGE/VOID/SPECTRUM
+ * permanecem como presets/estilos artísticos selecionáveis.
+ */
+export type TemplateId =
+  | 'mirage'
+  | 'afterimage'
+  | 'void'
+  | 'spectrum'
+  | 't1'
+  | 't2'
+  | 't3'
+  | 't4'
+  | 't5'
+  | 't6'
+  | 't7'
+  | 't8'
 
 export interface VisualSettings {
   /** Intensidade geral da reação audio (0–1). */

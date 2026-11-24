@@ -33,7 +33,9 @@ npm run preview    # serve o build
 
 1. **Fonte** → carregue o áudio (MP3, WAV, OGG, M4A, AAC, FLAC) e a capa (JPG, PNG, WEBP, GIF, AVIF).
    Sem capa, o Stage usa uma arte padrão gerada localmente.
-2. **Template** → escolha entre MIRAGE (padrão), AFTERIMAGE, VOID, SPECTRUM e TEMPLATES 03/04/05.
+2. **Composição** → escolha um dos oito layouts (01 CENTERED HERO, 02 STEREO FRAME, 03 OFFSET CINEMA,
+   04 EDITORIAL COVER, 05 ALBUM PLAYER SPLIT, 06 VERTICAL TOTEM, 07 SYMMETRIC SPECTRUM,
+   08 MONOCHROME FOCUS) ou um dos estilos originais (MIRAGE, padrão, AFTERIMAGE, VOID, SPECTRUM).
    A troca é imediata e não perde o áudio carregado.
 3. **Trecho do vídeo** → defina início e duração (máximo 30 s, mínimo 5 s).
 4. **Paleta** → as cores do vídeo saem automaticamente da capa (`Da capa`) ou você escolhe acento,

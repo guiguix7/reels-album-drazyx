@@ -71,7 +71,12 @@ export const TEMPLATE_DEFAULT_VISUAL: Record<TemplateId, ProjectConfig['visual']
   afterimage: { ...DEFAULT_PROJECT.visual, intensity: 0.8, particleCount: 0.35, cameraSpeed: 0.5, glitch: 'low' },
   void: { ...DEFAULT_PROJECT.visual, intensity: 0.5, particleCount: 0.15, glow: 0.3, grain: 0.5, cameraSpeed: 0.25, glitch: 'off' },
   spectrum: { ...DEFAULT_PROJECT.visual, intensity: 0.85, particleCount: 0.3, bassForce: 0.75, glow: 0.5, cameraSpeed: 0.3, glitch: 'low' },
+  t1: { ...DEFAULT_PROJECT.visual, intensity: 0.75, particleCount: 0.3, glow: 0.45, cameraSpeed: 0.25, glitch: 'low' },
+  t2: { ...DEFAULT_PROJECT.visual, intensity: 0.8, particleCount: 0.35, glow: 0.45, cameraSpeed: 0.4, glitch: 'low' },
   t3: { ...DEFAULT_PROJECT.visual, intensity: 0.7, particleCount: 0.4, glow: 0.4, cameraSpeed: 0.3, glitch: 'low' },
   t4: { ...DEFAULT_PROJECT.visual, intensity: 0.7, particleCount: 0.35, glow: 0.4, cameraSpeed: 0.3, glitch: 'low' },
   t5: { ...DEFAULT_PROJECT.visual, intensity: 0.6, particleCount: 0.3, glow: 0.35, cameraSpeed: 0.25, glitch: 'low' },
+  t6: { ...DEFAULT_PROJECT.visual, intensity: 0.7, particleCount: 0.3, glow: 0.4, cameraSpeed: 0.3, glitch: 'low' },
+  t7: { ...DEFAULT_PROJECT.visual, intensity: 0.85, particleCount: 0.2, bassForce: 0.75, glow: 0.5, cameraSpeed: 0.2, glitch: 'off' },
+  t8: { ...DEFAULT_PROJECT.visual, intensity: 0.55, particleCount: 0.15, bassForce: 0.6, glow: 0.3, grain: 0.55, cameraSpeed: 0.2, glitch: 'off' },
 }

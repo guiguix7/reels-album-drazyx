@@ -61,6 +61,8 @@ export const VoidTemplate: VisualTemplate = {
     ctx.scene.add(artist.mesh)
     const trackTitle = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.09, color: '#f2edf5', tracking: 3, align: 'center', lineHeight: 1.22, uppercase: true }))
     ctx.scene.add(trackTitle.mesh)
+    const tagline = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#a99eae', tracking: 5, align: 'center', lineHeight: 1.3, uppercase: true }))
+    ctx.scene.add(tagline.mesh)
     const album = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#8d8398', tracking: 4, align: 'center', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(album.mesh)
     const cta = track(new TextLayer({ font: 'ui', weight: 600, sizeFrac: 0.05, color: '#cf8aff', tracking: 6, align: 'center', lineHeight: 1.3, uppercase: true }))
@@ -125,6 +127,10 @@ export const VoidTemplate: VisualTemplate = {
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.84, {})
         trackTitle.setOpacity(type.showTrack ? 0.98 : 0)
         trackTitle.mesh.position.set(0, safe.topY - 0.85 - artistH - titleH * 0.55, 0)
+
+        tagline.set([type.showTagline ? type.tagline : ''], viewW * 0.72, {})
+        tagline.setOpacity(type.showTagline ? 0.72 : 0)
+        tagline.mesh.position.set(0, 1.8, 0)
 
         album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.7, {})
         album.setOpacity(type.showAlbum ? 0.75 : 0)

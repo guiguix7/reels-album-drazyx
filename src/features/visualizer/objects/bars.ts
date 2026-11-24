@@ -88,7 +88,7 @@ export class FFTBars {
     y0: number,
     width: number,
     bars: Float32Array,
-    opts: { maxHeight: number; minHeight?: number; fromEnd?: boolean },
+    opts: { maxHeight: number; minHeight?: number; fromEnd?: boolean; flipY?: boolean },
   ): void {
     const n = Math.min(this.count, bars.length)
     const step = width / n
@@ -97,7 +97,8 @@ export class FFTBars {
       const source = opts.fromEnd ? n - 1 - i : i
       const value = i < n ? Math.max(opts.minHeight ?? 0.02, bars[source]) : 0.02
       const h = value * opts.maxHeight
-      this.dummy.position.set(x0 + step * (i + 0.5), y0 + h / 2, 0)
+      const dir = opts.flipY ? -1 : 1
+      this.dummy.position.set(x0 + step * (i + 0.5), y0 + (h / 2) * dir, 0)
       this.dummy.scale.set(Math.max(0.01, barW), Math.max(0.005, h), 1)
       this.dummy.updateMatrix()
       this.mesh.setMatrixAt(i, this.dummy.matrix)
@@ -110,16 +111,18 @@ export class FFTBars {
     y0: number,
     height: number,
     bars: Float32Array,
-    opts: { maxLength: number; minLength?: number; growDown?: boolean },
+    opts: { maxLength: number; minLength?: number; growDown?: boolean; direction?: 1 | -1 },
   ): void {
     const n = Math.min(this.count, bars.length)
     const step = height / n
     const barH = step - this.gap
+    const direction = opts.direction ?? 1
     for (let i = 0; i < this.count; i++) {
-      const value = i < n ? Math.max(opts.minLength ?? 0.02, bars[i]) : 0.02
+      const source = direction === 1 ? i : n - 1 - i
+      const value = i < n ? Math.max(opts.minLength ?? 0.02, bars[source]) : 0.02
       const len = value * opts.maxLength
       const y = opts.growDown ? y0 - step * (i + 0.5) : y0 + step * (i + 0.5)
-      this.dummy.position.set(x0 + len / 2, y, 0)
+      this.dummy.position.set(x0 + (len / 2) * direction, y, 0)
       this.dummy.scale.set(Math.max(0.005, len), Math.max(0.01, barH), 1)
       this.dummy.updateMatrix()
       this.mesh.setMatrixAt(i, this.dummy.matrix)
