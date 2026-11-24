@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { getAudioEngine } from '../audio/AudioEngine'
 import type { PaletteSettings, TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
 import { DEFAULT_PALETTE } from '../project/project.defaults'
+import type { SceneTransition, StoryboardConfig } from '../storyboard/storyboard.types'
+import { effectiveType, effectiveVisual, findSceneAt } from '../storyboard/storyboard.utils'
 import { TEMPLATE_REGISTRY } from './templates/registry'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
@@ -33,6 +35,13 @@ export class VisualEngine {
   private type: TypeSettings
   private palette: PaletteSettings = DEFAULT_PALETTE
   private clip = { start: 0, end: 30, progress: 0 }
+
+  private storyboard: StoryboardConfig | null = null
+  private activeSceneId: string | null = null
+  private curtain: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>
+  private transitionKind: SceneTransition = 'cut'
+  private transitionRemaining = 0
+  private transitionDuration = 0
 
   private assets: StageAssets = { coverTexture: null, hasCover: false }
   private defaultCoverTexture: THREE.Texture | null = null
@@ -68,6 +77,23 @@ export class VisualEngine {
     this.camera = new THREE.PerspectiveCamera(fovForViewHeight(CAMERA_Z, VIEW_HEIGHT), 9 / 16, 0.1, 100)
     this.camera.position.set(0, 0, CAMERA_Z)
 
+    // Cortina de transição presa à câmera: cobre a tela mesmo durante o dolly.
+    this.curtain = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0,
+        depthTest: false,
+        depthWrite: false,
+      }),
+    )
+    this.curtain.position.z = -1
+    this.curtain.renderOrder = 1000
+    this.curtain.visible = false
+    this.camera.add(this.curtain)
+    this.scene.add(this.camera)
+
     this.finish = new FinishPass(this.renderer, this.width, this.height)
     this.applyDefaultCover()
     this.setResolution(this.width, this.height)
@@ -84,6 +110,21 @@ export class VisualEngine {
     this.clip = { start, end, progress: 0 }
   }
 
+  /** Ativa/desativa o storyboard; ao desligar, volta ao template avulso escolhido na galeria. */
+  setStoryboard(config: StoryboardConfig, fallbackTemplateId: TemplateId): void {
+    this.storyboard = config
+    if (!config.enabled || !config.scenes.length) {
+      this.activeSceneId = null
+      this.hideTransition()
+      this.setTemplate(fallbackTemplateId)
+      return
+    }
+    if (this.activeSceneId && !config.scenes.some((scene) => scene.id === this.activeSceneId)) {
+      this.activeSceneId = null
+      this.hideTransition()
+    }
+  }
+
   /** Paleta aplicada no update dos templates (sem reconstruir a cena). */
   setPalette(palette: PaletteSettings): void {
     this.palette = palette
@@ -96,6 +137,8 @@ export class VisualEngine {
     // dispose() dos templates libera recursos mas não remove os meshes da cena;
     // sem o clear, objetos do template anterior continuam renderizando por cima.
     this.scene.clear()
+    // A câmera carrega a cortina de transição e precisa voltar para a cena.
+    this.scene.add(this.camera)
     this.instance = null
     const template = TEMPLATE_REGISTRY[id]
     if (!template) return
@@ -169,6 +212,7 @@ export class VisualEngine {
     this.camera.updateProjectionMatrix()
     this.viewHeight = VIEW_HEIGHT
     this.viewWidth = VIEW_HEIGHT * aspect
+    this.resizeCurtain()
     this.instance?.resize(this.viewWidth, this.viewHeight)
   }
 
@@ -201,29 +245,84 @@ export class VisualEngine {
     const clipSpan = Math.max(0.001, this.clip.end - this.clip.start)
     this.clip.progress = Math.max(0, Math.min(1, (frame.time - this.clip.start) / clipSpan))
 
+    let visual = this.visual
+    let type = this.type
+    let palette = this.palette
+
+    if (this.storyboard?.enabled && this.storyboard.scenes.length) {
+      const sceneTime = Math.max(0, frame.time - this.clip.start)
+      const scene = findSceneAt(this.storyboard.scenes, sceneTime)
+      if (scene) {
+        const sceneChanged = this.activeSceneId !== scene.id
+        if (sceneChanged || this.templateId !== scene.layoutId) {
+          this.activeSceneId = scene.id
+          this.setTemplate(scene.layoutId)
+          if (sceneChanged) this.startTransition(scene.transition)
+        }
+        const sceneDuration = Math.max(0.001, scene.end - scene.start)
+        visual = effectiveVisual(this.visual, scene, Math.max(0, sceneTime - scene.start), sceneDuration)
+        type = effectiveType(this.type, scene)
+        if (scene.visualStyleId === 'violet') palette = DEFAULT_PALETTE
+      }
+    }
+
     if (this.instance) {
       this.instance.update({
         frame,
-        visual: this.visual,
-        type: this.type,
-        palette: this.palette,
+        visual,
+        type,
+        palette,
         clip: this.clip,
         time: this.time,
         dt,
       })
     }
 
+    this.updateTransition(dt)
+
     // Acabamento global (grain/vignette/CA/glitch) — controlado por config + transientes.
-    const glitchBase = this.visual.glitch === 'off' ? 0 : this.visual.glitch === 'low' ? 0.55 : 1
-    const chroma = 0.0005 + frame.transient * (this.visual.glitch === 'off' ? 0.0006 : this.visual.glitch === 'low' ? 0.0024 : 0.0048)
+    const glitchBase = visual.glitch === 'off' ? 0 : visual.glitch === 'low' ? 0.55 : 1
+    const chroma = 0.0005 + frame.transient * (visual.glitch === 'off' ? 0.0006 : visual.glitch === 'low' ? 0.0024 : 0.0048)
     this.finish.render(this.scene, this.camera, {
       time: this.time,
-      grain: this.visual.grain * 0.85,
+      grain: visual.grain * 0.85,
       vignette: 0.32,
       chroma,
-      scan: this.visual.glitch === 'medium' ? 0.3 : 0.15,
+      scan: visual.glitch === 'medium' ? 0.3 : 0.15,
       glitch: glitchBase * Math.max(0, frame.transient - 0.5) * 1.6,
     })
+  }
+
+  private startTransition(kind: SceneTransition): void {
+    if (kind === 'cut') {
+      this.hideTransition()
+      return
+    }
+    this.transitionKind = kind
+    this.transitionDuration = kind === 'flash' ? 0.35 : 0.55
+    this.transitionRemaining = this.transitionDuration
+    this.curtain.material.color.set(kind === 'flash' ? '#e9d7ff' : '#000000')
+    this.curtain.material.opacity = kind === 'flash' ? 0.8 : 1
+    this.curtain.visible = true
+  }
+
+  private updateTransition(dt: number): void {
+    if (!this.curtain.visible) return
+    this.transitionRemaining = Math.max(0, this.transitionRemaining - dt)
+    const progress = this.transitionDuration > 0 ? this.transitionRemaining / this.transitionDuration : 0
+    this.curtain.material.opacity = (this.transitionKind === 'flash' ? 0.8 : 1) * progress
+    if (this.transitionRemaining <= 0) this.curtain.visible = false
+  }
+
+  private hideTransition(): void {
+    this.curtain.visible = false
+    this.transitionRemaining = 0
+  }
+
+  private resizeCurtain(): void {
+    const distance = 1
+    const height = 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * distance
+    this.curtain.scale.set(height * this.camera.aspect * 1.02, height * 1.02, 1)
   }
 
   /** Pausa quando a aba perde visibilidade (economia sem quebrar o relógio). */
@@ -237,6 +336,9 @@ export class VisualEngine {
     this.instance?.dispose()
     this.scene.clear()
     this.instance = null
+    this.camera.remove(this.curtain)
+    this.curtain.geometry.dispose()
+    this.curtain.material.dispose()
     this.assets.coverTexture?.dispose()
     this.defaultCoverTexture?.dispose()
     this.finish.dispose()

@@ -1,5 +1,7 @@
 /** Contratos centrais do projeto — compartilhados entre UI, áudio, visual e gravação. */
 
+import type { StoryboardConfig } from '../storyboard/storyboard.types'
+
 export type AspectRatioId = '9:16' | '1:1' | '16:9'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
@@ -79,6 +81,7 @@ export interface ProjectConfig {
   clipDuration: number
   visual: VisualSettings
   type: TypeSettings
+  storyboard: StoryboardConfig
 }
 
 /** Dimensões de saída por proporção/qualidade. */

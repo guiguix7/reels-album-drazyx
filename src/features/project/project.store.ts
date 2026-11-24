@@ -2,6 +2,20 @@ import { create } from 'zustand'
 import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
 import { getClipEnd } from './project.types'
 import { DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
+import type { ClipAnalysis } from '../audio/offline-analysis'
+import type { HookSettings, StoryboardScene } from '../storyboard/storyboard.types'
+import {
+  applyHookToScenes,
+  buildAutoStoryboard,
+  createStoryboardPreset,
+  HOOK_PRESETS,
+  insertScene as insertSceneInList,
+  motionKeyframes,
+  moveScene as moveSceneInList,
+  removeScene as removeSceneFromList,
+  resizeScene,
+  scaleScenesToDuration,
+} from '../storyboard/storyboard.utils'
 
 export type AudioStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
 
@@ -28,6 +42,18 @@ interface ProjectState {
   setPaletteMode: (mode: PaletteMode) => void
   setCoverPalette: (palette: CoverPalette | null) => void
   resetVisualToTemplateDefault: () => void
+
+  /* ações — storyboard */
+  setStoryboardEnabled: (enabled: boolean) => void
+  applyStoryboardPreset: (kind: 15 | 30) => void
+  setAutoStoryboard: (analysis: ClipAnalysis) => void
+  setHook: (patch: Partial<HookSettings>) => void
+  updateScene: (id: string, patch: Partial<StoryboardScene>) => void
+  setSceneDuration: (id: string, seconds: number) => void
+  addScene: (afterId?: string) => void
+  duplicateScene: (id: string) => void
+  removeScene: (id: string) => void
+  moveScene: (id: string, direction: -1 | 1) => void
 
   /* ações — assets */
   setAudioMeta: (meta: AudioMeta) => void
@@ -77,7 +103,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const end = getClipEnd({ ...state.config, clipStart }, audioDuration)
       // Duração efetiva respeita o fim da faixa.
       const clipDuration = Math.max(1, Math.min(state.config.clipDuration, end - clipStart))
-      return { config: { ...state.config, clipStart, clipDuration } }
+      return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
     }),
 
   setClipDuration: (seconds, audioDuration) =>
@@ -87,7 +113,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const maxEnd = Math.min(MAX_CLIP_SECONDS, audioDuration ?? MAX_CLIP_SECONDS)
       const available = Math.max(1, maxEnd - state.config.clipStart)
       const clipDuration = clamp(seconds, 1, available)
-      return { config: { ...state.config, clipDuration } }
+      return { config: fitStoryboard({ ...state.config, clipDuration }) }
     }),
 
   setVisual: (patch) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, ...patch } } })),
@@ -130,6 +156,178 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (defaults) set((state) => ({ config: { ...state.config, visual: { ...defaults } } }))
   },
 
+  setStoryboardEnabled: (enabled) =>
+    set((state) => ({
+      config: { ...state.config, storyboard: { ...state.config.storyboard, enabled } },
+    })),
+
+  applyStoryboardPreset: (kind) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        storyboard: {
+          ...state.config.storyboard,
+          enabled: true,
+          source: 'preset',
+          scenes: createStoryboardPreset(kind, state.config.storyboard.hook, state.config.clipDuration),
+        },
+      },
+    })),
+
+  setAutoStoryboard: (analysis) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        storyboard: {
+          ...state.config.storyboard,
+          enabled: true,
+          source: 'auto',
+          scenes: buildAutoStoryboard(analysis, state.config.clipDuration, state.config.storyboard.hook),
+        },
+      },
+    })),
+
+  setHook: (patch) =>
+    set((state) => {
+      const storyboard = state.config.storyboard
+      const nextType = patch.type ?? storyboard.hook.type
+      const oldDefault = HOOK_PRESETS[storyboard.hook.type].text
+      const text =
+        patch.text ??
+        (patch.type && (storyboard.hook.text.trim() === '' || storyboard.hook.text === oldDefault)
+          ? HOOK_PRESETS[nextType].text
+          : storyboard.hook.text)
+      const hook = { ...storyboard.hook, ...patch, text }
+      return {
+        config: {
+          ...state.config,
+          storyboard: {
+            ...storyboard,
+            hook,
+            source: 'manual',
+            scenes: applyHookToScenes(storyboard.scenes, hook),
+          },
+        },
+      }
+    }),
+
+  updateScene: (id, patch) =>
+    set((state) => {
+      const storyboard = state.config.storyboard
+      const first = storyboard.scenes[0]
+      const syncHookText =
+        patch.text !== undefined && first?.id === id && first.role === 'hook'
+          ? { ...storyboard.hook, text: patch.text }
+          : storyboard.hook
+      return {
+        config: {
+          ...state.config,
+          storyboard: {
+            ...storyboard,
+            hook: syncHookText,
+            source: 'manual',
+            scenes: storyboard.scenes.map((scene) => {
+              if (scene.id !== id) return scene
+              const next = { ...scene, ...patch }
+              if (patch.motion) next.keyframes = motionKeyframes(patch.motion)
+              return next
+            }),
+          },
+        },
+      }
+    }),
+
+  setSceneDuration: (id, seconds) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        storyboard: {
+          ...state.config.storyboard,
+          source: 'manual',
+          scenes: resizeScene(state.config.storyboard.scenes, id, seconds, state.config.clipDuration),
+        },
+      },
+    })),
+
+  addScene: (afterId) =>
+    set((state) => {
+      const scenes = state.config.storyboard.scenes
+      const found = afterId ? scenes.findIndex((scene) => scene.id === afterId) : -1
+      const index = found >= 0 ? found + 1 : scenes.length
+      const base = scenes[Math.max(0, index - 1)]
+      const scene: StoryboardScene = {
+        id: makeSceneId(),
+        role: 'development',
+        start: 0,
+        end: 2,
+        layoutId: base?.layoutId ?? state.config.templateId,
+        visualStyleId: base?.visualStyleId ?? 'album',
+        transition: 'cut',
+        motion: 'slow',
+        text: '',
+        showText: false,
+        audioIntensity: 1,
+        keyframes: motionKeyframes('slow'),
+      }
+      return {
+        config: {
+          ...state.config,
+          storyboard: {
+            ...state.config.storyboard,
+            source: 'manual',
+            scenes: insertSceneInList(scenes, index, scene, state.config.clipDuration),
+          },
+        },
+      }
+    }),
+
+  duplicateScene: (id) =>
+    set((state) => {
+      const scenes = state.config.storyboard.scenes
+      const index = scenes.findIndex((scene) => scene.id === id)
+      if (index < 0) return state
+      const original = scenes[index]
+      const copy: StoryboardScene = {
+        ...original,
+        id: makeSceneId(),
+        keyframes: original.keyframes.map((keyframe) => ({ ...keyframe })),
+      }
+      return {
+        config: {
+          ...state.config,
+          storyboard: {
+            ...state.config.storyboard,
+            source: 'manual',
+            scenes: insertSceneInList(scenes, index + 1, copy, state.config.clipDuration),
+          },
+        },
+      }
+    }),
+
+  removeScene: (id) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        storyboard: {
+          ...state.config.storyboard,
+          source: 'manual',
+          scenes: removeSceneFromList(state.config.storyboard.scenes, id, state.config.clipDuration),
+        },
+      },
+    })),
+
+  moveScene: (id, direction) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        storyboard: {
+          ...state.config.storyboard,
+          source: 'manual',
+          scenes: moveSceneInList(state.config.storyboard.scenes, id, direction, state.config.clipDuration),
+        },
+      },
+    })),
+
   setAudioMeta: (meta) => {
     const previous = get().audioMeta
     revoke(previous?.objectUrl)
@@ -147,7 +345,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         audioMeta: meta,
         audioError: null,
         audioStatus: 'ready',
-        config: { ...config, clipStart, clipDuration },
+        config: fitStoryboard({ ...config, clipStart, clipDuration }),
       }
     })
   },
@@ -157,11 +355,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   clearAudio: () => {
     const previous = get().audioMeta
     revoke(previous?.objectUrl)
+    const config = get().config
     set({
       audioMeta: null,
       audioStatus: 'idle',
       audioError: null,
-      config: { ...get().config, clipStart: 0, clipDuration: MAX_CLIP_SECONDS },
+      config: fitStoryboard({ ...config, clipStart: 0, clipDuration: MAX_CLIP_SECONDS }),
     })
   },
 
@@ -183,6 +382,28 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+let sceneSeq = 0
+
+function makeSceneId(): string {
+  sceneSeq += 1
+  return `scene-${Date.now().toString(36)}-${sceneSeq}`
+}
+
+/** Mantém as cenas cobrindo exatamente a duração atual do trecho. */
+function fitStoryboard(config: ProjectConfig): ProjectConfig {
+  const scenes = config.storyboard.scenes
+  if (!scenes.length) return config
+  const current = scenes[scenes.length - 1].end
+  if (Math.abs(current - config.clipDuration) < 0.01) return config
+  return {
+    ...config,
+    storyboard: {
+      ...config.storyboard,
+      scenes: scaleScenesToDuration(scenes, config.clipDuration),
+    },
+  }
 }
 
 function structuredCloneSafe<T>(value: T): T {

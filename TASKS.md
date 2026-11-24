@@ -59,7 +59,7 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
 
 - [x] Fase 0 — Baseline: auditoria, smoke no deploy, checks verdes, docs de estratégia e roadmap, commit `chore: document retention-focused implementation baseline`
 - [x] Fase 1 — Hardening de áudio, gravação e estado do editor: AudioEngine.clear/resetAnalysis/clipTimer, track de áudio obrigatória, cancelamento seguro, re-clamp do trecho, UI bloqueada durante REC — commit `fix: harden audio and recording lifecycle`
-- [ ] Fase 2 — Hook Engine + Storyboard editável — commit `feat: add hook-driven storyboard engine`
+- [x] Fase 2 — Hook Engine + Storyboard editável: hooks A–E, presets 15/30 s, auto storyboard por análise offline do trecho, edição de cenas (adicionar, duplicar, remover, mover, duração, layout, paleta, transição, movimento, intensidade, texto), timeline com playhead e preview por cena — commit `feat: add hook-driven storyboard engine`
 - [ ] Fase 3 — 8 layouts distintos + galeria — commit `feat: expand visual composition system to eight layouts`
 - [ ] Fase 4 — Motion engine avançado + loop visual — commit `feat: add advanced audio-reactive motion engine`
 - [ ] Fase 5 — Recipes + Batch Creator + platform profiles — commit `feat: add creative content recipes and batch exports`

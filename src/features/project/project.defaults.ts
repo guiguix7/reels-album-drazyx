@@ -1,4 +1,5 @@
 import type { PaletteSettings, ProjectConfig, TemplateId } from './project.types'
+import { createDefaultStoryboard } from '../storyboard/storyboard.utils'
 
 /** Nome do produto centralizado — alterável aqui. */
 export const APP_NAME = 'DRAZYX VISUALIZER STUDIO'
@@ -61,6 +62,7 @@ export const DEFAULT_PROJECT: ProjectConfig = {
     scale: 1,
     tracking: 6,
   },
+  storyboard: createDefaultStoryboard(),
 }
 
 /** Valores padrão de cena por template — usado no botão "restaurar preset". */

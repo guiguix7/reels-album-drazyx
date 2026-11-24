@@ -324,3 +324,148 @@
 .downloadLink {
   text-decoration: none;
 }
+
+/* ---------- storyboard ---------- */
+
+.sbToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sbHook {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-line);
+}
+
+.sbField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.sbSelect {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--surface-line-strong);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.sbTimeline {
+  position: relative;
+  display: flex;
+  height: 16px;
+  margin: 8px 0 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-line);
+}
+
+.sbSegment {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+}
+
+.sbSegHook {
+  background: var(--accent);
+}
+
+.sbSegReveal {
+  background: #7c5cff;
+}
+
+.sbSegDevelopment {
+  background: #3b3350;
+}
+
+.sbSegPeak {
+  background: var(--accent-strong);
+}
+
+.sbSegPayoff {
+  background: #2c2638;
+}
+
+.sbPlayhead {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  width: 2px;
+  background: var(--text);
+  box-shadow: 0 0 8px var(--accent);
+  pointer-events: none;
+}
+
+.sbSceneList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sbScene {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--surface-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.014);
+}
+
+.sbSceneHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sbSceneRole {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.sbSceneActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbSceneTime {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.sbSceneGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sbActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sbNote {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}

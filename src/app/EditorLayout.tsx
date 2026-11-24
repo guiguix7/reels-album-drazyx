@@ -5,6 +5,7 @@ import { useProjectStore } from '../features/project/project.store'
 import { APP_NAME } from '../features/project/project.defaults'
 import { SourcePanel } from '../components/editor/SourcePanel'
 import { TemplateGallery } from '../components/editor/TemplateGallery'
+import { StoryboardPanel } from '../components/editor/StoryboardPanel'
 import { ClipPanel } from '../components/editor/ClipPanel'
 import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/VisualPanel'
 import { FormatPanel } from '../components/editor/FormatPanel'
@@ -51,6 +52,7 @@ export function EditorLayout(): JSX.Element {
           <fieldset className={styles.panelFieldset} disabled={recording}>
             <SourcePanel />
             <TemplateGallery />
+            <StoryboardPanel />
             <PalettePanel />
             <ClipPanel />
             <VisualPanel />
