@@ -1,5 +1,7 @@
 /** Capa padrão procedural (fallback quando o usuário não enviou capa). */
 
+import { createRandom } from '../motion/motion.utils'
+
 export function createDefaultCoverCanvas(size = 1080): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = size
@@ -33,12 +35,13 @@ export function createDefaultCoverCanvas(size = 1080): HTMLCanvasElement {
   ctx.stroke()
   ctx.restore()
 
-  // Textura de ruído
+  // Textura de ruído — semente fixa: a arte padrão é idêntica entre preview e export.
   const noiseCount = Math.round(size * 0.9)
+  const random = createRandom(0x0d7a2)
   for (let i = 0; i < noiseCount; i++) {
-    const alpha = Math.random() * 0.08
+    const alpha = random() * 0.08
     ctx.fillStyle = `rgba(242, 237, 245, ${alpha})`
-    ctx.fillRect(Math.random() * size, Math.random() * size, 1.5, 1.5)
+    ctx.fillRect(random() * size, random() * size, 1.5, 1.5)
   }
 
   // Tipografia

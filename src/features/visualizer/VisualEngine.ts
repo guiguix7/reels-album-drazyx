@@ -5,6 +5,7 @@ import { DEFAULT_PALETTE } from '../project/project.defaults'
 import type { SceneTransition, StoryboardConfig } from '../storyboard/storyboard.types'
 import { effectiveType, effectiveVisual, findSceneAt } from '../storyboard/storyboard.utils'
 import { TEMPLATE_REGISTRY } from './templates/registry'
+import { applyMotionProfile, applyVisualLoop, hashSeed, loopBlend } from './motion/motion.utils'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
 import { CAMERA_Z, VIEW_HEIGHT, fovForViewHeight } from './visual.types'
@@ -32,6 +33,8 @@ export class VisualEngine {
   private height = 1920
 
   private visual: VisualSettings
+  /** Parâmetros do início do trecho — usados no fechamento do loop visual. */
+  private openingVisual: VisualSettings
   private type: TypeSettings
   private palette: PaletteSettings = DEFAULT_PALETTE
   private clip = { start: 0, end: 30, progress: 0 }
@@ -54,6 +57,7 @@ export class VisualEngine {
   ) {
     this.canvas = canvas
     this.visual = visual
+    this.openingVisual = visual
     this.type = type
 
     this.renderer = new THREE.WebGLRenderer({
@@ -103,6 +107,7 @@ export class VisualEngine {
 
   setConfig(visual: VisualSettings, type: TypeSettings): void {
     this.visual = visual
+    this.openingVisual = visual
     this.type = type
   }
 
@@ -239,13 +244,25 @@ export class VisualEngine {
 
   private renderFrame(): void {
     const dt = Math.min(0.06, this.clock.getDelta())
-    this.time += dt
-
     const frame = getAudioEngine().getFrame()
+
+    // Tempo do visual: durante o playback o relógio do áudio é a fonte de verdade,
+    // então seek reverso reconstrói o mesmo frame e o export reproduz o preview.
+    // Sem áudio (ou pausado) a cena continua respirando em ritmo reduzido.
+    const audioLoaded = frame.duration > 0
+    if (audioLoaded && frame.playing) this.time = frame.time
+    else this.time += dt * (audioLoaded ? 0.25 : 1)
+
     const clipSpan = Math.max(0.001, this.clip.end - this.clip.start)
     this.clip.progress = Math.max(0, Math.min(1, (frame.time - this.clip.start) / clipSpan))
 
-    let visual = this.visual
+    const motionSeed = hashSeed([this.templateId ?? 'none', Math.round(this.clip.start * 10)])
+    let visual = applyMotionProfile(this.visual, this.visual.motionProfile, {
+      progress: this.clip.progress,
+      seed: motionSeed,
+      energy: frame.energy,
+      transient: frame.transient,
+    })
     let type = this.type
     let palette = this.palette
 
@@ -260,11 +277,13 @@ export class VisualEngine {
           if (sceneChanged) this.startTransition(scene.transition)
         }
         const sceneDuration = Math.max(0.001, scene.end - scene.start)
-        visual = effectiveVisual(this.visual, scene, Math.max(0, sceneTime - scene.start), sceneDuration)
+        visual = effectiveVisual(visual, scene, Math.max(0, sceneTime - scene.start), sceneDuration)
         type = effectiveType(this.type, scene)
         if (scene.visualStyleId === 'violet') palette = DEFAULT_PALETTE
       }
     }
+
+    visual = applyVisualLoop(visual, this.openingVisual, loopBlend(this.clip.progress, this.visual.loopVisual))
 
     if (this.instance) {
       this.instance.update({

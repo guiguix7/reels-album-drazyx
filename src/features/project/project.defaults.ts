@@ -47,6 +47,8 @@ export const DEFAULT_PROJECT: ProjectConfig = {
     grain: 0.35,
     cameraSpeed: 0.45,
     glitch: 'low',
+    motionProfile: 'dream',
+    loopVisual: false,
   },
   type: {
     artistName: 'DRAZYX',

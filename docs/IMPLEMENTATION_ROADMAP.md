@@ -43,15 +43,22 @@ um commit próprio; nenhuma fase é declarada concluída apenas por UI pronta.
 - QA visual de clipping, tipografia, safe areas e sobreposição.
 - Commit: `feat: expand visual composition system to eight layouts`.
 
-## Fase 4 — Motion engine avançado
+## Fase 4 — Motion engine avançado *(concluída)*
 
-- Análise adicional: onset, low-frequency pulse, centroid/flatness, envelope,
-  confiança de beat e sugestões de mudança de seção.
-- Mapeamento musical por elemento (bass/mid/treble/transiente/energia).
-- Motion profiles DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE, MINIMAL.
-- Determinismo por seed, preview = export, seek reverso correto.
-- Loop visual compatível com início/fim, sem prometer loop de áudio não processado.
+- [x] Motion profiles DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE, MINIMAL.
+- [x] Curvas por progresso sobre intensidade, graves, brilho, câmera e partículas,
+  com kick de transiente e energia mantendo a cena viva em silêncio.
+- [x] Determinismo por seed (`hashSeed` + mulberry32), partículas/capa padrão/glows
+  do MIRAGE sem `Math.random`.
+- [x] Tempo do visual dirigido pelo relógio do áudio no playback: preview = export
+  e seek reverso reconstrói o frame.
+- [x] Loop visual até o início do trecho, aplicado no último 8% (sem loop de áudio).
+- [x] Seletor de movimento no painel Visual com descrição do perfil.
 - Commit: `feat: add advanced audio-reactive motion engine`.
+
+Pendências registradas: análise espectral extra (centroide/flatness) e
+sugestões automáticas de seção não foram adicionadas nesta fase; o storyboard
+automático continua usando envelope/onsets/pico reais do áudio.
 
 ## Fase 5 — Recipes + Batch Creator
 

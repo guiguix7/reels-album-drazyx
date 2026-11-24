@@ -41,7 +41,13 @@ export const MirageTemplate: VisualTemplate = {
         blending: THREE.AdditiveBlending,
       })
       const sprite = new THREE.Sprite(material)
-      sprite.position.set((Math.random() - 0.5) * ctx.viewWidth * 0.8, (Math.random() - 0.5) * 4, -4 - i)
+      // Posições determinísticas por índice: o preview e o arquivo exportado
+      // reconstroem exatamente a mesma composição.
+      sprite.position.set(
+        (i - 1) * ctx.viewWidth * 0.26,
+        (i - 1) * 1.7,
+        -4 - i,
+      )
       sprite.scale.setScalar(5 + i * 1.5)
       sprite.renderOrder = 2
       ctx.scene.add(sprite)

@@ -88,6 +88,31 @@ export function TextInput({
   )
 }
 
+export function Select<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: T
+  options: Array<{ value: T; label: string }>
+  onChange: (value: T) => void
+}): JSX.Element {
+  return (
+    <label className={styles.fieldRow}>
+      <span className={styles.rowLabel}>{label}</span>
+      <select className={styles.select} value={value} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 export function ColorField({
   label,
   value,

@@ -62,7 +62,7 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
 - [x] Fase 2 — Hook Engine + Storyboard editável: hooks A–E, presets 15/30 s, auto storyboard por análise offline do trecho, edição de cenas (adicionar, duplicar, remover, mover, duração, layout, paleta, transição, movimento, intensidade, texto), timeline com playhead e preview por cena — commit `feat: add hook-driven storyboard engine`
 - [x] Fase 3 — 8 layouts distintos + galeria: T1 CENTERED HERO, T2 STEREO FRAME, T3 OFFSET CINEMA, T4 EDITORIAL COVER, T5 ALBUM PLAYER SPLIT (progresso real + empilhamento em 9:16), T6 VERTICAL TOTEM, T7 SYMMETRIC SPECTRUM, T8 MONOCHROME FOCUS; MIRAGE/AFTERIMAGE/VOID/SPECTRUM preservados como estilos; galeria com miniaturas esquemáticas e grupos — commit `feat: expand visual composition system to eight layouts`
   - QA visual dedicado dos 8 layouts nas 3 proporções fica para a Fase 7 (revisão de clipping/safe areas).
-- [ ] Fase 4 — Motion engine avançado + loop visual — commit `feat: add advanced audio-reactive motion engine`
+- [x] Fase 4 — Motion engine avançado + loop visual — perfis DREAM/PULSE/CINEMATIC/FRAGMENT/ORGANIC/INTENSE/MINIMAL, curvas por progresso, seed determinística, tempo do visual no relógio do áudio e fechamento de loop — commit `feat: add advanced audio-reactive motion engine`
 - [ ] Fase 5 — Recipes + Batch Creator + platform profiles — commit `feat: add creative content recipes and batch exports`
 - [ ] Fase 6 — Persistência local + Retention Lab — commit `feat: add local project persistence and retention lab`
 - [ ] Fase 7 — Performance, QA visual e export — commit `perf: optimize rendering and export pipeline`
