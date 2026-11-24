@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Stage } from '../features/visualizer/Stage'
 import { useRecordingFlow } from '../features/recording/useRecordingFlow'
+import { useBatchExport } from '../features/batch/useBatchExport'
 import { useProjectStore } from '../features/project/project.store'
 import { APP_NAME } from '../features/project/project.defaults'
 import { SourcePanel } from '../components/editor/SourcePanel'
@@ -11,11 +12,14 @@ import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/Visua
 import { FormatPanel } from '../components/editor/FormatPanel'
 import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
+import { RecipePanel } from '../components/editor/RecipePanel'
+import { BatchPanel } from '../components/editor/BatchPanel'
 import styles from './app.module.css'
 
 export function EditorLayout(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { startRecording, cancelRecording, recording } = useRecordingFlow(canvasRef)
+  const { startBatch, cancelBatch } = useBatchExport(canvasRef)
   const audioMeta = useProjectStore((s) => s.audioMeta)
   const audioLoading = useProjectStore((s) => s.audioStatus === 'loading')
 
@@ -51,6 +55,7 @@ export function EditorLayout(): JSX.Element {
         <aside className={styles.panelCol} aria-label="Painéis do editor">
           <fieldset className={styles.panelFieldset} disabled={recording}>
             <SourcePanel />
+            <RecipePanel />
             <TemplateGallery />
             <StoryboardPanel />
             <PalettePanel />
@@ -60,6 +65,7 @@ export function EditorLayout(): JSX.Element {
             <FormatPanel />
           </fieldset>
           <RecordPanel onStart={startRecording} onCancel={cancelRecording} />
+          <BatchPanel onStart={startBatch} onCancel={cancelBatch} />
         </aside>
       </main>
     </div>

@@ -63,7 +63,8 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
 - [x] Fase 3 — 8 layouts distintos + galeria: T1 CENTERED HERO, T2 STEREO FRAME, T3 OFFSET CINEMA, T4 EDITORIAL COVER, T5 ALBUM PLAYER SPLIT (progresso real + empilhamento em 9:16), T6 VERTICAL TOTEM, T7 SYMMETRIC SPECTRUM, T8 MONOCHROME FOCUS; MIRAGE/AFTERIMAGE/VOID/SPECTRUM preservados como estilos; galeria com miniaturas esquemáticas e grupos — commit `feat: expand visual composition system to eight layouts`
   - QA visual dedicado dos 8 layouts nas 3 proporções fica para a Fase 7 (revisão de clipping/safe areas).
 - [x] Fase 4 — Motion engine avançado + loop visual — perfis DREAM/PULSE/CINEMATIC/FRAGMENT/ORGANIC/INTENSE/MINIMAL, curvas por progresso, seed determinística, tempo do visual no relógio do áudio e fechamento de loop — commit `feat: add advanced audio-reactive motion engine`
-- [ ] Fase 5 — Recipes + Batch Creator + platform profiles — commit `feat: add creative content recipes and batch exports`
+- [x] Fase 5 — Recipes + Batch Creator + platform profiles — recipes ATMOSFERA/PROCESSO/COMUNIDADE, perfis TikTok/Reels/Shorts aplicados ao formato e CTA, fila de 3–5 peças gravada em sequência com download por job — commit `feat: add creative content recipes and batch exports`
+  - O lote baixa um arquivo por vez (link por job); não há ZIP nem download automático em massa.
 - [ ] Fase 6 — Persistência local + Retention Lab — commit `feat: add local project persistence and retention lab`
 - [ ] Fase 7 — Performance, QA visual e export — commit `perf: optimize rendering and export pipeline`
 - [ ] Fase 8 — Regressão final + documentação — commit `test: add comprehensive visualizer regression coverage`

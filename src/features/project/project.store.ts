@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import { applyRecipeToConfig } from '../recipes/apply-recipe'
+import { RECIPES } from '../recipes/recipes'
+import type { RecipeId } from '../recipes/recipes'
+import { applyPlatformToConfig } from '../platform/platform.profiles'
 import { getClipEnd } from './project.types'
 import { DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
 import type { ClipAnalysis } from '../audio/offline-analysis'
@@ -29,6 +33,9 @@ interface ProjectState {
   coverPalette: CoverPalette | null
 
   /* ações — configuração */
+  setConfig: (config: ProjectConfig) => void
+  applyRecipe: (id: RecipeId) => void
+  setPlatform: (id: PlatformId) => void
   setTemplate: (id: TemplateId) => void
   setAspect: (aspect: AspectRatioId) => void
   setQuality: (quality: OutputQuality) => void
@@ -81,6 +88,18 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   audioError: null,
   coverMeta: null,
   coverPalette: null,
+
+  setConfig: (config) => set({ config: fitStoryboard(config) }),
+
+  applyRecipe: (id) =>
+    set((state) => ({
+      config: applyRecipeToConfig(state.config, RECIPES[id]),
+    })),
+
+  setPlatform: (id) =>
+    set((state) => ({
+      config: applyPlatformToConfig(state.config, id),
+    })),
 
   setTemplate: (id) =>
     set((state) => {

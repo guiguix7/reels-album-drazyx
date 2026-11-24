@@ -4,6 +4,7 @@ import type { StoryboardConfig } from '../storyboard/storyboard.types'
 import type { MotionProfileId } from '../visualizer/motion/motion.types'
 
 export type AspectRatioId = '9:16' | '1:1' | '16:9'
+export type PlatformId = 'custom' | 'tiktok' | 'reels' | 'shorts'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
 
@@ -91,6 +92,8 @@ export interface CoverMeta {
 }
 
 export interface ProjectConfig {
+  /** Perfil de plataforma aplicado ao export (configuração, sem integração externa). */
+  platform: PlatformId
   aspectRatio: AspectRatioId
   quality: OutputQuality
   fps: number

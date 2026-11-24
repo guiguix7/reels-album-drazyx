@@ -60,14 +60,19 @@ Pendências registradas: análise espectral extra (centroide/flatness) e
 sugestões automáticas de seção não foram adicionadas nesta fase; o storyboard
 automático continua usando envelope/onsets/pico reais do áudio.
 
-## Fase 5 — Recipes + Batch Creator
+## Fase 5 — Recipes + Batch Creator *(concluída)*
 
-- Recipes de atmosfera, processo e comunidade com presets completos.
-- Aplicar recipe → storyboard editável; sem duplicar vídeos com nomes diferentes.
-- Fila de batch 3–5 peças práticas (arquitetura para 20–30), status/progresso/
-  preview/download/erros por job e naming consistente.
-- Platform profiles TikTok, Reels, Shorts apenas como configuração.
+- [x] Recipes ATMOSFERA (30 s, MIRAGE/DREAM), PROCESSO (15 s, T4/CINEMATIC) e
+  COMUNIDADE (15 s, T5/PULSE) com hook, copy, layout e visual completos.
+- [x] Aplicar recipe gera storyboard editável (sem duplicar vídeos nem inventar arquivos).
+- [x] Fila de batch de 3–5 peças em rotação recipe × layout, com status, erro,
+  preview de metadados e download por job; configuração original restaurada ao fim.
+- [x] Platform profiles TikTok, Reels, Shorts como configuração (formato, fps, CTA, nota).
 - Commit: `feat: add creative content recipes and batch exports`.
+
+Pendências registradas: fila limitada a 5 peças (arquitetura suporta mais, UI não
+expõe 20–30), sem ZIP/download em massa e sem pausa entre jobs além do
+auto-stop do áudio.
 
 ## Fase 6 — Persistência local + Retention Lab
 
