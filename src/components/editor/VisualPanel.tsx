@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useProjectStore } from '../../features/project/project.store'
 import { VISUAL_LIMITS } from '../../features/project/project.defaults'
-import { Button, Panel, Segmented, Slider, TextInput, Toggle } from '../ui/ui'
-import type { GlitchLevel } from '../../features/project/project.types'
+import { extractPaletteFromUrl } from '../../features/palette/palette'
+import { Button, ColorField, Notice, Panel, Segmented, Slider, TextInput, Toggle } from '../ui/ui'
+import type { GlitchLevel, PaletteMode } from '../../features/project/project.types'
 import styles from './panels.module.css'
 
 function percent(value: number): string {
@@ -13,6 +15,88 @@ const GLITCH_OPTIONS: Array<{ value: GlitchLevel; label: string }> = [
   { value: 'low', label: 'Sutil' },
   { value: 'medium', label: 'Forte' },
 ]
+
+const PALETTE_MODES: Array<{ value: PaletteMode; label: string }> = [
+  { value: 'auto', label: 'Da capa' },
+  { value: 'manual', label: 'Manual' },
+]
+
+/** Paleta do vídeo: extraída da capa ou definida à mão. */
+export function PalettePanel(): JSX.Element {
+  const palette = useProjectStore((s) => s.config.palette)
+  const coverMeta = useProjectStore((s) => s.coverMeta)
+  const coverPalette = useProjectStore((s) => s.coverPalette)
+  const setPalette = useProjectStore((s) => s.setPalette)
+  const setPaletteMode = useProjectStore((s) => s.setPaletteMode)
+  const setCoverPalette = useProjectStore((s) => s.setCoverPalette)
+  const [extracting, setExtracting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const extractFromCover = async (): Promise<void> => {
+    if (!coverMeta) return
+    setExtracting(true)
+    setError(null)
+    try {
+      const extracted = await extractPaletteFromUrl(coverMeta.objectUrl)
+      setCoverPalette(extracted)
+    } catch {
+      setError('Não foi possível ler as cores desta capa.')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
+  const swatches: Array<{ label: string; color: string }> = [
+    { label: 'Acento', color: palette.accent },
+    { label: 'Secundária', color: palette.secondary },
+    { label: 'Brilho', color: palette.glow },
+  ]
+
+  return (
+    <Panel
+      title="Paleta"
+      hint="Cores do vídeo a partir da capa ou escolhidas à mão."
+      actions={
+        <Button onClick={() => void extractFromCover()} disabled={!coverMeta || extracting}>
+          {extracting ? 'Lendo...' : 'Extrair'}
+        </Button>
+      }
+    >
+      <div className={styles.inlineField}>
+        <span className={styles.rowLabel}>Modo</span>
+        <Segmented options={PALETTE_MODES} value={palette.mode} onChange={(mode) => setPaletteMode(mode)} />
+      </div>
+
+      <div className={styles.paletteSwatches}>
+        {swatches.map((swatch) => (
+          <div key={swatch.label} className={styles.swatch}>
+            <span className={styles.swatchChip} style={{ background: swatch.color }} />
+            <span className={styles.swatchLabel}>{swatch.label}</span>
+            <span className={styles.swatchValue}>{swatch.color.toUpperCase()}</span>
+          </div>
+        ))}
+      </div>
+
+      {palette.mode === 'manual' ? (
+        <>
+          <ColorField label="Acento" value={palette.accent} onChange={(accent) => setPalette({ accent })} />
+          <ColorField label="Secundária" value={palette.secondary} onChange={(secondary) => setPalette({ secondary })} />
+          <ColorField label="Brilho" value={palette.glow} onChange={(glow) => setPalette({ glow })} />
+        </>
+      ) : (
+        <p className={styles.panelNote}>
+          {coverMeta
+            ? coverPalette
+              ? 'Cores extraídas da capa. Toque em Extrair para recalcular.'
+              : 'Ainda sem cores da capa — usando a paleta padrão.'
+            : 'Sem capa: paleta Drazyx padrão.'}
+        </p>
+      )}
+
+      {error ? <Notice tone="error">{error}</Notice> : null}
+    </Panel>
+  )
+}
 
 export function VisualPanel(): JSX.Element {
   const visual = useProjectStore((s) => s.config.visual)

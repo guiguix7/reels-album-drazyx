@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAudioEngineMeta } from '../../features/audio/useAudioEngine'
 import { useProjectStore } from '../../features/project/project.store'
+import { useRecorderStore } from '../../features/recording/recording.store'
 import { formatTime } from '../../lib/format-time'
 import styles from './panels.module.css'
 
@@ -11,6 +12,9 @@ export function Transport(): JSX.Element {
   const scrubRef = useRef(0)
   const config = useProjectStore((s) => s.config)
   const audioStatus = useProjectStore((s) => s.audioStatus)
+  const recorderStatus = useRecorderStore((s) => s.status)
+  // Transporte travado durante REC evita pausar o áudio e deixar a gravação sem fim.
+  const locked = recorderStatus === 'preparing' || recorderStatus === 'recording' || recorderStatus === 'processing'
 
   useEffect(() => {
     // Relógio da UI lido do elemento de áudio: continua correto mesmo em aba oculta,
@@ -26,6 +30,7 @@ export function Transport(): JSX.Element {
   const shownTime = scrubbing ? scrubRef.current : displayTime
 
   const toggle = async (): Promise<void> => {
+    if (locked) return
     if (playing) {
       engine.pause()
       return
@@ -59,7 +64,7 @@ export function Transport(): JSX.Element {
         type="button"
         className={`${styles.playButton} ${playing ? styles.playing : ''}`}
         onClick={() => void toggle()}
-        disabled={!canPlay}
+        disabled={!canPlay || locked}
         aria-label={playing ? 'Pausar' : 'Reproduzir'}
       >
         {playing ? (
@@ -85,7 +90,7 @@ export function Transport(): JSX.Element {
         onChange={(e) => onScrubChange(Number(e.target.value))}
         onMouseUp={onScrubEnd}
         onTouchEnd={onScrubEnd}
-        disabled={!canPlay}
+        disabled={!canPlay || locked}
         aria-label="Posição da faixa"
       />
 

@@ -88,6 +88,30 @@ export function TextInput({
   )
 }
 
+export function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}): JSX.Element {
+  return (
+    <label className={styles.colorRow}>
+      <span className={styles.rowLabel}>{label}</span>
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={styles.colorInput}
+        aria-label={label}
+      />
+      <span className={styles.colorValue}>{value.toUpperCase()}</span>
+    </label>
+  )
+}
+
 export function Toggle({
   label,
   checked,

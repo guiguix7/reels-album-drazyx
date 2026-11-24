@@ -5,7 +5,9 @@ import { FFTBars } from '../objects/bars'
 import { WaveformLine as WaveLine } from '../objects/waveform-line'
 import { CoverCard } from '../objects/cover-card'
 import { TextLayer } from '../objects/text-layer'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { darken, mixHex } from '../../palette/palette'
 
 /**
  * SPECTRUM — composição musical: espectro elegante na base, waveform fina
@@ -50,11 +52,28 @@ export const SpectrumTemplate: VisualTemplate = {
     let viewW = ctx.viewWidth
     let viewH = ctx.viewHeight
     let lastTexture: THREE.Texture | null = null
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      bars.setColors(colors.accent, colors.glow)
+      barsGhost.setColors(darken(colors.secondary, 0.35), darken(colors.accent, 0.55))
+      wave.setColor(colors.glow)
+      cover.setAccent(colors.accent, mixHex(colors.accent, colors.secondary, 0.5))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
@@ -68,12 +87,12 @@ export const SpectrumTemplate: VisualTemplate = {
         const barWidth = safe.width * 0.9
         const barBaseY = safe.bottomY + 0.1
         const barPeakY = barBaseY + 1.4
-        bars.updateRow(safe.leftX, barBaseY, barWidth, frame.bars, { maxHeight: 1.0 + bass * 0.35, minHeight: 0.04 })
+        bars.updateRow(safe.leftX, barBaseY, barWidth, frame.bars, { maxHeight: 1.0 + bass * 0.35 + frame.beatPulse * 0.22, minHeight: 0.04 })
         bars.setOpacity(0.45 + frame.energy * 0.35)
         barsGhost.updateRow(safe.leftX, barBaseY + 0.1, barWidth, frame.bars, { maxHeight: 1.75, minHeight: 0.02, fromEnd: true })
         barsGhost.setOpacity(0.18)
 
-        wave.update(frame.waveform, safe.leftX, barBaseY + 0.9, safe.width * 0.9, 0.4, 0.5 + frame.treble * 0.4)
+        wave.update(frame.waveform, safe.leftX, barBaseY + 0.9, safe.width * 0.9, 0.4 + frame.beatPulse * 0.08, 0.5 + frame.treble * 0.4)
 
         // Capa menor no alto
         const coverSize = viewW * 0.44
@@ -81,7 +100,7 @@ export const SpectrumTemplate: VisualTemplate = {
         cover.setGlowIntensity(0.3 + visual.glow * 0.4 + bass * 0.25)
         cover.group.position.set(0, safe.topY - coverSize / 2 - 0.7, 0)
         cover.group.rotation.y = Math.sin(time * 0.2) * 0.06
-        cover.group.scale.setScalar(1 + bass * 0.03)
+        cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
 
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.84, {})
         trackTitle.setOpacity(type.showTrack ? 0.95 : 0)
@@ -99,7 +118,7 @@ export const SpectrumTemplate: VisualTemplate = {
         album.mesh.position.set(safe.leftX, blockTop - titleH - gap - artistH - 0.22, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, blockTop + 0.6, 0)
 

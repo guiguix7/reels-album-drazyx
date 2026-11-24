@@ -8,6 +8,7 @@ import {
   spectralFlux,
   TransientDetector,
 } from './audio.utils'
+import { detectRhythmFromBuffer } from './rhythm'
 import type { AudioEngineMeta, AudioFrame } from './audio.types'
 import { BAR_COUNT } from './audio.types'
 
@@ -45,6 +46,9 @@ export class AudioEngine {
     treble: 0,
     energy: 0,
     transient: 0,
+    bpm: 0,
+    beatPhase: 0,
+    beatPulse: 0,
     frequency: null,
     waveform: null,
     bars: this.barSmoothed,
@@ -54,6 +58,7 @@ export class AudioEngine {
   private lastAnalysisTime = performance.now() / 1000
   private objectUrl: string | null = null
   private rafHandle: number | null = null
+  private clipTimer: number | null = null
   private armedEnd: number | null = null
   private clipEndFired = false
   private listeners = new Set<() => void>()
@@ -61,6 +66,7 @@ export class AudioEngine {
     status: 'idle',
     fileName: null,
     duration: 0,
+    bpm: 0,
     error: null,
     monitorVolume: 0.8,
     playing: false,
@@ -76,13 +82,18 @@ export class AudioEngine {
       this.frame.duration = duration
     })
     this.audio.addEventListener('play', () => this.patchMeta({ playing: true, status: 'playing' }))
-    this.audio.addEventListener('pause', () => this.patchMeta({ playing: false, status: this.meta.status === 'error' ? 'error' : 'paused' }))
+    this.audio.addEventListener('pause', () => {
+      // Eventos de pause também chegam ao trocar/limpar o src; não podem sobrescrever
+      // os estados loading/idle/error da troca de arquivo.
+      const keep = !this.meta.fileName || this.meta.status === 'loading' || this.meta.status === 'error'
+      this.patchMeta({ playing: false, status: keep ? this.meta.status : 'paused' })
+    })
     this.audio.addEventListener('error', () => this.onElementError())
     // Auto-stop do trecho não pode depender de requestAnimationFrame: o navegador
     // pausa rAF em abas ocultas e a gravação nunca terminaria. timeupdate + timer
     // leem o relógio do próprio áudio (fonte de verdade) e disparam o fim.
     this.audio.addEventListener('timeupdate', () => this.checkClipEnd())
-    window.setInterval(() => this.checkClipEnd(), 250)
+    this.clipTimer = window.setInterval(() => this.checkClipEnd(), 250)
     this.startLoop()
   }
 
@@ -180,7 +191,14 @@ export class AudioEngine {
       return false
     }
     this.ensureContext()
-    this.patchMeta({ status: 'loading', error: null, fileName: file.name })
+    this.rhythmToken++
+    // Troca de arquivo: para o trecho armado e zera a análise antes do novo decode.
+    this.audio.pause()
+    this.armedEnd = null
+    this.clipEndCallback = null
+    this.clipEndFired = false
+    this.resetAnalysis()
+    this.patchMeta({ status: 'loading', error: null, fileName: file.name, duration: 0, bpm: 0, playing: false })
     const oldUrl = this.objectUrl
     this.objectUrl = URL.createObjectURL(file)
     this.audio.src = this.objectUrl
@@ -194,14 +212,60 @@ export class AudioEngine {
       this.patchMeta({ status: 'ready', duration: this.audio.duration })
       this.frame.duration = this.audio.duration
       this.frame.time = 0
+      // Ritmo é assíncrono e opcional: não bloqueia o play nem a gravação.
+      void this.detectRhythm()
       return true
     } catch {
+      // Arquivo inválido não pode deixar um src quebrado nem metadados antigos na UI.
+      this.clear()
       this.patchMeta({
         status: 'error',
         error: 'O navegador não conseguiu decodificar este áudio. Tente MP3, WAV ou OGG.',
       })
       return false
     }
+  }
+
+  /** Remove o áudio atual (playback, src, object URL e análise) mantendo o grafo de áudio. */
+  clear(): void {
+    this.rhythmToken++
+    this.armedEnd = null
+    this.clipEndCallback = null
+    this.clipEndFired = false
+    this.audio.pause()
+    this.audio.removeAttribute('src')
+    this.audio.load()
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl)
+      this.objectUrl = null
+    }
+    this.resetAnalysis()
+    this.patchMeta({
+      status: 'idle',
+      fileName: null,
+      duration: 0,
+      bpm: 0,
+      error: null,
+      playing: false,
+    })
+  }
+
+  private resetAnalysis(): void {
+    this.frame.time = 0
+    this.frame.duration = 0
+    this.frame.playing = false
+    this.frame.bass = 0
+    this.frame.mid = 0
+    this.frame.treble = 0
+    this.frame.energy = 0
+    this.frame.transient = 0
+    this.frame.bpm = 0
+    this.frame.beatPhase = 0
+    this.frame.beatPulse = 0
+    this.barSmoothed.fill(0)
+    this.barPeaks.fill(0)
+    this.previousFrequency?.fill(0)
+    this.transientDetector = new TransientDetector()
   }
 
   private waitForMetadata(): Promise<void> {
@@ -229,6 +293,30 @@ export class AudioEngine {
     })
   }
 
+  /**
+   * Decodifica o arquivo local e estima o BPM (primeiros 45 s).
+   * Roda depois do ready; falhas só deixam o visual sem pulso de batida.
+   */
+  private async detectRhythm(): Promise<void> {
+    const ctx = this.ctx
+    const url = this.objectUrl
+    if (!ctx || !url) return
+    const token = ++this.rhythmToken
+    try {
+      const response = await fetch(url)
+      const data = await response.arrayBuffer()
+      const buffer = await ctx.decodeAudioData(data)
+      if (token !== this.rhythmToken) return
+      const result = detectRhythmFromBuffer(buffer)
+      if (result.bpm > 0) {
+        this.frame.bpm = result.bpm
+        this.patchMeta({ bpm: result.bpm })
+      }
+    } catch {
+      // BPM é um refinamento: o visual continua reagindo por bandas/transientes.
+    }
+  }
+
   private onElementError(): void {
     // Ignora erros de src vazio ao limpar assets.
     if (!this.meta.fileName) return
@@ -238,15 +326,19 @@ export class AudioEngine {
   /* ---------- transporte ---------- */
 
   async play(): Promise<void> {
-    this.ensureContext()
     try {
+      // Resume o AudioContext no mesmo gesto do play; sem isso o elemento toca mudo.
+      await this.ensureRunning()
       await this.audio.play()
     } catch (error) {
       const name = (error as { name?: string } | undefined)?.name
       if (name === 'NotAllowedError') {
         this.patchMeta({ status: 'paused', error: 'Reprodução bloqueada pelo navegador. Clique em play novamente.' })
       } else {
-        this.patchMeta({ status: 'error', error: 'Não foi possível reproduzir o áudio.' })
+        this.patchMeta({
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Não foi possível reproduzir o áudio.',
+        })
       }
     }
   }
@@ -297,6 +389,7 @@ export class AudioEngine {
   }
 
   private clipEndCallback: (() => void) | null = null
+  private rhythmToken = 0
 
   isReady(): boolean {
     return this.meta.status === 'ready' || this.meta.status === 'playing' || this.meta.status === 'paused'
@@ -337,6 +430,9 @@ export class AudioEngine {
       this.frame.treble = envelope(this.frame.treble, 0, 0.05, 0.25, dt)
       this.frame.energy = envelope(this.frame.energy, 0, 0.05, 0.3, dt)
       this.frame.transient = Math.max(0, this.frame.transient - dt * 3)
+      this.frame.bpm = 0
+      this.frame.beatPhase = 0
+      this.frame.beatPulse = 0
       for (let i = 0; i < BAR_COUNT; i++) this.barSmoothed[i] = envelope(this.barSmoothed[i], 0, 0.05, 0.2, dt)
       return
     }
@@ -361,6 +457,9 @@ export class AudioEngine {
     const rms = Math.sqrt(rmsSum / (this.waveform.length / 2))
     this.frame.energy = envelope(this.frame.energy, Math.min(1, rms * 1.6), 0.08, 0.35, dt)
 
+    // Pulso de batida derivado do BPM (fonte de verdade = tempo do áudio).
+    this.updateBeat(time)
+
     const flux = spectralFlux(this.frequency, this.previousFrequency, binForFrequency(4000, sampleRate, FFT_SIZE))
     if (this.transientDetector.maybeFire(flux, now)) this.frame.transient = 1
     else this.frame.transient = Math.max(0, this.frame.transient - dt * 9)
@@ -376,11 +475,29 @@ export class AudioEngine {
     }
   }
 
+  /** Fase e envelope do pulso de batida, sincronizados ao relógio da faixa. */
+  private updateBeat(time: number): void {
+    const bpm = this.frame.bpm
+    if (bpm <= 0) {
+      this.frame.beatPhase = 0
+      this.frame.beatPulse = 0
+      return
+    }
+    const beats = time * (bpm / 60)
+    const phase = beats - Math.floor(beats)
+    this.frame.beatPhase = phase
+    // Ataque em 1 e queda acentuada: sensação de tempo sem "piscar" a cada quadro.
+    this.frame.beatPulse = this.frame.playing ? Math.pow(1 - phase, 5) * (0.55 + this.frame.energy * 0.45) : 0
+  }
+
   /* ---------- limpeza ---------- */
 
   destroy(): void {
+    this.rhythmToken++
     if (this.rafHandle != null) cancelAnimationFrame(this.rafHandle)
     this.rafHandle = null
+    if (this.clipTimer != null) window.clearInterval(this.clipTimer)
+    this.clipTimer = null
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
@@ -388,6 +505,14 @@ export class AudioEngine {
       URL.revokeObjectURL(this.objectUrl)
       this.objectUrl = null
     }
+    this.sourceNode?.disconnect()
+    this.analyser?.disconnect()
+    this.monitorGain?.disconnect()
+    this.recDest?.disconnect()
+    this.sourceNode = null
+    this.analyser = null
+    this.monitorGain = null
+    this.recDest = null
     void this.ctx?.close()
     this.ctx = null
     this.listeners.clear()

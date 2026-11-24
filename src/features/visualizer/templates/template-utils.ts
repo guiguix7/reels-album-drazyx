@@ -1,4 +1,32 @@
+import { mixHex } from '../../palette/palette'
+import type { PaletteSettings } from '../../project/project.types'
+
 /** Utilidades de movimento para templates (easings e fades por progresso do trecho). */
+
+/** Cores derivadas da paleta para o fundo e os elementos do Stage. */
+export interface PaletteColors {
+  key: string
+  accent: string
+  secondary: string
+  glow: string
+  /** Topo do gradiente de fundo (secundária escurecida). */
+  top: string
+  bottom: string
+  /** Cor do glow radial do fundo. */
+  backgroundGlow: string
+}
+
+export function derivePalette(palette: PaletteSettings): PaletteColors {
+  return {
+    key: `${palette.accent}|${palette.secondary}|${palette.glow}`,
+    accent: palette.accent,
+    secondary: palette.secondary,
+    glow: palette.glow,
+    top: mixHex(palette.secondary, '#070810', 0.62),
+    bottom: '#070810',
+    backgroundGlow: mixHex(palette.accent, '#070810', 0.32),
+  }
+}
 
 export function fadeIn(progress: number, start: number, end: number): number {
   if (progress <= start) return 0

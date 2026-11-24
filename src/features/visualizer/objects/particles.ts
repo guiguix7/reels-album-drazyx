@@ -78,6 +78,11 @@ export class ParticleField {
     this.points.visible = opacity > 0.01
   }
 
+  /** Cor das partículas (paleta da capa). */
+  setColor(color: string): void {
+    this.material.color.set(color)
+  }
+
   dispose(): void {
     this.geometry.dispose()
     this.material.dispose()

@@ -47,6 +47,11 @@ export class WaveformLine {
     this.geometry.computeBoundingSphere()
   }
 
+  /** Cor da linha (paleta da capa). */
+  setColor(color: string): void {
+    this.material.color.set(color)
+  }
+
   dispose(): void {
     this.geometry.dispose()
     this.material.dispose()

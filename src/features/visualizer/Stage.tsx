@@ -20,6 +20,8 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   const clipDuration = useProjectStore((s) => s.config.clipDuration)
   const visual = useProjectStore((s) => s.config.visual)
   const type = useProjectStore((s) => s.config.type)
+  const palette = useProjectStore((s) => s.config.palette)
+  const storyboard = useProjectStore((s) => s.config.storyboard)
   const coverUrl = useProjectStore((s) => s.coverMeta?.objectUrl ?? null)
 
   // Criação única do engine
@@ -29,7 +31,8 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     const store = useProjectStore.getState()
     const engine = new VisualEngine(canvas, store.config.visual, store.config.type)
     engineRef.current = engine
-    engine.setTemplate(store.config.templateId)
+    engine.setPalette(store.config.palette)
+    engine.setStoryboard(store.config.storyboard, store.config.templateId)
     engine.start()
     if (import.meta.env.DEV) {
       ;(window as unknown as Record<string, unknown>).__drazyxEngine = engine
@@ -46,10 +49,17 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Troca de template
+  // Troca de template (ignorada enquanto o storyboard controla as cenas)
   useEffect(() => {
-    engineRef.current?.setTemplate(templateId)
+    if (!useProjectStore.getState().config.storyboard.enabled) {
+      engineRef.current?.setTemplate(templateId)
+    }
   }, [templateId])
+
+  // Storyboard: sequência de cenas + template de fallback
+  useEffect(() => {
+    engineRef.current?.setStoryboard(storyboard, templateId)
+  }, [storyboard, templateId])
 
   // Resolução / proporção
   useEffect(() => {
@@ -68,6 +78,11 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   useEffect(() => {
     engineRef.current?.setConfig(visual, type)
   }, [visual, type])
+
+  // Paleta automática da capa / manual do usuário
+  useEffect(() => {
+    engineRef.current?.setPalette(palette)
+  }, [palette])
 
   // Capa
   useEffect(() => {

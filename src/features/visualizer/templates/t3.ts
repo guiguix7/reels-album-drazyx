@@ -5,17 +5,20 @@ import { FFTBars } from '../objects/bars'
 import { CoverCard } from '../objects/cover-card'
 import { TextLayer } from '../objects/text-layer'
 import { radialGlowTexture } from '../objects/textures'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { mixHex } from '../../palette/palette'
 
 /**
- * TEMPLATE 03 — wireframe favorito do usuário: badge circular + título no
- * topo-esquerda, capa grande à direita e waveform na base. Estética de
- * player-card sobre fundo escuro com a capa ampliada bem sutil.
+ * LAYOUT 03 — OFFSET CINEMA
+ * Composição editorial assimétrica: badge + título no topo-esquerda, capa
+ * grande à direita e espectro na base. A capa ampliada ao fundo cria
+ * profundidade sem competir com o texto.
  */
 export const Template03: VisualTemplate = {
   id: 't3',
-  name: 'TEMPLATE 03',
-  description: 'Badge + título no topo, capa grande à direita, waveform na base.',
+  name: '03 — OFFSET CINEMA',
+  description: 'Badge + título à esquerda, capa grande à direita, espectro na base.',
   build(ctx: StageContext): TemplateInstance {
     const disposables: Array<{ dispose(): void }> = []
     const track = <T extends { dispose(): void }>(item: T): T => {
@@ -72,11 +75,28 @@ export const Template03: VisualTemplate = {
     let viewW = ctx.viewWidth
     let viewH = ctx.viewHeight
     let lastTexture: THREE.Texture | null = null
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      badgeMaterial.color.set(colors.accent)
+      badgeGlowMaterial.color.set(colors.accent)
+      bars.setColors(colors.accent, mixHex(colors.accent, '#f2edf5', 0.6))
+      cover.setAccent(colors.accent, mixHex(colors.accent, colors.secondary, 0.5))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
@@ -92,14 +112,14 @@ export const Template03: VisualTemplate = {
         const bgPulse = 1 + bass * 0.04
         bgCover.scale.set(9.5 * bgPulse, 9.5 * bgPulse, 1)
         // Capa fantasma só como textura de fundo: baixa o bastante para não competir com o texto.
-        bgCoverMaterial.opacity = 0.035 + frame.energy * 0.035
+        bgCoverMaterial.opacity = 0.035 + frame.energy * 0.035 + frame.beatPulse * 0.03
         dimmer.scale.set(10, 11, 1)
 
         // Badge pulsando com o áudio
-        const badgePulse = 1 + bass * 0.25
+        const badgePulse = 1 + bass * 0.22 + frame.beatPulse * 0.1
         badge.scale.setScalar(badgePulse)
         badgeGlow.scale.setScalar((0.9 + bass * 0.5) * (1 + frame.transient * 0.3))
-        badgeGlowMaterial.opacity = 0.35 + bass * 0.4 + frame.transient * 0.2
+        badgeGlowMaterial.opacity = 0.35 + bass * 0.4 + frame.transient * 0.2 + frame.beatPulse * 0.12
 
         // Texto topo-esquerda ao lado do badge
         const badgeX = safe.leftX + 0.12
@@ -129,11 +149,11 @@ export const Template03: VisualTemplate = {
         // Waveform na base (barras brancas/acento)
         const barWidth = safe.width * 0.88
         const barBaseY = safe.bottomY + 0.5
-        bars.updateRow(safe.leftX, barBaseY, barWidth, frame.bars, { maxHeight: 0.95 + bass * 0.4, minHeight: 0.05 })
+        bars.updateRow(safe.leftX, barBaseY, barWidth, frame.bars, { maxHeight: 0.95 + bass * 0.4 + frame.beatPulse * 0.2, minHeight: 0.05 })
         bars.setOpacity(0.75 + frame.energy * 0.25)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, barBaseY - 0.42, 0)
 

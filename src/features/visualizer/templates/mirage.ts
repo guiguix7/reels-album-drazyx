@@ -6,7 +6,9 @@ import { CoverCard } from '../objects/cover-card'
 import { SpectrumRing } from '../objects/bars'
 import { TextLayer } from '../objects/text-layer'
 import { radialGlowTexture } from '../objects/textures'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { mixHex } from '../../palette/palette'
 
 /**
  * MIRAGE — preset principal. Storyboard de 30s: tagline → capa suspensa →
@@ -75,11 +77,33 @@ export const MirageTemplate: VisualTemplate = {
     layout()
 
     let lastTexture: THREE.Texture | null = null
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    /** Reaplica cores somente quando a paleta muda (sem trabalho por frame). */
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      glows.forEach((sprite, index) => {
+        const material = sprite.material as THREE.SpriteMaterial
+        material.color.set(index === 1 ? colors.secondary : colors.accent)
+      })
+      particles.setColor(colors.glow)
+      ring.setColor(colors.accent)
+      ringOuter.setColor(colors.secondary)
+      cover.setAccent(colors.accent, mixHex(colors.accent, colors.secondary, 0.5))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, clip, time, dt } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         // troca de textura da capa
         if (ctx.assets.coverTexture !== lastTexture) {
@@ -97,7 +121,7 @@ export const MirageTemplate: VisualTemplate = {
           sprite.position.x = Math.sin(t) * viewW * 0.3
           sprite.position.y = Math.cos(t * 0.8) * 2.4 + (i - 1) * 1.6
           const material = sprite.material as THREE.SpriteMaterial
-          material.opacity = (0.16 + frame.mid * 0.22 + frame.treble * 0.1) * intensity * (1 - i * 0.2)
+          material.opacity = (0.16 + frame.mid * 0.22 + frame.treble * 0.1 + frame.beatPulse * 0.12) * intensity * (1 - i * 0.2)
         })
 
         particles.update(dt, bass, 0.4 + visual.cameraSpeed)
@@ -111,12 +135,12 @@ export const MirageTemplate: VisualTemplate = {
         cover.group.position.z = 0
         cover.group.rotation.y = Math.sin(time * 0.22) * 0.055 + frame.mid * 0.05
         cover.group.rotation.x = Math.cos(time * 0.17) * 0.02
-        const coverPulse = 1 + bass * 0.035
+        const coverPulse = 1 + bass * 0.035 + frame.beatPulse * 0.012
         cover.group.scale.setScalar(coverPulse)
 
-        // Anéis espectrais reativos
-        ring.update(2.35 + bass * 0.45, frame.bars, 0.85, 0.05, time * 0.12, (0.35 + frame.treble * 0.5) * intensity)
-        ringOuter.update(3.15 + bass * 0.7, frame.bars, 0.55, 0.035, -time * 0.07, (0.2 + frame.mid * 0.4) * intensity * 0.7)
+        // Anéis espectrais reativos (graves + batida detectada)
+        ring.update(2.35 + bass * 0.45 + frame.beatPulse * 0.14, frame.bars, 0.85, 0.05, time * 0.12, (0.35 + frame.treble * 0.5) * intensity)
+        ringOuter.update(3.15 + bass * 0.7 + frame.beatPulse * 0.1, frame.bars, 0.55, 0.035, -time * 0.07, (0.2 + frame.mid * 0.4) * intensity * 0.7)
 
         // Tipografia por fase do trecho
         const p = clip.progress
@@ -145,7 +169,7 @@ export const MirageTemplate: VisualTemplate = {
         }
 
         const ctaOpacity = type.showCta ? (p > 0.82 ? (p - 0.82) / 0.08 : 0) : 0
-        cta.set([type.ctaText], viewW * 0.8, {})
+        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, safe.bottomY - 0.45, 0)
 

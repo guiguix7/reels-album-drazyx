@@ -48,10 +48,180 @@
 
 /* ---------- galeria de templates ---------- */
 
+.galleryLabel {
+  margin: 4px 0 0;
+  font: 600 9.5px/1 var(--font-ui);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+/* Miniaturas esquemáticas: cada layout tem uma silhueta reconhecível. */
+.thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 4px;
+  background: radial-gradient(circle at 50% 40%, #1d1530, #070810 72%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.thumbA,
+.thumbB {
+  position: absolute;
+  display: block;
+}
+
+.thumb[data-kind='t1'] .thumbA {
+  inset: 22% 32%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.14);
+}
+.thumb[data-kind='t1'] .thumbB {
+  left: 22%; right: 22%; bottom: 16%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.thumb[data-kind='t2'] .thumbA {
+  inset: 24% 38%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.12);
+}
+.thumb[data-kind='t2'] .thumbB {
+  top: 42%; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent 32%, transparent 68%, var(--accent));
+}
+
+.thumb[data-kind='t3'] .thumbA {
+  top: 20%; bottom: 20%; right: 12%;
+  width: 42%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.12);
+}
+.thumb[data-kind='t3'] .thumbB {
+  top: 26%; left: 10%;
+  width: 30%;
+  height: 3px;
+  background: var(--text-dim);
+  box-shadow: 0 8px 0 -1px var(--accent), 0 16px 0 -1px var(--surface-line-strong);
+}
+
+.thumb[data-kind='t4'] .thumbA {
+  top: 14%; bottom: 14%; right: 6%;
+  width: 46%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.1);
+}
+.thumb[data-kind='t4'] .thumbB {
+  top: 22%; bottom: 22%; left: 10%;
+  width: 2px;
+  background: linear-gradient(180deg, var(--accent), transparent);
+}
+
+.thumb[data-kind='t5'] .thumbA {
+  top: 20%; bottom: 20%; left: 10%;
+  width: 32%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.16);
+}
+.thumb[data-kind='t5'] .thumbB {
+  top: 20%; bottom: 20%; right: 10%;
+  width: 40%;
+  border: 1px solid var(--surface-line-strong);
+  background: linear-gradient(180deg, rgba(242, 237, 245, 0.16) 0 3px, transparent 3px 100%), rgba(17, 16, 26, 0.9);
+}
+
+.thumb[data-kind='t6'] .thumbA {
+  top: 12%; bottom: 24%; left: 38%; right: 38%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.12);
+}
+.thumb[data-kind='t6'] .thumbB {
+  top: 16%; bottom: 28%; left: 12%; right: 12%;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 9%);
+  opacity: 0.5;
+}
+
+.thumb[data-kind='t7'] .thumbA {
+  inset: 26% 34%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.12);
+}
+.thumb[data-kind='t7'] .thumbB {
+  top: 34%; bottom: 34%; left: 6%; right: 6%;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 12%);
+  opacity: 0.55;
+  mask-image: linear-gradient(90deg, #000 0 22%, transparent 22% 78%, #000 78% 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0 22%, transparent 22% 78%, #000 78% 100%);
+}
+
+.thumb[data-kind='t8'] .thumbA {
+  inset: 24% 34%;
+  border: 1px solid #cfc9d4;
+  background: rgba(207, 201, 212, 0.12);
+  filter: grayscale(1);
+}
+.thumb[data-kind='t8'] .thumbB {
+  left: 26%; right: 26%; bottom: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #cfc9d4, transparent);
+}
+
+.thumb[data-kind='mirage'] .thumbA {
+  inset: 18%;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgba(184, 77, 255, 0.45) inset;
+}
+.thumb[data-kind='mirage'] .thumbB {
+  inset: 38%;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+}
+
+.thumb[data-kind='afterimage'] .thumbA {
+  inset: 30% 40%;
+  border: 1px solid var(--accent);
+  background: rgba(184, 77, 255, 0.14);
+}
+.thumb[data-kind='afterimage'] .thumbB {
+  inset: 36% 30%;
+  border: 1px solid var(--surface-line-strong);
+  opacity: 0.6;
+}
+
+.thumb[data-kind='void'] .thumbA {
+  inset: 42%;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 16px var(--accent);
+}
+.thumb[data-kind='void'] .thumbB {
+  left: 20%; right: 20%; top: 50%;
+  height: 1px;
+  background: var(--surface-line-strong);
+}
+
+.thumb[data-kind='spectrum'] .thumbA {
+  inset: 22%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent), transparent 55%, var(--accent));
+  opacity: 0.55;
+}
+.thumb[data-kind='spectrum'] .thumbB {
+  inset: 38%;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
 }
 
 .templateCard {
@@ -154,6 +324,47 @@
 .inlineField > :last-child {
   flex: 1;
   min-width: 0;
+}
+
+/* ---------- paleta ---------- */
+
+.paletteSwatches {
+  display: flex;
+  gap: 8px;
+}
+
+.swatch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  padding: 7px;
+}
+
+.swatchChip {
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.swatchLabel {
+  font: 500 9.5px/1 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.swatchValue {
+  font: 500 10px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .toggleGrid {
@@ -282,4 +493,149 @@
 
 .downloadLink {
   text-decoration: none;
+}
+
+/* ---------- storyboard ---------- */
+
+.sbToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sbHook {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-line);
+}
+
+.sbField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.sbSelect {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--surface-line-strong);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.sbTimeline {
+  position: relative;
+  display: flex;
+  height: 16px;
+  margin: 8px 0 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-line);
+}
+
+.sbSegment {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+}
+
+.sbSegHook {
+  background: var(--accent);
+}
+
+.sbSegReveal {
+  background: #7c5cff;
+}
+
+.sbSegDevelopment {
+  background: #3b3350;
+}
+
+.sbSegPeak {
+  background: var(--accent-strong);
+}
+
+.sbSegPayoff {
+  background: #2c2638;
+}
+
+.sbPlayhead {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  width: 2px;
+  background: var(--text);
+  box-shadow: 0 0 8px var(--accent);
+  pointer-events: none;
+}
+
+.sbSceneList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sbScene {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--surface-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.014);
+}
+
+.sbSceneHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sbSceneRole {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.sbSceneActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbSceneTime {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.sbSceneGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sbActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sbNote {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
 }

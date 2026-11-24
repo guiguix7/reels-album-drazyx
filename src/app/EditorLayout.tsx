@@ -5,8 +5,9 @@ import { useProjectStore } from '../features/project/project.store'
 import { APP_NAME } from '../features/project/project.defaults'
 import { SourcePanel } from '../components/editor/SourcePanel'
 import { TemplateGallery } from '../components/editor/TemplateGallery'
+import { StoryboardPanel } from '../components/editor/StoryboardPanel'
 import { ClipPanel } from '../components/editor/ClipPanel'
-import { VisualPanel, TextPanel } from '../components/editor/VisualPanel'
+import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/VisualPanel'
 import { FormatPanel } from '../components/editor/FormatPanel'
 import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
@@ -14,7 +15,7 @@ import styles from './app.module.css'
 
 export function EditorLayout(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const { startRecording, cancelRecording } = useRecordingFlow(canvasRef)
+  const { startRecording, cancelRecording, recording } = useRecordingFlow(canvasRef)
   const audioMeta = useProjectStore((s) => s.audioMeta)
   const audioLoading = useProjectStore((s) => s.audioStatus === 'loading')
 
@@ -48,12 +49,16 @@ export function EditorLayout(): JSX.Element {
         </section>
 
         <aside className={styles.panelCol} aria-label="Painéis do editor">
-          <SourcePanel />
-          <TemplateGallery />
-          <ClipPanel />
-          <VisualPanel />
-          <TextPanel />
-          <FormatPanel />
+          <fieldset className={styles.panelFieldset} disabled={recording}>
+            <SourcePanel />
+            <TemplateGallery />
+            <StoryboardPanel />
+            <PalettePanel />
+            <ClipPanel />
+            <VisualPanel />
+            <TextPanel />
+            <FormatPanel />
+          </fieldset>
           <RecordPanel onStart={startRecording} onCancel={cancelRecording} />
         </aside>
       </main>

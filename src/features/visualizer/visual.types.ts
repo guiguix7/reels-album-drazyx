@@ -1,7 +1,7 @@
 /** Tipos do motor visual — contratos entre Stage, templates e engine. */
 
 import type * as THREE from 'three'
-import type { TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
+import type { PaletteSettings, TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
 import type { AudioFrame } from '../audio/audio.types'
 
 export interface StageAssets {
@@ -29,6 +29,7 @@ export interface TemplateUpdateArgs {
   frame: AudioFrame
   visual: VisualSettings
   type: TypeSettings
+  palette: PaletteSettings
   clip: ClipInfo
   /** Tempo contínuo do engine (segundos desde o início da sessão visual). */
   time: number

@@ -4,15 +4,18 @@ import { GradientBackground } from '../objects/background'
 import { FFTBars } from '../objects/bars'
 import { CoverCard } from '../objects/cover-card'
 import { TextLayer } from '../objects/text-layer'
-import { safeArea } from './template-utils'
+import { derivePalette, safeArea } from './template-utils'
+import type { PaletteColors } from './template-utils'
+import { mixHex } from '../../palette/palette'
 
 /**
- * TEMPLATE 04 — wireframe favorito do usuário: coluna de waveform à esquerda
- * com texto abaixo, e capa grande ocupando a direita.
+ * LAYOUT 04 — EDITORIAL COVER
+ * Espaço negativo forte: coluna de waveform e texto à esquerda, capa grande
+ * à direita. Composição contida, sem elementos competindo com a arte.
  */
 export const Template04: VisualTemplate = {
   id: 't4',
-  name: 'TEMPLATE 04',
+  name: '04 — EDITORIAL COVER',
   description: 'Waveform vertical + texto à esquerda, capa grande à direita.',
   build(ctx: StageContext): TemplateInstance {
     const disposables: Array<{ dispose(): void }> = []
@@ -44,11 +47,26 @@ export const Template04: VisualTemplate = {
     let viewW = ctx.viewWidth
     let viewH = ctx.viewHeight
     let lastTexture: THREE.Texture | null = null
+    let palette: PaletteColors | null = null
+    let paletteKey = ''
+
+    const applyPalette = (colors: PaletteColors): void => {
+      background.setColors(colors.top, colors.bottom, colors.backgroundGlow)
+      bars.setColors(colors.accent, colors.secondary)
+      cover.setAccent(colors.accent, mixHex(colors.accent, colors.secondary, 0.5))
+    }
 
     return {
       update(args: TemplateUpdateArgs): void {
         const { frame, visual, type, time } = args
         const safe = safeArea(viewW, viewH)
+        const nextPalette = derivePalette(args.palette)
+        if (nextPalette.key !== paletteKey) {
+          paletteKey = nextPalette.key
+          palette = nextPalette
+          applyPalette(nextPalette)
+        }
+        const pal = palette as PaletteColors
 
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
@@ -62,7 +80,7 @@ export const Template04: VisualTemplate = {
         const colX = safe.leftX + 0.09
         const colTopY = safe.topY - 0.6
         const colHeight = viewH * 0.34
-        bars.updateColumn(colX, colTopY, colHeight, frame.bars, { maxLength: 0.85 + bass * 0.5, minLength: 0.04, growDown: true })
+        bars.updateColumn(colX, colTopY, colHeight, frame.bars, { maxLength: 0.85 + bass * 0.5 + frame.beatPulse * 0.18, minLength: 0.04, growDown: true })
         bars.setOpacity(0.8 + frame.energy * 0.2)
 
         // Texto abaixo da coluna
@@ -81,7 +99,7 @@ export const Template04: VisualTemplate = {
         album.mesh.position.set(colX - 0.09, textY - titleH - artistH - 0.4, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], textWidth, {})
+        cta.set([type.ctaText], textWidth, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(safe.leftX, safe.bottomY + 0.1, 0)
 
@@ -92,7 +110,7 @@ export const Template04: VisualTemplate = {
         cover.group.position.set(viewW * 0.17, 0.5 + Math.sin(time * 0.4) * 0.07, 0)
         cover.group.rotation.y = Math.sin(time * 0.17) * 0.05
         cover.group.rotation.z = 0.012
-        cover.group.scale.setScalar(1 + bass * 0.03)
+        cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
 
         // Câmera com leve deriva
         const camSpeed = 0.2 + visual.cameraSpeed * 0.5
