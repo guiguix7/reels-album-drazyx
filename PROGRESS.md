@@ -1,0 +1,34 @@
+# PROGRESS — DRAZYX VISUALIZER STUDIO
+
+Última atualização: 2026-11-23
+
+## Estado atual
+
+Fases 0–5 implementadas. Aplicação executável com `npm run dev`.
+
+## Plano de riscos identificado na Fase 0
+
+- OneDrive pode interferir com watchers do Vite — monitorar; se falhar, rodar fora da pasta sincronizada.
+- MediaRecorder/captureStream exige Chrome/Edge; Firefox tem suporte parcial; Safari limitado (registrar no README).
+- Resolução de export 1080×1920 pode pesar em GPUs fracas — modo 720×1280 disponível.
+- Referências de vídeo (YouTube) não pôde ser reproduzido pelo agente — direção visual seguiu o texto do PROMPT.md + imagens fornecidas pelo usuário.
+- Sem áudio real do usuário nesta sessão: QA de gravação usou arquivo de teste gerado localmente quando possível; instruções de validação manual documentadas no README.
+
+## Decisões técnicas (resumo; detalhes em DECISIONS.md)
+
+- Estado: Zustand (single store) — `features/project/project.store.ts`.
+- Templates = presets visuais selecionáveis: MIRAGE, AFTERIMAGE, VOID, SPECTRUM, TEMPLATE 03, TEMPLATE 04, TEMPLATE 05 (favoritos do usuário da imagem de wireframes).
+- Tipografia do vídeo renderizada dentro do canvas (CanvasTexture) para garantir captura na gravação.
+- Áudio: elemento `<audio>` único + MediaElementSource único; grafo: source → analyser → monitorGain → destination e source → recDest (MediaStreamAudioDestinationNode). Gravação sempre pós-mix pré-monitor (mudo no monitor não silencia o arquivo).
+- Gravação: MediaRecorder com codec detection; tempo de áudio como fonte de verdade; auto-stop no fim do trecho.
+- UI: CSS Modules + tokens.css; sem biblioteca de componentes.
+
+## Log de execução
+
+- 2026-11-13 — Fase 0 concluída: inspeção, ambiente (Node v25, npm 11.6.2), PROMPT.md salvo, TASKS.md/PROGRESS.md criados.
+- 2026-11-13 — Fase 1 concluída: esqueleto Vite+React+TS, tokens, layout de estúdio, Stage 9:16, build/typecheck verdes.
+- 2026-11-13 — Fase 2 concluída: AudioEngine completo (upload, playback, seek, analyser, bandas, transientes, estados, seleção de trecho).
+- 2026-11-13 — Fase 3 concluída: VisualEngine Three.js + 7 templates (MIRAGE, AFTERIMAGE, VOID, SPECTRUM, T3, T4, T5) + pass de acabamento + troca de template na UI.
+- 2026-11-13 — Fase 4 concluída: Recorder com MediaRecorder + canvas stream + audio stream, auto-stop, preview, download.
+- 2026-11-13 — Fase 5 concluída: testes Vitest, lint/typecheck/test/build verdes, README.md, QA manual via navegador, relatório final.
+- 2026-11-23 — Revisão e correções: painéis do editor encolhiam e cortavam conteúdo (flex-shrink); relógio do transporte e auto-stop do trecho deixaram de depender de rAF (aba oculta); setClipDuration não trava mais depois de uma redução; duração do preview WebM; README preenchido; tipografia do T4 e painéis do T5 sem sobreposição; capa fantasma do T3 mais discreta; estado vazio do Stage compacto. QA real: áudio WAV 02:27 + capa JPG, gravação de 5s gerando WebM 1080×1920 com VP9+Opus.

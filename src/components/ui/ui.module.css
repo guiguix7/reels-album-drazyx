@@ -1,0 +1,224 @@
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  /* Coluna de painéis é flex + scroll: sem isto os painéis encolhem e cortam o conteúdo. */
+  flex-shrink: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--surface-line);
+  background: linear-gradient(180deg, rgba(184, 77, 255, 0.05), transparent);
+}
+
+.panelTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.panelHint {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.panelActions {
+  flex-shrink: 0;
+}
+
+.panelBody {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rowLabel {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  min-width: 86px;
+  flex-shrink: 0;
+}
+
+.rowValue {
+  font-size: 11px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range {
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font: 500 13px/1.4 var(--font-ui);
+  padding: 8px 10px;
+  transition: border-color var(--ui-speed) ease;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input::placeholder {
+  color: rgba(169, 158, 174, 0.55);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.check {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  padding: 3px;
+}
+
+.segment {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: 600 11px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 7px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color var(--ui-speed) ease, background var(--ui-speed) ease;
+}
+
+.segment:hover {
+  color: var(--text);
+}
+
+.segmentActive {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.segmentActive:hover {
+  color: var(--accent-strong);
+}
+
+.button {
+  border: 1px solid var(--surface-line-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+  font: 600 12px/1 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: background var(--ui-speed) ease, border-color var(--ui-speed) ease, color var(--ui-speed) ease;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn_primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn_primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #ffffff;
+}
+
+.btn_danger {
+  background: rgba(255, 93, 93, 0.12);
+  border-color: rgba(255, 93, 93, 0.5);
+  color: var(--danger);
+}
+
+.btn_danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.notice {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 9px 11px;
+  border-radius: var(--radius-s);
+  border: 1px solid transparent;
+}
+
+.notice_info {
+  color: var(--text-dim);
+  background: rgba(169, 158, 174, 0.08);
+}
+
+.notice_ok {
+  color: var(--ok);
+  background: rgba(123, 224, 168, 0.08);
+  border-color: rgba(123, 224, 168, 0.25);
+}
+
+.notice_error {
+  color: var(--danger);
+  background: rgba(255, 93, 93, 0.08);
+  border-color: rgba(255, 93, 93, 0.3);
+}

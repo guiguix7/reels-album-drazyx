@@ -1,0 +1,285 @@
+/* ---------- painéis ---------- */
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fileMeta {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fileName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileInfo {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.linkButton {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: 500 11px/1 var(--font-ui);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 2px;
+  transition: color var(--ui-speed) ease;
+}
+
+.linkButton:hover {
+  color: var(--danger);
+}
+
+/* ---------- galeria de templates ---------- */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.templateCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  padding: 10px 10px 11px;
+  cursor: pointer;
+  transition: border-color var(--ui-speed) ease, background var(--ui-speed) ease, transform var(--ui-speed) ease;
+}
+
+.templateCard:hover {
+  border-color: var(--surface-line-strong);
+  transform: translateY(-1px);
+}
+
+.templateActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.templateIndex {
+  font: 700 10px/1 var(--font-title);
+  letter-spacing: 0.14em;
+  color: var(--accent-strong);
+}
+
+.templateName {
+  font: 600 12px/1.2 var(--font-ui);
+  color: var(--text);
+}
+
+.templateDesc {
+  font: 400 10.5px/1.35 var(--font-ui);
+  color: var(--text-dim);
+}
+
+/* ---------- trecho ---------- */
+
+.clipSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.clipRange {
+  font: 600 13px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  letter-spacing: 0.03em;
+}
+
+.clipBadge {
+  font: 700 11px/1 var(--font-ui);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid rgba(184, 77, 255, 0.3);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clipBadgeMax {
+  color: var(--ok);
+  background: rgba(123, 224, 168, 0.1);
+  border-color: rgba(123, 224, 168, 0.35);
+}
+
+.panelNote {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.inlineField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Rótulo das linhas de campo (mesma linguagem do Slider/TextInput em ui.module.css). */
+.rowLabel {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  min-width: 86px;
+  flex-shrink: 0;
+}
+
+.inlineField > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 10px;
+}
+
+/* ---------- transport ---------- */
+
+.transport {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-m);
+  padding: 10px 14px;
+}
+
+.playButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  cursor: pointer;
+  transition: background var(--ui-speed) ease, transform var(--ui-speed) ease;
+}
+
+.playButton:hover:not(:disabled) {
+  background: rgba(184, 77, 255, 0.24);
+  transform: scale(1.04);
+}
+
+.playButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.playing {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.scrubber {
+  flex: 1;
+  min-width: 140px;
+}
+
+.timeLabel {
+  font: 500 11.5px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-line-strong);
+  flex-shrink: 0;
+}
+
+.statusPlaying {
+  background: var(--ok);
+  box-shadow: 0 0 8px rgba(123, 224, 168, 0.6);
+}
+
+.statusError {
+  background: var(--danger);
+}
+
+/* ---------- gravação ---------- */
+
+.recordRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.recHint {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.previewBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  padding: 10px;
+}
+
+.previewVideo {
+  width: 100%;
+  max-height: 300px;
+  border-radius: 4px;
+  background: #000;
+  object-fit: contain;
+}
+
+.previewMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.previewActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.downloadLink {
+  text-decoration: none;
+}

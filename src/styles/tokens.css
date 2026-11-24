@@ -1,0 +1,37 @@
+/* DRAZYX VISUALIZER STUDIO — design tokens (fonte única de identidade visual) */
+:root {
+  /* Paleta de marca */
+  --bg: #070810;
+  --surface: #11101a;
+  --surface-raised: #18131d;
+  --surface-line: #221e2e;
+  --surface-line-strong: #2c2638;
+  --text: #f2edf5;
+  --text-dim: #a99eae;
+  --accent: #b84dff;
+  --accent-strong: #cf8aff;
+  --accent-soft: rgba(184, 77, 255, 0.14);
+  --accent-glow: rgba(184, 77, 255, 0.35);
+  --danger: #ff5d5d;
+  --ok: #7be0a8;
+  --warn: #ffc46b;
+
+  /* Tipografia */
+  --font-title: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Raio e movimento */
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+  --ui-speed: 180ms;
+  --ui-speed-slow: 240ms;
+
+  /* Zonas seguras de vídeo vertical (plataformas cobrem bordas) */
+  --video-safe-x: 6%;
+  --video-safe-top: 8%;
+  --video-safe-bottom: 16%;
+
+  /* Sombra de superfície */
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.45);
+}

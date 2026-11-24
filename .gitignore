@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+Thumbs.db
+
+# Ferramentas locais de agente (não fazem parte do produto)
+.opencode/
+.freebuff/
+
+# Mídia local de teste (não versionar: arquivos grandes e material do usuário)
+src/tests/song/
+src/tests/img/
+teste-ui-*.png

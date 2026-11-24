@@ -1,0 +1,69 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { useProjectStore } from '../features/project/project.store'
+import { DEFAULT_PROJECT } from '../features/project/project.defaults'
+
+describe('project.store', () => {
+  beforeEach(() => {
+    // Reset do estado entre testes
+    useProjectStore.setState({
+      config: structuredCloneSafe(),
+      audioStatus: 'idle',
+      audioMeta: null,
+      audioError: null,
+      coverMeta: null,
+    })
+  })
+
+  it('estado inicial = DEFAULT_PROJECT', () => {
+    expect(useProjectStore.getState().config.clipDuration).toBe(30)
+    expect(useProjectStore.getState().config.templateId).toBe('mirage')
+  })
+
+  it('setTemplate aceita id válido', () => {
+    useProjectStore.getState().setTemplate('t3')
+    expect(useProjectStore.getState().config.templateId).toBe('t3')
+  })
+
+  it('setTemplate rejeita id desconhecido', () => {
+    const before = useProjectStore.getState().config.templateId
+    // @ts-expect-error teste de proteção em runtime
+    useProjectStore.getState().setTemplate('inexistente')
+    expect(useProjectStore.getState().config.templateId).toBe(before)
+  })
+
+  it('setClipStart clampa dentro da faixa e re-clampa duração', () => {
+    const s = useProjectStore.getState()
+    s.setClipStart(95, 100)
+    expect(useProjectStore.getState().config.clipStart).toBe(95)
+    // duração deve re-clampar para 5 (fim da faixa) — clamp de duração mínima
+    expect(useProjectStore.getState().config.clipDuration).toBeLessThanOrEqual(5)
+  })
+
+  it('setClipDuration limita a 30s', () => {
+    const s = useProjectStore.getState()
+    s.setClipDuration(120, 300)
+    expect(useProjectStore.getState().config.clipDuration).toBe(30)
+  })
+
+  it('setVisual aplica patch parcial', () => {
+    const s = useProjectStore.getState()
+    s.setVisual({ intensity: 0.9 })
+    expect(useProjectStore.getState().config.visual.intensity).toBe(0.9)
+    expect(useProjectStore.getState().config.visual.glow).toBe(DEFAULT_PROJECT.visual.glow)
+  })
+
+  it('resetVisualToTemplateDefault volta aos padrões do template', () => {
+    const s = useProjectStore.getState()
+    s.setTemplate('void')
+    s.setVisual({ intensity: 1, glow: 1 })
+    s.resetVisualToTemplateDefault()
+    const visual = useProjectStore.getState().config.visual
+    expect(visual.intensity).toBe(0.5)
+    expect(visual.glow).toBe(0.3)
+    expect(visual.glitch).toBe('off')
+  })
+})
+
+function structuredCloneSafe(): typeof DEFAULT_PROJECT {
+  return JSON.parse(JSON.stringify(DEFAULT_PROJECT))
+}
