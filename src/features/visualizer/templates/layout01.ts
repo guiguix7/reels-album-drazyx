@@ -98,37 +98,39 @@ export const Layout01: VisualTemplate = {
         particles.setOpacity((0.22 + frame.energy * 0.32) * (0.5 + visual.intensity * 0.5))
 
         // Proporção segura: em 16:9 a capa não pode dominar a largura.
-        const base = Math.min(viewW * 0.6, viewH * 0.46)
+        const base = Math.min(viewW * 0.56, viewH * 0.34)
         const size = base * (1 + bass * 0.03 + frame.beatPulse * 0.01)
+        const coverY = 0.62 + Math.sin(time * 0.32) * 0.06
         cover.setSize(size, size)
         cover.setGlowIntensity(0.22 + visual.glow * 0.4 + bass * 0.25)
-        cover.group.position.set(0, 0.25 + Math.sin(time * 0.32) * 0.06, 0)
+        cover.group.position.set(0, coverY, 0)
         cover.group.rotation.y = Math.sin(time * 0.16) * 0.05
         cover.group.rotation.x = Math.cos(time * 0.12) * 0.02
 
-        halo.position.set(0, 0.25, -0.5)
+        halo.position.set(0, coverY, -0.5)
         halo.scale.setScalar(size * (2.5 + bass * 0.3))
         haloMaterial.opacity = 0.16 + bass * 0.24 + frame.transient * 0.1
-
-        // Espectro espelhado discreto abaixo da capa.
-        const barWidth = Math.min(viewW * 0.72, viewH * 0.62)
-        bars.updateRow(-barWidth / 2, safe.bottomY + 1.5, barWidth, frame.bars, {
-          maxHeight: 0.42 + bass * 0.28 + frame.beatPulse * 0.1,
-          minHeight: 0.03,
-        })
-        bars.setOpacity(0.42 + frame.treble * 0.35)
 
         tagline.set([type.tagline], viewW * 0.82, { color: pal.glow })
         tagline.setOpacity(type.showTagline ? 0.9 : 0)
         tagline.mesh.position.set(0, safe.topY - 0.3, 0)
 
+        // Bloco de texto ancorado na base segura; capa e título não se cruzam.
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.78, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(0, safe.bottomY + 1.05 + titleH / 2, 0)
+        trackTitle.mesh.position.set(0, safe.bottomY + 0.6 + titleH / 2, 0)
 
         artist.set([type.showArtist ? type.artistName : ''], viewW * 0.7, {})
         artist.setOpacity(type.showArtist ? 0.85 : 0)
-        artist.mesh.position.set(0, safe.bottomY + 0.85, 0)
+        artist.mesh.position.set(0, safe.bottomY + 0.3, 0)
+
+        // Espectro no vão real entre a capa e o título (altura limitada ao espaço).
+        const barWidth = Math.min(viewW * 0.72, viewH * 0.62)
+        const barTop = coverY - size / 2 - 0.12
+        const titleTop = safe.bottomY + 0.6 + titleH
+        const barMax = Math.max(0.08, Math.min(0.42 + bass * 0.28 + frame.beatPulse * 0.1, titleTop - barTop - 0.16))
+        bars.updateRow(-barWidth / 2, barTop, barWidth, frame.bars, { maxHeight: barMax, minHeight: 0.03 })
+        bars.setOpacity(0.42 + frame.treble * 0.35)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.84 ? Math.min(1, (args.clip.progress - 0.84) / 0.08) : 0
         cta.set([type.ctaText], viewW * 0.76, { color: pal.glow })

@@ -43,48 +43,88 @@ um commit próprio; nenhuma fase é declarada concluída apenas por UI pronta.
 - QA visual de clipping, tipografia, safe areas e sobreposição.
 - Commit: `feat: expand visual composition system to eight layouts`.
 
-## Fase 4 — Motion engine avançado
+## Fase 4 — Motion engine avançado *(concluída)*
 
-- Análise adicional: onset, low-frequency pulse, centroid/flatness, envelope,
-  confiança de beat e sugestões de mudança de seção.
-- Mapeamento musical por elemento (bass/mid/treble/transiente/energia).
-- Motion profiles DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE, MINIMAL.
-- Determinismo por seed, preview = export, seek reverso correto.
-- Loop visual compatível com início/fim, sem prometer loop de áudio não processado.
+- [x] Motion profiles DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE, MINIMAL.
+- [x] Curvas por progresso sobre intensidade, graves, brilho, câmera e partículas,
+  com kick de transiente e energia mantendo a cena viva em silêncio.
+- [x] Determinismo por seed (`hashSeed` + mulberry32), partículas/capa padrão/glows
+  do MIRAGE sem `Math.random`.
+- [x] Tempo do visual dirigido pelo relógio do áudio no playback: preview = export
+  e seek reverso reconstrói o frame.
+- [x] Loop visual até o início do trecho, aplicado no último 8% (sem loop de áudio).
+- [x] Seletor de movimento no painel Visual com descrição do perfil.
 - Commit: `feat: add advanced audio-reactive motion engine`.
 
-## Fase 5 — Recipes + Batch Creator
+Pendências registradas: análise espectral extra (centroide/flatness) e
+sugestões automáticas de seção não foram adicionadas nesta fase; o storyboard
+automático continua usando envelope/onsets/pico reais do áudio.
 
-- Recipes de atmosfera, processo e comunidade com presets completos.
-- Aplicar recipe → storyboard editável; sem duplicar vídeos com nomes diferentes.
-- Fila de batch 3–5 peças práticas (arquitetura para 20–30), status/progresso/
-  preview/download/erros por job e naming consistente.
-- Platform profiles TikTok, Reels, Shorts apenas como configuração.
+## Fase 5 — Recipes + Batch Creator *(concluída)*
+
+- [x] Recipes ATMOSFERA (30 s, MIRAGE/DREAM), PROCESSO (15 s, T4/CINEMATIC) e
+  COMUNIDADE (15 s, T5/PULSE) com hook, copy, layout e visual completos.
+- [x] Aplicar recipe gera storyboard editável (sem duplicar vídeos nem inventar arquivos).
+- [x] Fila de batch de 3–5 peças em rotação recipe × layout, com status, erro,
+  preview de metadados e download por job; configuração original restaurada ao fim.
+- [x] Platform profiles TikTok, Reels, Shorts como configuração (formato, fps, CTA, nota).
 - Commit: `feat: add creative content recipes and batch exports`.
 
-## Fase 6 — Persistência local + Retention Lab
+Pendências registradas: fila limitada a 5 peças (arquitetura suporta mais, UI não
+expõe 20–30), sem ZIP/download em massa e sem pausa entre jobs além do
+auto-stop do áudio.
 
-- IndexedDB: salvar/carregar/duplicar/renomear/excluir, export/import de projeto.
-- Manifest por export (variante, projeto, faixa, trecho, hook, layout, estilo,
-  motion, CTA, plataforma, resolução, fps, data).
-- Entrada manual/CSV de métricas e dashboard comparativo com definições claras.
-- Sem dados inventados, sem misturar denominadores, sem alegar causalidade.
+## Fase 6 — Persistência local + Retention Lab *(concluída)*
+
+- [x] IndexedDB (projetos, exports, métricas): salvar/carregar/duplicar/renomear/excluir.
+- [x] Export/import de projeto em JSON com schema versionado e merge de defaults.
+- [x] Manifest por export com variante, hook, layouts, motion, CTA, plataforma,
+  resolução, fps, trecho e data; gravado na gravação individual e em cada job do lote.
+- [x] Retention Lab com entrada manual e CSV (`,`/`;`, cabeçalhos PT/EN), taxas
+  calculadas só com denominador real e tempo médio ponderado por views.
+- [x] Sem coleta automática, sem dados inventados e sem afirmar causalidade.
 - Commit: `feat: add local project persistence and retention lab`.
 
-## Fase 7 — Performance, qualidade visual e export
+Limitações registradas: áudio/capa não são persistidos (Object URLs da sessão),
+não há gráficos históricos nem filtros avançados, e o CSV não carrega contexto de
+plataforma/hook/layout — o contexto vem do projeto no momento da importação.
 
-- Ciclo de vida Three.js, reuso de recursos, partículas e shaders.
-- Perfis draft/standard/export/lightweight sem perder 720p/1080p.
-- Auditoria dos 8 layouts nas 3 proporções com screenshots.
-- Validação do export: MIME/extensão, áudio presente, duração, seek e cleanup.
+## Fase 7 — Performance, qualidade visual e export *(concluída)*
+
+- [x] Ciclo de vida Three.js: engine é destruída/reconstruída com `dispose`, texturas e
+  materiais seguem sendo liberados pelos templates; nenhum recurso novo persistente.
+- [x] Perfis draft/standard/export/lightweight e `AdaptiveResolution`: no preview a
+  escala de render cai quando o frame estoura o orçamento; no export volta a 1.0.
+- [x] Export em resolução cheia via `beginExport()`/`endExport()` no registry da engine,
+  usado pela gravação individual e por cada job do lote.
+- [x] Auditoria dos 8 layouts nas 3 proporções em `docs/qa/layouts-audit.jpg`
+  (contact sheet 8×3); texto limitado a 60% da altura do palco, T2/T4/T6 reempilhados
+  e capas de T3/T4 limitadas pela altura.
+- [x] Validação do export: arquivo não vazio, MIME × extensão e duração do vídeo contra
+  o trecho, exibidos como avisos no painel de gravação (sem bloquear o download).
 - Commit: `perf: optimize rendering and export pipeline`.
 
-## Fase 8 — Regressão final
+Limitações registradas: a auditoria visual usou um contact sheet único, sem screenshot
+nativo por layout; codecs não foram re-testados após as mudanças e não houve medição de
+performance em GPU fraca. A presença de faixa de áudio continua garantida pelo pipeline
+(track live obrigatória), não por inspeção do container gravado.
 
-- Testes de áudio, storyboard, layouts, gravação, performance e integridade do arquivo.
-- QA end-to-end completo do prompt (novo projeto → export → persistência → batch → lab).
-- README/PROGRESS/TASKS/DECISIONS/docs finais com limitações reais.
+## Fase 8 — Regressão final *(concluída)*
+
+- [x] Testes de áudio, storyboard, layouts, gravação, performance e integridade do arquivo
+  (117 testes em 21 arquivos), mais regressão de safe areas nas três proporções, limite
+  tipográfico, imutabilidade da configuração base no lote e parsing de CSV.
+- [x] QA end-to-end do fluxo individual no navegador: carregar WAV → escolher 5 s → gravar em
+  1080×1920/30 fps → preview e download do WebM com áudio (2.111.213 bytes, 5,16 s, sem avisos
+  de validação) → manifest do export presente no IndexedDB.
+- [x] README/PROGRESS/TASKS/roadmap finais com recipes, storyboard, movimento, plataformas,
+  lote, persistência, Retention Lab, performance e limitações reais.
 - Commit: `test: add comprehensive visualizer regression coverage`.
+
+Limitações registradas: o lote completo (3–5 peças) e o round-trip da UI do Retention Lab não
+foram re-executados nesta rodada — têm cobertura unitária, mas não evidência visual nova. Os
+codecs não foram re-testados e não houve medição de performance em GPU fraca. A auditoria visual
+dos layouts continua sendo um contact sheet único, não screenshots nativos por layout.
 
 ## Dependências críticas
 

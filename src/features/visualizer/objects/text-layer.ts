@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { onFontsReady } from './fonts-ready'
+import { capTextWidth } from '../text-metrics'
 
 /**
  * Tipografia renderizada em canvas → CanvasTexture → plano.
@@ -177,7 +178,7 @@ export class TextLayer {
   /** Define o texto (linhas) e a largura em unidades de mundo. Retorna altura de mundo. */
   set(lines: string[], worldWidth: number, stylePatch: Partial<TextStyle> = {}): number {
     this.lines = lines
-    this.worldWidth = worldWidth
+    this.worldWidth = capTextWidth(worldWidth)
     this.style = { ...this.style, ...stylePatch }
     this.redraw()
     return this.worldHeight

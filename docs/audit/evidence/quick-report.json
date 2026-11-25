@@ -1,0 +1,278 @@
+{
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "scroll": {
+        "w": 1440,
+        "h": 900
+      },
+      "overflowX": false,
+      "stage": {
+        "x": 310,
+        "y": 74,
+        "w": 407,
+        "h": 723
+      },
+      "stageFrame": {
+        "x": 18,
+        "y": 55,
+        "w": 990,
+        "h": 761
+      },
+      "stageRatio": 0.562,
+      "stageShareWidth": 28.2,
+      "aside": {
+        "x": 1022,
+        "y": 55,
+        "w": 400,
+        "h": 829
+      },
+      "asideScrollH": 3581,
+      "uploadTop": 127,
+      "uploadVisible": true,
+      "recordTop": 3515,
+      "recordVisible": false,
+      "empty": {
+        "x": 380,
+        "y": 650,
+        "w": 266,
+        "h": 16
+      },
+      "emptyInsideStage": false,
+      "emptyOverlapsStage": true,
+      "cardSize": {
+        "x": 1037,
+        "y": 344,
+        "w": 180,
+        "h": 201
+      },
+      "fontSizes": {
+        "9.5px": 5,
+        "10px": 15,
+        "10.5px": 12,
+        "11px": 44,
+        "12px": 21,
+        "13px": 1
+      },
+      "smallTextCount": 76,
+      "totalTextCount": 137
+    },
+    {
+      "viewport": "1024x768",
+      "scroll": {
+        "w": 1024,
+        "h": 768
+      },
+      "overflowX": false,
+      "stage": {
+        "x": 167,
+        "y": 68,
+        "w": 340,
+        "h": 604
+      },
+      "stageFrame": {
+        "x": 12,
+        "y": 53,
+        "w": 650,
+        "h": 635
+      },
+      "stageRatio": 0.562,
+      "stageShareWidth": 33.2,
+      "aside": {
+        "x": 672,
+        "y": 53,
+        "w": 340,
+        "h": 703
+      },
+      "asideScrollH": 3608,
+      "uploadTop": 141,
+      "uploadVisible": true,
+      "recordTop": 3514,
+      "recordVisible": false,
+      "empty": {
+        "x": 204,
+        "y": 546,
+        "w": 266,
+        "h": 16
+      },
+      "emptyInsideStage": false,
+      "emptyOverlapsStage": true,
+      "cardSize": {
+        "x": 687,
+        "y": 358,
+        "w": 150,
+        "h": 196
+      },
+      "fontSizes": {
+        "9.5px": 5,
+        "10px": 15,
+        "10.5px": 12,
+        "11px": 44,
+        "12px": 21,
+        "13px": 1
+      },
+      "smallTextCount": 76,
+      "totalTextCount": 137
+    },
+    {
+      "viewport": "390x844",
+      "scroll": {
+        "w": 390,
+        "h": 4336
+      },
+      "overflowX": false,
+      "stage": {
+        "x": 19,
+        "y": 93,
+        "w": 352,
+        "h": 626
+      },
+      "stageFrame": {
+        "x": 10,
+        "y": 84,
+        "w": 370,
+        "h": 644
+      },
+      "stageRatio": 0.562,
+      "stageShareWidth": 90.3,
+      "aside": {
+        "x": 10,
+        "y": 802,
+        "w": 370,
+        "h": 3525
+      },
+      "asideScrollH": 3525,
+      "uploadTop": 874,
+      "uploadVisible": false,
+      "recordTop": 4205,
+      "recordVisible": false,
+      "empty": {
+        "x": 62,
+        "y": 607,
+        "w": 266,
+        "h": 16
+      },
+      "emptyInsideStage": false,
+      "emptyOverlapsStage": true,
+      "cardSize": {
+        "x": 25,
+        "y": 1091,
+        "w": 165,
+        "h": 191
+      },
+      "fontSizes": {
+        "9.5px": 5,
+        "10px": 15,
+        "10.5px": 12,
+        "11px": 44,
+        "12px": 21,
+        "13px": 1
+      },
+      "smallTextCount": 76,
+      "totalTextCount": 137
+    }
+  ],
+  "layouts": [
+    {
+      "clicked": "CENTERED HERO",
+      "selected": [
+        {
+          "index": 8,
+          "sel": "true",
+          "label": "01 MIRAGE"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "STEREO FRAME",
+      "selected": [
+        {
+          "index": 8,
+          "sel": "true",
+          "label": "01 MIRAGE"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "OFFSET CINEMA",
+      "selected": [
+        {
+          "index": 2,
+          "sel": "true",
+          "label": "03 03 — OFFSET CINEMA"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "EDITORIAL COVER",
+      "selected": [
+        {
+          "index": 3,
+          "sel": "true",
+          "label": "04 04 — EDITORIAL COVER"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "ALBUM PLAYER SPLIT",
+      "selected": [
+        {
+          "index": 4,
+          "sel": "true",
+          "label": "05 05 — ALBUM PLAYER SPLIT"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "VERTICAL TOTEM",
+      "selected": [
+        {
+          "index": 4,
+          "sel": "true",
+          "label": "05 05 — ALBUM PLAYER SPLIT"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "SYMMETRIC SPECTRUM",
+      "selected": [
+        {
+          "index": 4,
+          "sel": "true",
+          "label": "05 05 — ALBUM PLAYER SPLIT"
+        }
+      ],
+      "hash": 0
+    },
+    {
+      "clicked": "MONOCHROME FOCUS",
+      "selected": [
+        {
+          "index": 4,
+          "sel": "true",
+          "label": "05 05 — ALBUM PLAYER SPLIT"
+        }
+      ],
+      "hash": 0
+    }
+  ],
+  "flow": {
+    "consoleLogs": [
+      "warning: THREE.Color: Alpha component of rgba(184, 77, 255, 0.5) will be ignored.",
+      "warning: THREE.Color: Alpha component of rgba(128, 130, 147, 0.5) will be ignored."
+    ],
+    "failureText": "DRAZYX | VISUALIZER STUDIO | DRAZYX VISUALIZER STUDIO — local-first · nada sai do seu navegador | 00:00 / 02:27 | FONTE | Áudio e capa ficam no navegador — nada é enviado para fora. | TROCAR ÁUDIO | Wake Up.wav | 02:27 | REMOVER | TROCAR CAPA | cover wake up.jpg | REMOVER | Áudio pronto. Duração 02:27. Ritmo detectado: 93 BPM. | COMPOSIÇÃO | Oito layouts distintos; os presets originais continuam disponíveis como estilo. | LAYOUTS | 01 | 01 — CENTERED HERO | Capa central, halo simétrico e detalhe espectral mínimo. | 02 | 02 — STEREO FRAME | Capa central, waveforms espelhadas à esquerda e à direita. | 03 | 03 — OFFSET CINEMA | Badge + título à esquerda, capa grande à direita, espectro na base. | 04 | 04 — EDITORIAL COVER | Waveform vertical + texto à esquerda, capa grande à direita. | 05 | 0"
+  },
+  "errors": [
+    {
+      "step": "record",
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /GRAVAR TRECHO/ })\u001b[22m\n"
+    }
+  ]
+}

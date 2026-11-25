@@ -88,8 +88,8 @@ export const Layout02: VisualTemplate = {
         particles.update(args.dt, bass * 0.5, 0.3 + visual.cameraSpeed * 0.5)
         particles.setOpacity(0.2 + frame.energy * 0.3)
 
-        const size = Math.min(viewW * 0.46, viewH * 0.38)
-        const coverY = 0.45 + Math.sin(time * 0.3) * 0.05
+        const size = Math.min(viewW * 0.44, viewH * 0.3)
+        const coverY = 0.8 + Math.sin(time * 0.3) * 0.05
         cover.setSize(size, size)
         cover.setGlowIntensity(0.25 + visual.glow * 0.35 + bass * 0.25)
         cover.group.position.set(0, coverY, 0)
@@ -102,25 +102,26 @@ export const Layout02: VisualTemplate = {
         waveLeft.update(frame.waveform, -viewW / 2 + 0.12, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
         waveRight.update(frame.waveform, size / 2 + 0.18, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
 
-        // Espectro de apoio abaixo da capa.
+        // Espectro de apoio entre a capa e o bloco de metadados.
         const barWidth = Math.min(viewW * 0.5, viewH * 0.42)
-        bars.updateRow(-barWidth / 2, coverY - size / 2 - 0.75, barWidth, frame.bars, {
-          maxHeight: 0.4 + bass * 0.28,
-          minHeight: 0.03,
-        })
+        const barTop = coverY - size / 2 - 0.4
+        const barMax = 0.38 + bass * 0.24
+        bars.updateRow(-barWidth / 2, barTop, barWidth, frame.bars, { maxHeight: barMax, minHeight: 0.03 })
         bars.setOpacity(0.5 + frame.energy * 0.3)
 
-        artist.set([type.showArtist ? type.artistName : ''], viewW * 0.72, {})
-        artist.setOpacity(type.showArtist ? 0.9 : 0)
-        artist.mesh.position.set(0, coverY - size / 2 - 1.45, 0)
-
+        // Metadados empilhados de cima para baixo dentro do espaço restante.
+        const blockTop = barTop - barMax - 0.22
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.74, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(0, coverY - size / 2 - 1.55 - titleH / 2, 0)
+        trackTitle.mesh.position.set(0, blockTop - titleH / 2, 0)
 
-        album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.68, {})
+        const artistH = artist.set([type.showArtist ? type.artistName : ''], Math.min(viewW * 0.72, 5), {})
+        artist.setOpacity(type.showArtist ? 0.9 : 0)
+        artist.mesh.position.set(0, blockTop - titleH - 0.1 - artistH / 2, 0)
+
+        const albumH = album.set([type.showAlbum ? type.albumTitle : ''], Math.min(viewW * 0.68, 4), {})
         album.setOpacity(type.showAlbum ? 0.7 : 0)
-        album.mesh.position.set(0, safe.bottomY + 0.55, 0)
+        album.mesh.position.set(0, blockTop - titleH - artistH - 0.18 - albumH / 2, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.84 ? Math.min(1, (args.clip.progress - 0.84) / 0.08) : 0
         cta.set([type.ctaText], viewW * 0.76, { color: pal.glow })

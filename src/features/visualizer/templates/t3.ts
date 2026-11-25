@@ -137,8 +137,8 @@ export const Template03: VisualTemplate = {
         artist.setOpacity(type.showArtist ? 0.85 : 0)
         artist.mesh.position.set(textX, safe.topY - 0.36 - titleH, 0)
 
-        // Capa grande à direita, levemente inclinada
-        const coverSize = viewW * 0.66
+        // Capa grande à direita, levemente inclinada — limitada pela altura em 16:9.
+        const coverSize = Math.min(viewW * 0.62, viewH * 0.52)
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.25 + visual.glow * 0.45 + bass * 0.3)
         cover.group.position.set(viewW * 0.05, 0.35 + Math.sin(time * 0.45) * 0.07, 0)

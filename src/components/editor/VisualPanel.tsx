@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useProjectStore } from '../../features/project/project.store'
 import { VISUAL_LIMITS } from '../../features/project/project.defaults'
 import { extractPaletteFromUrl } from '../../features/palette/palette'
-import { Button, ColorField, Notice, Panel, Segmented, Slider, TextInput, Toggle } from '../ui/ui'
+import { Button, ColorField, Notice, Panel, Segmented, Select, Slider, TextInput, Toggle } from '../ui/ui'
+import { MOTION_PROFILES, MOTION_PROFILE_OPTIONS } from '../../features/visualizer/motion/motion.profiles'
 import type { GlitchLevel, PaletteMode } from '../../features/project/project.types'
 import styles from './panels.module.css'
 
@@ -124,6 +125,18 @@ export function VisualPanel(): JSX.Element {
         <span className={styles.rowLabel}>Glitch</span>
         <Segmented options={GLITCH_OPTIONS} value={visual.glitch} onChange={(v) => setGlitch(v)} />
       </div>
+      <Select
+        label="Movimento"
+        value={visual.motionProfile}
+        options={MOTION_PROFILE_OPTIONS}
+        onChange={(motionProfile) => setVisual({ motionProfile })}
+      />
+      <p className={styles.panelNote}>{MOTION_PROFILES[visual.motionProfile].description}</p>
+      <Toggle
+        label="Loop visual (fecha no início do trecho)"
+        checked={visual.loopVisual}
+        onChange={(loopVisual) => setVisual({ loopVisual })}
+      />
     </Panel>
   )
 }

@@ -84,9 +84,9 @@ export const Layout06: VisualTemplate = {
         particles.setOpacity(0.18 + frame.energy * 0.28)
 
         // Totem: mais alto que largo, sempre dentro da altura visível.
-        const coverH = Math.min(viewH * 0.52, viewW * 0.92)
+        const coverH = Math.min(viewH * 0.46, viewW * 0.92)
         const coverW = coverH * 0.78
-        const coverY = 0.55 + Math.sin(time * 0.22) * 0.08
+        const coverY = 0.75 + Math.sin(time * 0.22) * 0.08
         cover.setSize(coverW, coverH)
         cover.setGlowIntensity(0.22 + visual.glow * 0.38 + bass * 0.22)
         cover.group.position.set(0, coverY, 0)
@@ -108,19 +108,21 @@ export const Layout06: VisualTemplate = {
         leftBars.setOpacity(0.5 + frame.energy * 0.3)
         rightBars.setOpacity(0.5 + frame.energy * 0.3)
 
-        // Metadados presos à base da capa.
-        const metaY = coverY - coverH / 2 - 0.35
+        // Metadados empilhados de baixo para cima, sem cruzar com a capa.
+        const albumH = album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.66, {})
+        album.setOpacity(type.showAlbum ? 0.68 : 0)
+        const albumY = safe.bottomY + 0.4
+        album.mesh.position.set(0, albumY, 0)
+
+        const artistH = artist.set([type.showArtist ? type.artistName : ''], viewW * 0.7, {})
+        artist.setOpacity(type.showArtist ? 0.9 : 0)
+        const artistY = albumY + albumH / 2 + 0.14 + artistH / 2
+        artist.mesh.position.set(0, artistY, 0)
+
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.78, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(0, metaY - titleH, 0)
-
-        artist.set([type.showArtist ? type.artistName : ''], viewW * 0.7, {})
-        artist.setOpacity(type.showArtist ? 0.9 : 0)
-        artist.mesh.position.set(0, metaY - titleH - 0.32, 0)
-
-        album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.66, {})
-        album.setOpacity(type.showAlbum ? 0.68 : 0)
-        album.mesh.position.set(0, safe.bottomY + 0.55, 0)
+        const titleY = artistY + artistH / 2 + 0.16 + titleH / 2
+        trackTitle.mesh.position.set(0, titleY, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.84 ? Math.min(1, (args.clip.progress - 0.84) / 0.08) : 0
         cta.set([type.ctaText], viewW * 0.76, { color: pal.glow })

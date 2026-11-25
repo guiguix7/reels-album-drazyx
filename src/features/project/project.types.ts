@@ -1,8 +1,10 @@
 /** Contratos centrais do projeto — compartilhados entre UI, áudio, visual e gravação. */
 
 import type { StoryboardConfig } from '../storyboard/storyboard.types'
+import type { MotionProfileId } from '../visualizer/motion/motion.types'
 
 export type AspectRatioId = '9:16' | '1:1' | '16:9'
+export type PlatformId = 'custom' | 'tiktok' | 'reels' | 'shorts'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
 
@@ -38,6 +40,10 @@ export interface VisualSettings {
   /** Velocidade de câmera (0–1). */
   cameraSpeed: number
   glitch: GlitchLevel
+  /** Perfil de movimento que curva a reação ao áudio ao longo do trecho. */
+  motionProfile: MotionProfileId
+  /** Fecha a composição no início do trecho (continuidade visual, não loop de áudio). */
+  loopVisual: boolean
 }
 
 /** Cores aplicadas ao Stage. 'auto' acompanha a capa; 'manual' é escolha do usuário. */
@@ -86,6 +92,8 @@ export interface CoverMeta {
 }
 
 export interface ProjectConfig {
+  /** Perfil de plataforma aplicado ao export (configuração, sem integração externa). */
+  platform: PlatformId
   aspectRatio: AspectRatioId
   quality: OutputQuality
   fps: number

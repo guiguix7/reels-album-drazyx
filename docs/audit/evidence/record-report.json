@@ -1,0 +1,289 @@
+{
+  "steps": [
+    "loaded",
+    "audio ready",
+    "cover set",
+    "record clicked"
+  ],
+  "errors": [
+    "TimeoutError: locator.waitFor: Timeout 45000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Gravação concluída.') to be visible\u001b[22m\n"
+  ],
+  "console": [
+    "warning: [.WebGL-0x35a400635a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x35a400635a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x35a400635a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x35a400635a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "sliders": [
+    {
+      "i": 0,
+      "min": "0",
+      "max": "147.397324",
+      "value": "0",
+      "label": ""
+    },
+    {
+      "i": 1,
+      "min": "0",
+      "max": "147.397324",
+      "value": "0",
+      "label": "INÍCIO 00:00.0"
+    },
+    {
+      "i": 2,
+      "min": "5",
+      "max": "30",
+      "value": "30",
+      "label": "DURAÇÃO 00:30.0"
+    },
+    {
+      "i": 3,
+      "min": "0",
+      "max": "1",
+      "value": "0.72",
+      "label": "INTENSIDADE 72%"
+    },
+    {
+      "i": 4,
+      "min": "0",
+      "max": "1",
+      "value": "0.6",
+      "label": "PARTÍCULAS 60%"
+    },
+    {
+      "i": 5,
+      "min": "0",
+      "max": "1",
+      "value": "0.65",
+      "label": "FORÇA DO GRAVE 65%"
+    },
+    {
+      "i": 6,
+      "min": "0",
+      "max": "1",
+      "value": "0.55",
+      "label": "BRILHO 55%"
+    },
+    {
+      "i": 7,
+      "min": "0",
+      "max": "1",
+      "value": "0.35",
+      "label": "GRÃO 35%"
+    },
+    {
+      "i": 8,
+      "min": "0",
+      "max": "1",
+      "value": "0.45",
+      "label": "CÂMERA 45%"
+    },
+    {
+      "i": 9,
+      "min": "0.6",
+      "max": "1.4",
+      "value": "1",
+      "label": "ESCALA 100%"
+    },
+    {
+      "i": 10,
+      "min": "-2",
+      "max": "24",
+      "value": "6",
+      "label": "TRACKING 6"
+    }
+  ],
+  "durationAfterSet": "5",
+  "buttons": [
+    {
+      "text": "",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "TROCAR ÁUDIO",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "REMOVER",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "TROCAR CAPA",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "REMOVER",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "01\n01 — CENTERED HERO\nCapa central, halo",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "02\n02 — STEREO FRAME\nCapa central, wavef",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "03\n03 — OFFSET CINEMA\nBadge + título à e",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "04\n04 — EDITORIAL COVER\nWaveform vertica",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "05\n05 — ALBUM PLAYER SPLIT\nCapa à esquer",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "06\n06 — VERTICAL TOTEM\nCapa alta central",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "07\n07 — SYMMETRIC SPECTRUM\nCapa quadrada",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "08\n08 — MONOCHROME FOCUS\nCapa central em",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "01\nMIRAGE\nCena cinematográfica com capa ",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "02\nAFTERIMAGE\nEcos translúcidos da capa ",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "03\nVOID\nEspaço quase vazio, tipografia c",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "04\nSPECTRUM\nEspectro elegante em barras ",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "PRESET 15S",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "PRESET 30S",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "AUTO PELO ÁUDIO",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "EXTRAIR",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "DA CAPA",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "MANUAL",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "REDEFINIR",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "OFF",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "SUTIL",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "FORTE",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "9:16 REELS",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "1:1 FEED",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "16:9 WIDE",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "FULL 1080",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "LEVE 720",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "30 FPS",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "60 FPS",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "text": "GRAVAR TRECHO",
+      "disabled": false,
+      "visible": true
+    }
+  ],
+  "nav": {
+    "domContentLoaded": 506,
+    "load": 507,
+    "transferKB": 215,
+    "resources": 3,
+    "heapMB": 70.1,
+    "thirdParty": [
+      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap"
+    ]
+  },
+  "recordCount": 1,
+  "statusAfterClick": [
+    "Gravando o trecho selecionado..."
+  ],
+  "failureText": "EFINIR | INTENSIDADE | 72% | PARTÍCULAS | 60% | FORÇA DO GRAVE | 65% | BRILHO | 55% | GRÃO | 35% | CÂMERA | 45% | GLITCH | OFF | SUTIL | FORTE | TIPOGRAFIA DO VÍDEO | Renderizado dentro do Stage — faz parte do arquivo final. | ARTISTA | FAIXA | ÁLBUM | CTA | TAGLINE | Artista | Faixa | Álbum | CTA | Tagline | ESCALA | 100% | TRACKING | 6 | FORMATO | Saída atual: 1080×1920 px | PROPORÇÃO | 9:16 REELS | 1:1 FEED | 16:9 WIDE | RESOLUÇÃO | FULL 1080 | LEVE 720 | TAXA | 30 FPS | 60 FPS | GRAVAÇÃO | Grava o Stage + áudio sincronizado. Mantenha esta aba visível. | GRAVAR TRECHO | Vídeo com áudio em um arquivo | A gravação terminou sem conteúdo. Verifique se o Stage estava visível e tente novamente."
+}

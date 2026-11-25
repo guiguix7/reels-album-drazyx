@@ -83,6 +83,11 @@ export function RecordPanel({
               video.currentTime = 1e101
             }}
           />
+          {preview.warnings.map((warning) => (
+            <Notice key={warning} tone="info">
+              {warning}
+            </Notice>
+          ))}
           <div className={styles.previewMeta}>
             <span className={styles.fileName} title={preview.fileName}>
               {preview.fileName}

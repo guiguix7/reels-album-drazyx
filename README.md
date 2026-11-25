@@ -40,11 +40,54 @@ npm run preview    # serve o build
 3. **Trecho do vídeo** → defina início e duração (máximo 30 s, mínimo 5 s).
 4. **Paleta** → as cores do vídeo saem automaticamente da capa (`Da capa`) ou você escolhe acento,
    secundária e brilho no modo `Manual`. `Extrair` recalcula a partir da capa atual.
-5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera e glitch;
-   textos de artista, faixa, álbum, CTA e tagline — todo texto é desenhado dentro do canvas do Stage.
+5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera, glitch e
+   perfil de movimento; textos de artista, faixa, álbum, CTA e tagline — todo texto é desenhado dentro
+   do canvas do Stage.
 6. **Formato** → proporção (9:16 padrão), resolução (1080×1920 ou 720×1280) e FPS (30 para export).
 7. **Transporte** (barra inferior) → play/pause, seek, tempo atual e duração da faixa.
 8. **Gravação** → `Gravar trecho` inicia a captura, para sozinha no fim do trecho e libera preview + download.
+
+## Recipes, storyboard e movimento
+
+- **Recipes** aplicam um preset narrativo completo (hook, storyboard, layout, visual, movimento e copy):
+  `ATMOSFERA` (30 s, MIRAGE/DREAM), `PROCESSO` (15 s, EDITORIAL COVER/CINEMATIC) e `COMUNIDADE`
+  (15 s, ALBUM PLAYER SPLIT/PULSE). O resultado é um storyboard editável — nenhum vídeo é duplicado.
+- **Storyboard** (`Ativar storyboard`) substitui o template fixo por cenas com papel, layout, transição,
+  movimento e textos, sincronizadas com o tempo real do áudio. Presets de 15/30 s e geração automática
+  usam envelope RMS, onsets e pico reais do trecho — nada é inventado. O playhead da timeline permite
+  revisar cada cena antes de gravar.
+- **Movimento** oferece sete perfis: DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE e MINIMAL.
+  A resposta vem de curvas por progresso, graves/transientes e uma seed determinística (o mesmo trecho
+  gera o mesmo movimento). O toggle `Loop visual` fecha a composição no início do trecho, sem prometer
+  loop do áudio.
+- **Perfis de plataforma** (TikTok, Reels, Shorts) ajustam formato, resolução, FPS e CTA do projeto.
+- **Batch Creator** gera de 3 a 5 peças em rotação recipe × layout e grava uma por vez com o mesmo
+  pipeline do Stage + áudio real, devolvendo preview e download por job. A configuração original é
+  restaurada ao fim.
+
+## Projetos e Retention Lab
+
+- **Projetos** são salvos no IndexedDB deste navegador (salvar, carregar, duplicar, renomear e excluir).
+  Áudio e capa não são persistidos: são Object URLs da sessão e precisam ser recarregados após abrir um
+  projeto. `Exportar JSON`/`Importar JSON` levam a configuração entre navegadores, com schema versionado
+  e merge de defaults para arquivos antigos.
+- Cada gravação (individual ou job do lote) registra um **manifest** local com variante, hook, layouts,
+  movimento, CTA, plataforma, resolução, FPS, duração e tamanho do arquivo.
+- O **Retention Lab** aceita métricas digitadas ou um CSV com cabeçalho (`variante`/`label` e `views`;
+  opcionais `views3s`, `tempomedio`, `saves`, `shares`, `cliques`, `notas`; separador `,` ou `;`).
+  Retenção, saves, shares e cliques só são calculados com denominador real (views); sem views a taxa
+  aparece como `—`. O tempo médio é ponderado por views. Não há coleta automática nem afirmação de
+  causalidade.
+
+## Performance e validação do export
+
+- No preview, a resolução de render se adapta ao orçamento de frame (`draft`, `standard`, `export`,
+  `lightweight`) para manter a reprodução fluida; a gravação sempre usa a resolução cheia configurada.
+- Ao final da gravação, o arquivo é conferido: tamanho mínimo, formato/MIME × extensão, resolução e
+  duração contra o trecho. Inconsistências aparecem como avisos no painel de gravação e não bloqueiam
+  o download.
+- A tipografia de todos os layouts é limitada a 60% da altura do palco, para que títulos e metadados
+  mantenham a mesma hierarquia em 9:16, 1:1 e 16:9.
 
 Atalhos: `Espaço` = play/pause (quando nenhum campo de texto está focado). A gravação exige áudio
 carregado e trecho válido.
@@ -92,7 +135,14 @@ carregado e trecho válido.
 - Arquivos de áudio/capa ficam apenas na sessão do navegador; nada é salvo em servidor.
 - Se o navegador bloquear o áudio (autoplay policy), clique em play novamente: o `AudioContext` só é
   retomado por gesto do usuário.
+- A gravação gera um arquivo por vez; o lote baixa um link por job (não há ZIP nem download automático
+  em massa).
+- A auditoria visual dos oito layouts foi feita em um contact sheet (`docs/qa/layouts-audit.jpg`),
+  não em screenshots nativos por layout. Codecs não foram re-testados após essa revisão e não houve
+  medição de performance em GPU fraca.
 - Em máquinas sem WebGL o Stage não renderiza; não há fallback 2D implementado.
+- O console do navegador pode exibir avisos do Three.js/WebGL sobre alfa em cores e `flipY` de
+  texturas; eles não interrompem o preview nem a gravação.
 
 ## Estrutura
 
@@ -104,8 +154,14 @@ src/
   features/project/     tipos, defaults do preset Drazyx e store Zustand
   features/audio/       AudioEngine (playback, AnalyserNode, bandas, transientes, relógio) + ritmo (BPM)
   features/palette/     extração de cores da capa e utilitários de cor
-  features/visualizer/  VisualEngine (Three.js), Stage, templates e pass de acabamento
-  features/recording/   StageRecorder (MediaRecorder) e orquestração do fluxo
+  features/storyboard/  hooks, cenas, presets e geração automática pelo áudio
+  features/recipes/     recipes narrativos e aplicação ao projeto
+  features/platform/    perfis TikTok/Reels/Shorts
+  features/batch/       fila de variações e nomes dos arquivos do lote
+  features/visualizer/  VisualEngine (Three.js), motion, performance, Stage, templates
+  features/recording/   StageRecorder (MediaRecorder), validação do arquivo e fluxo
+  features/persistence/ IndexedDB, import/export JSON e manifest por export
+  features/retention/   métricas locais, CSV e taxas com denominador real
   lib/                  validação de arquivos, capacidades do navegador, formatação
   tests/                testes unitários Vitest + assets locais de teste
 ```

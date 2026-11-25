@@ -5,6 +5,8 @@ import { DEFAULT_PALETTE } from '../project/project.defaults'
 import type { SceneTransition, StoryboardConfig } from '../storyboard/storyboard.types'
 import { effectiveType, effectiveVisual, findSceneAt } from '../storyboard/storyboard.utils'
 import { TEMPLATE_REGISTRY } from './templates/registry'
+import { applyMotionProfile, applyVisualLoop, hashSeed, loopBlend } from './motion/motion.utils'
+import { AdaptiveResolution } from './performance'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
 import { CAMERA_Z, VIEW_HEIGHT, fovForViewHeight } from './visual.types'
@@ -30,8 +32,14 @@ export class VisualEngine {
   private viewWidth = VIEW_HEIGHT
   private width = 1080
   private height = 1920
+  private renderScale = 1
+  private readonly adaptive = new AdaptiveResolution()
+  private adaptiveEnabled = true
+  private exportMode = false
 
   private visual: VisualSettings
+  /** Parâmetros do início do trecho — usados no fechamento do loop visual. */
+  private openingVisual: VisualSettings
   private type: TypeSettings
   private palette: PaletteSettings = DEFAULT_PALETTE
   private clip = { start: 0, end: 30, progress: 0 }
@@ -54,6 +62,7 @@ export class VisualEngine {
   ) {
     this.canvas = canvas
     this.visual = visual
+    this.openingVisual = visual
     this.type = type
 
     this.renderer = new THREE.WebGLRenderer({
@@ -103,6 +112,7 @@ export class VisualEngine {
 
   setConfig(visual: VisualSettings, type: TypeSettings): void {
     this.visual = visual
+    this.openingVisual = visual
     this.type = type
   }
 
@@ -205,8 +215,7 @@ export class VisualEngine {
   setResolution(width: number, height: number): void {
     this.width = width
     this.height = height
-    this.renderer.setSize(width, height, false)
-    this.finish.setSize(width, height)
+    this.applyRenderSize()
     const aspect = width / height
     this.camera.aspect = aspect
     this.camera.updateProjectionMatrix()
@@ -218,6 +227,40 @@ export class VisualEngine {
 
   getResolution(): { width: number; height: number } {
     return { width: this.width, height: this.height }
+  }
+
+  /** Escala interna do preview (1 = resolução de saída). */
+  getRenderScale(): number {
+    return this.renderScale
+  }
+
+  /**
+   * Antes de gravar: resolução cheia e adaptação desligada. O MediaRecorder
+   * captura o canvas neste tamanho, então o arquivo nunca sai em escala de preview.
+   */
+  beginExport(): void {
+    this.exportMode = true
+    this.adaptiveEnabled = false
+    this.adaptive.reset()
+    this.renderScale = 1
+    this.applyRenderSize()
+  }
+
+  /** Depois de gravar: volta ao preview adaptativo. */
+  endExport(): void {
+    this.exportMode = false
+    this.adaptiveEnabled = true
+    this.adaptive.reset()
+    this.renderScale = 1
+    this.applyRenderSize()
+  }
+
+  private applyRenderSize(): void {
+    const scale = this.exportMode ? 1 : this.renderScale
+    const width = Math.max(2, Math.round(this.width * scale))
+    const height = Math.max(2, Math.round(this.height * scale))
+    this.renderer.setSize(width, height, false)
+    this.finish.setSize(width, height)
   }
 
   /* ---------- loop ---------- */
@@ -239,13 +282,34 @@ export class VisualEngine {
 
   private renderFrame(): void {
     const dt = Math.min(0.06, this.clock.getDelta())
-    this.time += dt
+
+    if (this.adaptiveEnabled && !this.exportMode) {
+      const nextScale = this.adaptive.push(dt)
+      if (nextScale !== this.renderScale) {
+        this.renderScale = nextScale
+        this.applyRenderSize()
+      }
+    }
 
     const frame = getAudioEngine().getFrame()
+
+    // Tempo do visual: durante o playback o relógio do áudio é a fonte de verdade,
+    // então seek reverso reconstrói o mesmo frame e o export reproduz o preview.
+    // Sem áudio (ou pausado) a cena continua respirando em ritmo reduzido.
+    const audioLoaded = frame.duration > 0
+    if (audioLoaded && frame.playing) this.time = frame.time
+    else this.time += dt * (audioLoaded ? 0.25 : 1)
+
     const clipSpan = Math.max(0.001, this.clip.end - this.clip.start)
     this.clip.progress = Math.max(0, Math.min(1, (frame.time - this.clip.start) / clipSpan))
 
-    let visual = this.visual
+    const motionSeed = hashSeed([this.templateId ?? 'none', Math.round(this.clip.start * 10)])
+    let visual = applyMotionProfile(this.visual, this.visual.motionProfile, {
+      progress: this.clip.progress,
+      seed: motionSeed,
+      energy: frame.energy,
+      transient: frame.transient,
+    })
     let type = this.type
     let palette = this.palette
 
@@ -260,11 +324,13 @@ export class VisualEngine {
           if (sceneChanged) this.startTransition(scene.transition)
         }
         const sceneDuration = Math.max(0.001, scene.end - scene.start)
-        visual = effectiveVisual(this.visual, scene, Math.max(0, sceneTime - scene.start), sceneDuration)
+        visual = effectiveVisual(visual, scene, Math.max(0, sceneTime - scene.start), sceneDuration)
         type = effectiveType(this.type, scene)
         if (scene.visualStyleId === 'violet') palette = DEFAULT_PALETTE
       }
     }
+
+    visual = applyVisualLoop(visual, this.openingVisual, loopBlend(this.clip.progress, this.visual.loopVisual))
 
     if (this.instance) {
       this.instance.update({

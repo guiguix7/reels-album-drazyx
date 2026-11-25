@@ -131,6 +131,23 @@
   color: rgba(169, 158, 174, 0.55);
 }
 
+.select {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font: 500 13px/1.4 var(--font-ui);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .toggleRow {
   display: flex;
   align-items: center;

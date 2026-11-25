@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { particleTexture } from './textures'
+import { createRandom, hashSeed } from '../motion/motion.utils'
 
 /** Campo de partículas de profundidade — arrastado por graves, lento por padrão. */
 
@@ -9,6 +10,8 @@ export interface ParticleFieldOptions {
   color: string
   size: number
   opacity: number
+  /** Semente fixa: preview e export reconstroem o mesmo campo de partículas. */
+  seed?: number
 }
 
 export class ParticleField {
@@ -26,13 +29,15 @@ export class ParticleField {
     const total = this.count * 3
     this.positions = new Float32Array(total)
     this.velocities = new Float32Array(total)
+    const seed = options.seed ?? hashSeed([this.count, this.area.x, this.area.y, this.area.z])
+    const random = createRandom(seed)
     for (let i = 0; i < this.count; i++) {
-      this.positions[i * 3] = (Math.random() - 0.5) * this.area.x
-      this.positions[i * 3 + 1] = (Math.random() - 0.5) * this.area.y
-      this.positions[i * 3 + 2] = (Math.random() - 0.5) * this.area.z
-      this.velocities[i * 3] = (Math.random() - 0.5) * 0.12
-      this.velocities[i * 3 + 1] = 0.06 + Math.random() * 0.14
-      this.velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.08
+      this.positions[i * 3] = (random() - 0.5) * this.area.x
+      this.positions[i * 3 + 1] = (random() - 0.5) * this.area.y
+      this.positions[i * 3 + 2] = (random() - 0.5) * this.area.z
+      this.velocities[i * 3] = (random() - 0.5) * 0.12
+      this.velocities[i * 3 + 1] = 0.06 + random() * 0.14
+      this.velocities[i * 3 + 2] = (random() - 0.5) * 0.08
     }
     this.geometry = new THREE.BufferGeometry()
     this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3))

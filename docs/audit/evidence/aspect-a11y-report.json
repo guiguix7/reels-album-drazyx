@@ -1,0 +1,119 @@
+{
+  "aspect": {
+    "9:16": {
+      "canvasIntrinsic": "1080x1920",
+      "canvasCss": "407x723",
+      "inner": "407x723",
+      "innerRatio": 0.562,
+      "expectedRatio": 0.563
+    },
+    "1:1": {
+      "canvasIntrinsic": "1080x1080",
+      "canvasCss": "723x723",
+      "inner": "723x723",
+      "innerRatio": 1,
+      "expectedRatio": 1
+    },
+    "16:9": {
+      "canvasIntrinsic": "1920x1080",
+      "canvasCss": "952x723",
+      "inner": "952x723",
+      "innerRatio": 1.317,
+      "expectedRatio": 1.778
+    }
+  },
+  "keyboard": {
+    "order": [
+      {
+        "tag": "BUTTON",
+        "name": "07\n07 — SYMMETRIC SPECTRUM\nCap",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "08\n08 — MONOCHROME FOCUS\nCapa ",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "01\nMIRAGE\nCena cinematográfica",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "02\nAFTERIMAGE\nEcos translúcido",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "03\nVOID\nEspaço quase vazio, ti",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "04\nSPECTRUM\nEspectro elegante ",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "INPUT",
+        "name": "",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "PRESET 15S",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "PRESET 30S",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      },
+      {
+        "tag": "BUTTON",
+        "name": "DA CAPA",
+        "outline": "solid 2px",
+        "boxShadow": "none"
+      }
+    ]
+  },
+  "a11y": {
+    "unlabeledControls": 2,
+    "totalControls": 24,
+    "liveRegions": 0,
+    "canvasLabel": null,
+    "canvasRole": null,
+    "listboxes": 2,
+    "options": 12,
+    "tabbables": 62,
+    "skipLink": false
+  },
+  "invalid": {
+    "error": "não conseguiu decodificar este áudio. Tente MP3, WAV ou OGG.",
+    "recordDisabled": true,
+    "fileText": "Nenhum arquivo de áudio"
+  },
+  "short": {
+    "ready": true,
+    "duration": "Duração 00:02",
+    "range": {
+      "min": "5",
+      "max": "5",
+      "value": "5"
+    },
+    "recordDisabled": false
+  },
+  "errors": [],
+  "layoutT6": [
+    "01 MIRAGE"
+  ]
+}

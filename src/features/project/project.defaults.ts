@@ -32,6 +32,7 @@ export const DEFAULT_PALETTE: PaletteSettings = {
 
 /** Preset inicial: primeiro lançamento Drazyx. */
 export const DEFAULT_PROJECT: ProjectConfig = {
+  platform: 'custom',
   aspectRatio: '9:16',
   quality: 'full',
   fps: 30,
@@ -47,6 +48,8 @@ export const DEFAULT_PROJECT: ProjectConfig = {
     grain: 0.35,
     cameraSpeed: 0.45,
     glitch: 'low',
+    motionProfile: 'dream',
+    loopVisual: false,
   },
   type: {
     artistName: 'DRAZYX',
