@@ -109,12 +109,22 @@ nativo por layout; codecs não foram re-testados após as mudanças e não houve
 performance em GPU fraca. A presença de faixa de áudio continua garantida pelo pipeline
 (track live obrigatória), não por inspeção do container gravado.
 
-## Fase 8 — Regressão final
+## Fase 8 — Regressão final *(concluída)*
 
-- Testes de áudio, storyboard, layouts, gravação, performance e integridade do arquivo.
-- QA end-to-end completo do prompt (novo projeto → export → persistência → batch → lab).
-- README/PROGRESS/TASKS/DECISIONS/docs finais com limitações reais.
+- [x] Testes de áudio, storyboard, layouts, gravação, performance e integridade do arquivo
+  (117 testes em 21 arquivos), mais regressão de safe areas nas três proporções, limite
+  tipográfico, imutabilidade da configuração base no lote e parsing de CSV.
+- [x] QA end-to-end do fluxo individual no navegador: carregar WAV → escolher 5 s → gravar em
+  1080×1920/30 fps → preview e download do WebM com áudio (2.111.213 bytes, 5,16 s, sem avisos
+  de validação) → manifest do export presente no IndexedDB.
+- [x] README/PROGRESS/TASKS/roadmap finais com recipes, storyboard, movimento, plataformas,
+  lote, persistência, Retention Lab, performance e limitações reais.
 - Commit: `test: add comprehensive visualizer regression coverage`.
+
+Limitações registradas: o lote completo (3–5 peças) e o round-trip da UI do Retention Lab não
+foram re-executados nesta rodada — têm cobertura unitária, mas não evidência visual nova. Os
+codecs não foram re-testados e não houve medição de performance em GPU fraca. A auditoria visual
+dos layouts continua sendo um contact sheet único, não screenshots nativos por layout.
 
 ## Dependências críticas
 

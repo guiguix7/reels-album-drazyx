@@ -69,4 +69,5 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
   - Áudio e capa não são salvos: são Object URLs da sessão; recarregue após abrir um projeto.
 - [x] Fase 7 — Performance, QA visual e export — perfis de render + resolução adaptativa no preview, export em resolução cheia via `beginExport`/`endExport`, validação de arquivo/duração, auditoria visual 8 layouts × 3 proporções em `docs/qa/layouts-audit.jpg` e limite tipográfico por altura do palco — commit `perf: optimize rendering and export pipeline`
   - QA visual em contact sheet único (sem screenshots nativos por layout); codecs não foram re-testados e não houve benchmark em GPU fraca.
-- [ ] Fase 8 — Regressão final + documentação — commit `test: add comprehensive visualizer regression coverage`
+- [x] Fase 8 — Regressão final + documentação — `text-metrics` testável, regressão de safe area/lote/CSV (117 testes), README com recipes/storyboard/movimento/lote/persistência/Retention Lab/limitações e QA real do fluxo individual (WAV → trecho de 5 s → WebM 1080×1920 com áudio, 5,16 s, manifest no IndexedDB) — commit `test: add comprehensive visualizer regression coverage`
+  - Lote completo e round-trip visual do Retention Lab não foram re-executados nesta rodada; codecs não foram re-testados e não houve benchmark em GPU fraca.

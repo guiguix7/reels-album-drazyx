@@ -45,10 +45,15 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
   (THREE.PerspectiveCamera usa graus); textos vivem em z=0 com safe area de 9%;
   `VisualEngine.setTemplate()` limpa a cena (`scene.clear()`) para não herdar meshes
   do template anterior.
-- Próxima arquitetura separa layout (geometria/proporção) de estilo visual
-  (paleta/luz/textura) e motion profile; T3/T4/T5 serão mapeados explicitamente.
-- Referências visuais fornecidas como imagem não estavam acessíveis na auditoria;
-  a direção segue as descrições do prompt e será validada com screenshots próprios.
+- Oito layouts numerados (T1–T8) separados de quatro estilos visuais
+  (MIRAGE/AFTERIMAGE/VOID/SPECTRUM) e do motion profile; T3/T4/T5 continuam
+  selecionáveis e mapeados explicitamente.
+- Toda `TextLayer` é limitada a 60% da altura do palco em unidades de mundo.
+  Sem o limite, em 16:9 o texto cresce junto com a largura e colide com capa e
+  metadados; a hierarquia agora é a mesma em 9:16, 1:1 e 16:9.
+- A auditoria visual dos oito layouts nas três proporções é feita em contact
+  sheet (`docs/qa/layouts-audit.jpg`); screenshots nativos por layout ficam como
+  pendência registrada.
 
 ## Gravação e export
 
@@ -64,13 +69,24 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
   configuração ficam desabilitados (fieldset) e o transporte bloqueado; o painel de
   gravação permanece ativo para permitir cancelar.
 - 9:16 1080×1920 e 30 fps padrão; 720p e 60 fps como opções.
+- O preview reduz a escala de render quando o frame estoura o orçamento, mas a
+  gravação sempre renderiza em resolução cheia (`beginVisualExport`/`endVisualExport`).
+- O arquivo gerado é validado (tamanho, MIME × extensão, resolução e duração vs.
+  trecho) e as inconsistências aparecem como avisos, sem bloquear o download.
+- O lote reutiliza o mesmo pipeline da gravação individual, um job por vez, com
+  manifest e download próprios; não há ZIP.
 
-## Próximas decisões planejadas
+## Storyboard, persistência e processo
 
 - Storyboard: cenas tipadas com `role`, `layoutId`, `visualStyleId`, transição,
-  motion profile, textos e keyframes; áudio continua sendo o relógio.
-- Motion determinístico por seed; preview deve reproduzir o export e seek reverso
-  deve reconstruir o estado correto.
-- Persistência em IndexedDB; manifest por export e Retention Lab local com métricas
-  manuais/CSV, sem fabricar dados nem alegar causalidade.
-- Um commit por fase do master prompt, sempre em `feat/retention-driven-visualizer`.
+  motion profile, textos e keyframes; áudio continua sendo o relógio. Presets
+  15/30 s e geração automática usam envelope/onsets/pico reais do trecho.
+- Motion determinístico por seed (`hashSeed` + mulberry32); preview reproduz o
+  export e seek reverso reconstrói o frame. Loop visual fecha no início do trecho,
+  sem prometer loop de áudio.
+- Persistência em IndexedDB (projetos/exports/métricas); manifest por export e
+  Retention Lab local com métricas manuais/CSV, sem fabricar dados nem alegar
+  causalidade. Áudio e capa não são persistidos (Object URLs da sessão).
+- Um commit por fase do master prompt, sempre em `feat/retention-driven-visualizer`;
+  nenhuma fase é declarada concluída apenas por UI pronta, e limitações reais
+  ficam registradas em PROGRESS/TASKS/roadmap.

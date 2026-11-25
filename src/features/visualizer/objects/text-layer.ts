@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { onFontsReady } from './fonts-ready'
-import { VIEW_HEIGHT } from '../visual.types'
+import { capTextWidth } from '../text-metrics'
 
 /**
  * Tipografia renderizada em canvas → CanvasTexture → plano.
@@ -43,13 +43,6 @@ const FAMILY: Record<TextFont, string> = {
   title: '"Space Grotesk", "Segoe UI", system-ui, sans-serif',
   ui: '"Inter", "Segoe UI", system-ui, sans-serif',
 }
-
-/**
- * Limite de largura do texto relativo à altura do palco. Sem isto, em 16:9 a
- * tipografia cresce junto com a largura e colide com capa/metadados; o texto
- * mantém a mesma hierarquia nas três proporções.
- */
-const MAX_TEXT_WORLD_WIDTH = VIEW_HEIGHT * 0.6
 
 /** Desenha texto com tracking manual e wrap; retorna canvas + métricas. */
 export function drawTextCanvas(lines: string[], style: TextStyle, canvasPxWidth: number): HTMLCanvasElement {
@@ -185,7 +178,7 @@ export class TextLayer {
   /** Define o texto (linhas) e a largura em unidades de mundo. Retorna altura de mundo. */
   set(lines: string[], worldWidth: number, stylePatch: Partial<TextStyle> = {}): number {
     this.lines = lines
-    this.worldWidth = Math.min(worldWidth, MAX_TEXT_WORLD_WIDTH)
+    this.worldWidth = capTextWidth(worldWidth)
     this.style = { ...this.style, ...stylePatch }
     this.redraw()
     return this.worldHeight
