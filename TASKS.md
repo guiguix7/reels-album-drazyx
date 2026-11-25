@@ -5,6 +5,7 @@
 - [x] Fase 0 — Baseline: branch `feat/product-quality-improvements`, `npm ci` + lint + typecheck + 117 testes + build verdes, produção reconciliada (`index-DZ5U_6t5.js`), `docs/IMPROVEMENT_BASELINE.md`
 - [x] Fase 1 — Correções críticas: 8 layouts selecionáveis, Stage com razão medida, MIRAGE sem colisão, validação única de áudio curto e empty state fora do palco — 129 testes verdes
 - [x] Fase 2 — Workspace/onboarding: CTA persistente de gravação, guia de 5 passos, descrições e grupos no Visual, tipografia/alvos/contraste, chrome compacto — validação DOM desktop/mobile
+- [x] Fase 5 — Elementos editáveis: overlay WebGL com texto/capa/forma/waveform/progresso, seleção e drag no Stage, inspetor, camadas, presets locais e import/export JSON — 137 testes
 - [x] Fase 4 — Composições por formato: modo retrato/quadrado/paisagem, capas limitadas pela altura, layouts editoriais específicos (MIRAGE/T4/T6/T8/AFTERIMAGE/SPECTRUM), T2 e T6 sem laterais apertadas em retrato, remoção do fundo 2.5D do T3 — 135 testes
 - [x] Fase 3 — Storyboard/trecho: 45 s, preset 45 s, waveform com seleção arrastável, timeline clicável, inspector único, preview por cena/sequência com parada no fim — 133 testes
 

@@ -3,6 +3,13 @@
 Decisões de produto e engenharia que governam a evolução do app.
 Tooling de agentes/OpenCode não pertence a este arquivo.
 
+## 2026-11-25 — Fase 5: elementos editáveis
+
+- A customização usa uma camada declarativa separada do template (`CompositionLayer`): os templates continuam sendo pontos de partida e nenhum elemento original é sobrescrito. O usuário pode cobrir/editar a composição com camadas extras; esconder a tipografia original ainda é feito pelos toggles de Tipografia.
+- Elementos vivem em `ProjectConfig.elements`, em porcentagem do palco. O renderer desenha no WebGL (portanto entra na gravação); o overlay HTML só converte gestos em store.
+- O overlay suporta texto, capa, forma, waveform e progresso. Player completo e importação de imagem ficam para a fase de music video/expansão; a UI não finge que existem.
+- Presets usam `localStorage` e JSON exportável; a mídia nunca é incluída. A ordem do array é a ordem de camadas e vira `renderOrder` explícito.
+
 ## 2026-11-25 — Fase 4: composição por formato
 
 - O formato é derivado do aspecto real do palco (`getFormatMode`), não do rótulo da UI: retrato abaixo de 0,8, paisagem acima de 1,2, quadrado no meio.

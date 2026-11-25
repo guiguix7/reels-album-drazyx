@@ -80,6 +80,40 @@ export interface TypeSettings {
   tracking: number
 }
 
+export type CompositionElementType = 'text' | 'artwork' | 'shape' | 'waveform' | 'progress'
+export type CompositionFont = 'title' | 'ui'
+export type CompositionMotion = 'none' | 'float' | 'pulse'
+
+/**
+ * Camada editável desenhada no Stage por cima do template. Coordenadas em
+ * porcentagem do palco; width/height em porcentagem da largura/altura.
+ */
+export interface CompositionElement {
+  id: string
+  type: CompositionElementType
+  name: string
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  opacity: number
+  visible: boolean
+  locked: boolean
+  color: string
+  text: string
+  font: CompositionFont
+  /** Tamanho do texto como fração da altura do palco (1–40). */
+  fontSize: number
+  weight: number
+  align: 'left' | 'center' | 'right'
+  tracking: number
+  motion: CompositionMotion
+  /** Intensidade do movimento (0–100). */
+  motionAmount: number
+  reactive: boolean
+}
+
 export interface AudioMeta {
   fileName: string
   duration: number
@@ -105,6 +139,8 @@ export interface ProjectConfig {
   visual: VisualSettings
   type: TypeSettings
   storyboard: StoryboardConfig
+  /** Elementos editáveis da composição; vazio preserva o template puro. */
+  elements: CompositionElement[]
 }
 
 /** Dimensões de saída por proporção/qualidade. */

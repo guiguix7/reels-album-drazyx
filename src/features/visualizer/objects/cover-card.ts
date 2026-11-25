@@ -69,6 +69,14 @@ export class CoverCard {
     this.glowMaterial.opacity = 0.25 + intensity * 0.65
   }
 
+  /** Opacidade global do card (usada pelas camadas editáveis). */
+  setOpacity(opacity: number): void {
+    this.backingMaterial.opacity = opacity
+    this.coverMaterial.opacity = opacity
+    ;(this.border.material as THREE.LineBasicMaterial).opacity = Math.min(1, opacity * 0.9)
+    this.glowMaterial.opacity *= opacity
+  }
+
   /** Cor do glow/moldura seguindo a paleta (acento da capa). */
   setAccent(color: string, borderColor = color): void {
     this.glowMaterial.color.set(color)

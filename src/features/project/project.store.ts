@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import type { AspectRatioId, AudioMeta, CompositionElement, CompositionElementType, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import { createCompositionElement } from '../composition/composition.defaults'
 import { applyRecipeToConfig } from '../recipes/apply-recipe'
 import { RECIPES } from '../recipes/recipes'
 import type { RecipeId } from '../recipes/recipes'
@@ -31,6 +32,8 @@ interface ProjectState {
   coverMeta: CoverMeta | null
   /** Paleta extraída da capa (fonte para o modo automático). */
   coverPalette: CoverPalette | null
+  /** Elemento selecionado no Stage / inspetor. Não persiste no projeto. */
+  selectedElementId: string | null
 
   /* ações — configuração */
   setConfig: (config: ProjectConfig) => void
@@ -50,6 +53,16 @@ interface ProjectState {
   setPaletteMode: (mode: PaletteMode) => void
   setCoverPalette: (palette: CoverPalette | null) => void
   resetVisualToTemplateDefault: () => void
+
+  /* ações — composição */
+  addElement: (type: CompositionElementType, overrides?: Partial<CompositionElement>) => void
+  updateElement: (id: string, patch: Partial<CompositionElement>) => void
+  removeElement: (id: string) => void
+  duplicateElement: (id: string) => void
+  moveElementLayer: (id: string, direction: -1 | 1) => void
+  replaceElements: (elements: CompositionElement[]) => void
+  clearElements: () => void
+  selectElement: (id: string | null) => void
 
   /* ações — storyboard */
   setStoryboardEnabled: (enabled: boolean) => void
@@ -89,6 +102,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   audioError: null,
   coverMeta: null,
   coverPalette: null,
+  selectedElementId: null,
 
   setConfig: (config) => set({ config: fitStoryboard(config) }),
 
@@ -182,6 +196,82 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         : state.config.palette
       return { coverPalette: palette, config: { ...state.config, palette: next } }
     }),
+
+  addElement: (type, overrides) =>
+    set((state) => {
+      const ratio = state.config.aspectRatio === '9:16' ? 9 / 16 : state.config.aspectRatio === '1:1' ? 1 : 16 / 9
+      const element = createCompositionElement(type, ratio, overrides)
+      return {
+        config: { ...state.config, elements: [...state.config.elements, element] },
+        selectedElementId: element.id,
+      }
+    }),
+
+  updateElement: (id, patch) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        elements: state.config.elements.map((element) => {
+          if (element.id !== id) return element
+          const next = { ...element, ...patch }
+          return {
+            ...next,
+            x: Math.max(-100, Math.min(200, next.x)),
+            y: Math.max(-100, Math.min(200, next.y)),
+            width: Math.max(1, Math.min(220, next.width)),
+            height: Math.max(0.5, Math.min(220, next.height)),
+            rotation: Math.max(-180, Math.min(180, next.rotation)),
+            opacity: Math.max(0, Math.min(1, next.opacity)),
+            fontSize: Math.max(0.5, Math.min(30, next.fontSize)),
+            tracking: Math.max(-2, Math.min(24, next.tracking)),
+            motionAmount: Math.max(0, Math.min(100, next.motionAmount)),
+          }
+        }),
+      },
+    })),
+
+  removeElement: (id) =>
+    set((state) => ({
+      config: { ...state.config, elements: state.config.elements.filter((element) => element.id !== id) },
+      selectedElementId: state.selectedElementId === id ? null : state.selectedElementId,
+    })),
+
+  duplicateElement: (id) =>
+    set((state) => {
+      const source = state.config.elements.find((element) => element.id === id)
+      if (!source) return state
+      const copy: CompositionElement = {
+        ...source,
+        id: `el-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        name: `${source.name} 2`,
+        x: Math.min(100, source.x + 4),
+        y: Math.min(100, source.y + 4),
+      }
+      return { config: { ...state.config, elements: [...state.config.elements, copy] }, selectedElementId: copy.id }
+    }),
+
+  moveElementLayer: (id, direction) =>
+    set((state) => {
+      const elements = [...state.config.elements]
+      const index = elements.findIndex((element) => element.id === id)
+      const target = index + direction
+      if (index < 0 || target < 0 || target >= elements.length) return state
+      const [item] = elements.splice(index, 1)
+      elements.splice(target, 0, item)
+      return { config: { ...state.config, elements } }
+    }),
+
+  replaceElements: (elements) => set((state) => ({
+    config: { ...state.config, elements },
+    selectedElementId: elements[0]?.id ?? null,
+  })),
+
+  clearElements: () => set((state) => ({
+    config: { ...state.config, elements: [] },
+    selectedElementId: null,
+  })),
+
+  selectElement: (selectedElementId) => set({ selectedElementId }),
 
   resetVisualToTemplateDefault: () => {
     const id = get().config.templateId

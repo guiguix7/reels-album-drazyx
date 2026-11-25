@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { getAudioEngine } from '../audio/AudioEngine'
-import type { PaletteSettings, TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
+import type { CompositionElement, PaletteSettings, TemplateId, TypeSettings, VisualSettings } from '../project/project.types'
 import { DEFAULT_PALETTE } from '../project/project.defaults'
 import type { SceneTransition, StoryboardConfig } from '../storyboard/storyboard.types'
 import { effectiveType, effectiveVisual, findSceneAt } from '../storyboard/storyboard.utils'
@@ -9,6 +9,7 @@ import { applyMotionProfile, applyVisualLoop, hashSeed, loopBlend } from './moti
 import { AdaptiveResolution } from './performance'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
+import { CompositionLayer } from './objects/composition-layer'
 import { CAMERA_Z, VIEW_HEIGHT, fovForViewHeight } from './visual.types'
 import type { StageAssets, TemplateInstance } from './visual.types'
 
@@ -54,6 +55,8 @@ export class VisualEngine {
   private assets: StageAssets = { coverTexture: null, hasCover: false }
   private defaultCoverTexture: THREE.Texture | null = null
   private loadingImage: HTMLImageElement | null = null
+  private elements: CompositionElement[] = []
+  private composition: CompositionLayer | null = null
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -144,6 +147,8 @@ export class VisualEngine {
     if (this.templateId === id) return
     this.templateId = id
     this.instance?.dispose()
+    this.composition?.dispose()
+    this.composition = null
     // dispose() dos templates libera recursos mas não remove os meshes da cena;
     // sem o clear, objetos do template anterior continuam renderizando por cima.
     this.scene.clear()
@@ -160,6 +165,21 @@ export class VisualEngine {
       assets: this.assets,
     })
     this.instance.resize(this.viewWidth, this.viewHeight)
+    this.rebuildComposition()
+  }
+
+  /** Elementos declarativos por cima do template; vazio não altera nada. */
+  setElements(elements: CompositionElement[]): void {
+    this.elements = elements
+    this.rebuildComposition()
+  }
+
+  private rebuildComposition(): void {
+    this.composition?.dispose()
+    this.composition = null
+    if (!this.elements.length) return
+    this.composition = new CompositionLayer(this.elements, this.assets, this.viewWidth, this.viewHeight)
+    this.scene.add(this.composition.group)
   }
 
   setCoverUrl(url: string | null): void {
@@ -223,6 +243,7 @@ export class VisualEngine {
     this.viewWidth = VIEW_HEIGHT * aspect
     this.resizeCurtain()
     this.instance?.resize(this.viewWidth, this.viewHeight)
+    this.composition?.resize(this.viewWidth, this.viewHeight)
   }
 
   getResolution(): { width: number; height: number } {
@@ -332,17 +353,17 @@ export class VisualEngine {
 
     visual = applyVisualLoop(visual, this.openingVisual, loopBlend(this.clip.progress, this.visual.loopVisual))
 
-    if (this.instance) {
-      this.instance.update({
-        frame,
-        visual,
-        type,
-        palette,
-        clip: this.clip,
-        time: this.time,
-        dt,
-      })
+    const updateArgs = {
+      frame,
+      visual,
+      type,
+      palette,
+      clip: this.clip,
+      time: this.time,
+      dt,
     }
+    if (this.instance) this.instance.update(updateArgs)
+    this.composition?.update(updateArgs)
 
     this.updateTransition(dt)
 
@@ -400,6 +421,8 @@ export class VisualEngine {
   dispose(): void {
     this.stop()
     this.instance?.dispose()
+    this.composition?.dispose()
+    this.composition = null
     this.scene.clear()
     this.instance = null
     this.camera.remove(this.curtain)

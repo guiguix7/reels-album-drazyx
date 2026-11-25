@@ -83,6 +83,7 @@ export const DEFAULT_PROJECT: ProjectConfig = {
     tracking: 6,
   },
   storyboard: createDefaultStoryboard(),
+  elements: [],
 }
 
 /** Valores padrão de cena por template — usado no botão "restaurar preset". */

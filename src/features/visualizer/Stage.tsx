@@ -6,6 +6,7 @@ import { getClipEnd } from '../project/project.types'
 import { getOutputDimensions } from '../project/project.types'
 import { getAudioEngine } from '../audio/AudioEngine'
 import { fitStageSize } from './stage-size'
+import { CompositionOverlay } from './CompositionOverlay'
 import styles from './stage.module.css'
 
 /**
@@ -27,6 +28,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   const palette = useProjectStore((s) => s.config.palette)
   const storyboard = useProjectStore((s) => s.config.storyboard)
   const coverUrl = useProjectStore((s) => s.coverMeta?.objectUrl ?? null)
+  const elements = useProjectStore((s) => s.config.elements)
 
   // Criação única do engine
   useEffect(() => {
@@ -38,6 +40,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     setVisualEngine(engine)
     engine.setPalette(store.config.palette)
     engine.setStoryboard(store.config.storyboard, store.config.templateId)
+    engine.setElements(store.config.elements)
     engine.start()
     if (import.meta.env.DEV) {
       // Apenas em desenvolvimento: permite inspecionar/auditar os layouts no navegador.
@@ -97,6 +100,11 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     engineRef.current?.setCoverUrl(coverUrl)
   }, [coverUrl])
 
+  // Camadas editáveis (o overlay HTML apenas manipula; o WebGL desenha)
+  useEffect(() => {
+    engineRef.current?.setElements(elements)
+  }, [elements])
+
   const dims = getOutputDimensions(aspect, quality)
 
   // O CSS sozinho não preserva a razão quando a largura é limitada e a altura
@@ -135,6 +143,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     <div className={styles.stageFrame} ref={frameRef}>
       <div className={styles.stageInner} style={stageStyle}>
         <canvas ref={canvasRef as React.Ref<HTMLCanvasElement>} width={dims.width} height={dims.height} className={styles.canvas} />
+        <CompositionOverlay />
       </div>
     </div>
   )

@@ -877,6 +877,138 @@
   color: var(--text-dim);
 }
 
+/* ---------- composição editável ---------- */
+
+.compAddRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.compLayerList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.compLayerRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+}
+
+.compLayerRowActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.compLayerName {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 4px 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: 600 12px/1.2 var(--font-ui);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.compLayerName span {
+  font: 500 10px/1.2 var(--font-ui);
+  color: var(--text-dim);
+}
+
+.compIconButton {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--surface-line);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.compIconButton:hover {
+  border-color: var(--surface-line-strong);
+  color: var(--text);
+}
+
+.compIconButton[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.compInspector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-line);
+}
+
+.compInspectorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.compInspectorHead strong {
+  font: 700 12px/1.2 var(--font-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.compInspectorActions {
+  display: flex;
+  gap: 5px;
+}
+
+.compPresets {
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-line);
+}
+
+.compPresets summary {
+  padding: 4px 0;
+  color: var(--text-dim);
+  font: 600 12px/1.4 var(--font-ui);
+  cursor: pointer;
+}
+
+.compPresetRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ---------- recipes e batch ---------- */
 
 .recipeList {
