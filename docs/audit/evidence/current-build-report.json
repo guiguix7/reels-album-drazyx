@@ -1,0 +1,188 @@
+{
+  "viewport": "1920x1080",
+  "layouts": {
+    "uiClicks": [
+      {
+        "index": 0,
+        "label": "01 01 — CENTERED HERO",
+        "active": "mirage",
+        "selected": [
+          "01 MIRAGE"
+        ]
+      },
+      {
+        "index": 1,
+        "label": "02 02 — STEREO FRAME",
+        "active": "mirage",
+        "selected": [
+          "01 MIRAGE"
+        ]
+      },
+      {
+        "index": 2,
+        "label": "03 03 — OFFSET CINEMA",
+        "active": "t3",
+        "selected": [
+          "03 03 — OFFSET CINEMA"
+        ]
+      },
+      {
+        "index": 3,
+        "label": "04 04 — EDITORIAL COVER",
+        "active": "t4",
+        "selected": [
+          "04 04 — EDITORIAL COVER"
+        ]
+      },
+      {
+        "index": 4,
+        "label": "05 05 — ALBUM PLAYER SPLIT",
+        "active": "t5",
+        "selected": [
+          "05 05 — ALBUM PLAYER SPLIT"
+        ]
+      },
+      {
+        "index": 5,
+        "label": "06 06 — VERTICAL TOTEM",
+        "active": "t5",
+        "selected": [
+          "05 05 — ALBUM PLAYER SPLIT"
+        ]
+      },
+      {
+        "index": 6,
+        "label": "07 07 — SYMMETRIC SPECTRUM",
+        "active": "t5",
+        "selected": [
+          "05 05 — ALBUM PLAYER SPLIT"
+        ]
+      },
+      {
+        "index": 7,
+        "label": "08 08 — MONOCHROME FOCUS",
+        "active": "t5",
+        "selected": [
+          "05 05 — ALBUM PLAYER SPLIT"
+        ]
+      }
+    ]
+  },
+  "stages": {
+    "square": {
+      "intrinsic": "756x756",
+      "canvas": "903x903",
+      "inner": "903x903",
+      "ratio": 1
+    },
+    "wide": {
+      "intrinsic": "1344x756",
+      "canvas": "1432x903",
+      "inner": "1432x903",
+      "ratio": 1.586,
+      "expected": 1.778
+    }
+  },
+  "storyboard": {
+    "panel": {
+      "sceneCards": 0,
+      "panelHeight": null,
+      "asideScrollHeight": 7863,
+      "sceneCardHeights": [],
+      "selectsPerScene": 0,
+      "slidersPerScene": 0,
+      "scenes": [
+        {
+          "role": "hook",
+          "start": 0,
+          "end": 3,
+          "layout": "void"
+        },
+        {
+          "role": "reveal",
+          "start": 3,
+          "end": 8,
+          "layout": "mirage"
+        },
+        {
+          "role": "development",
+          "start": 8,
+          "end": 16,
+          "layout": "spectrum"
+        },
+        {
+          "role": "development",
+          "start": 16,
+          "end": 23,
+          "layout": "afterimage"
+        },
+        {
+          "role": "peak",
+          "start": 23,
+          "end": 27,
+          "layout": "t3"
+        },
+        {
+          "role": "payoff",
+          "start": 27,
+          "end": 30,
+          "layout": "t5"
+        }
+      ]
+    },
+    "scenePreview": {
+      "before": null,
+      "after": null,
+      "firstSceneEnd": 3,
+      "continuesPastScene": null
+    }
+  },
+  "clip": {
+    "duration": {
+      "requested": 45,
+      "stored": 30,
+      "sliderMax": "5",
+      "clipStart": 0
+    }
+  },
+  "visual": {
+    "sliderLabels": [
+      "INTENSIDADE",
+      "PARTÍCULAS",
+      "FORÇA DO GRAVE",
+      "BRILHO",
+      "GRÃO",
+      "CÂMERA"
+    ],
+    "descriptionElements": [
+      "Ajustes finos da cena ativa. Cada template tem seus padrões.",
+      "Deriva lenta, brilho contínuo e resposta macia aos graves."
+    ],
+    "hasPerControlDescription": false
+  },
+  "a11y": {
+    "liveRegions": 0,
+    "canvasRole": null,
+    "canvasLabel": null,
+    "tabbables": 95,
+    "smallText": {
+      "small": 135,
+      "total": 215
+    },
+    "smallTargets": 38,
+    "totalButtons": 50,
+    "asideScrollHeight": 5266,
+    "recordTop": null,
+    "recordSectionText": null
+  },
+  "errors": [],
+  "customization": {
+    "hasPositionControls": true,
+    "hasLayerControls": true,
+    "hasFontFamilyControl": false,
+    "hasElementSelectionHint": false,
+    "typographyInputs": [],
+    "canvasRole": null,
+    "canvasLabel": null
+  }
+}

@@ -1,6 +1,8 @@
 import { useRecorderStore } from '../../features/recording/recording.store'
 import type { RecorderStatus } from '../../features/recording/recording.store'
 import { useProjectStore } from '../../features/project/project.store'
+import { getClipReadiness } from '../../features/project/project.types'
+import { MIN_CLIP_SECONDS } from '../../features/project/project.defaults'
 import { formatTimePrecise } from '../../lib/format-time'
 import { Button, Notice, Panel } from '../ui/ui'
 import styles from './panels.module.css'
@@ -31,12 +33,14 @@ export function RecordPanel({
   const error = useRecorderStore((s) => s.error)
   const preview = useRecorderStore((s) => s.preview)
   const reset = useRecorderStore((s) => s.reset)
-  const audioStatus = useProjectStore((s) => s.audioStatus)
-  const audioReady = audioStatus === 'ready' || audioStatus === 'playing' || audioStatus === 'paused'
+  const audioMeta = useProjectStore((s) => s.audioMeta)
+  const config = useProjectStore((s) => s.config)
+  const readiness = getClipReadiness(config, audioMeta?.duration ?? null, MIN_CLIP_SECONDS)
+  const isFull = config.productionMode === 'full'
   const busy = status === 'preparing' || status === 'recording' || status === 'processing'
 
   return (
-    <Panel title="Gravação" hint="Grava o Stage + áudio sincronizado. Mantenha esta aba visível.">
+    <Panel title="Gravação" hint={isFull ? 'Grava a faixa inteira em 16:9, com áudio sincronizado. Mantenha esta aba visível.' : 'Grava o Stage + áudio sincronizado. Mantenha esta aba visível.'}>
       <div className={styles.recordRow}>
         {busy ? (
           <Button variant="danger" onClick={() => void onCancel()}>
@@ -46,9 +50,9 @@ export function RecordPanel({
           <Button
             variant="primary"
             onClick={() => void onStart()}
-            disabled={!audioReady}
+            disabled={!readiness.recordable}
           >
-            {status === 'done' ? 'Gravar novamente' : 'Gravar trecho'}
+            {status === 'done' ? 'Gravar novamente' : isFull ? 'Gravar music video' : 'Gravar trecho'}
           </Button>
         )}
         <span className={styles.recHint}>
@@ -56,10 +60,14 @@ export function RecordPanel({
         </span>
       </div>
 
-      {statusMessage && STATUS_COPY[status] ? <Notice tone="info">{STATUS_COPY[status]}</Notice> : null}
+      {statusMessage && STATUS_COPY[status] ? (
+        <Notice tone="info">
+          {isFull && status === 'recording' ? 'Gravando a faixa inteira...' : STATUS_COPY[status]}
+        </Notice>
+      ) : null}
       {error ? <Notice tone="error">{error}</Notice> : null}
-      {!audioReady && status === 'idle' ? (
-        <Notice tone="info">Carregue um áudio para habilitar a gravação.</Notice>
+      {!readiness.recordable && status === 'idle' && readiness.reason ? (
+        <Notice tone="info">{readiness.reason}</Notice>
       ) : null}
 
       {preview ? (

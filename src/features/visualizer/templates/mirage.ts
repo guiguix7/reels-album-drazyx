@@ -9,6 +9,8 @@ import { radialGlowTexture } from '../objects/textures'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { stackMirageMeta } from './mirage-layout'
+import { coverSide, getFormatMode } from './composition'
 
 /**
  * MIRAGE — preset principal. Storyboard de 30s: tagline → capa suspensa →
@@ -68,9 +70,13 @@ export const MirageTemplate: VisualTemplate = {
 
     const tagline = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#f2edf5', tracking: 6, align: 'center', lineHeight: 1.35, uppercase: true }))
     ctx.scene.add(tagline.mesh)
-    const artistTrack = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.085, color: '#f2edf5', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.28, lineColors: ['#f2edf5', '#a99eae'], uppercase: true }))
-    ctx.scene.add(artistTrack.mesh)
-    const albumLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#a99eae', tracking: 3, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
+    // Título e artista em camadas separadas: cada bloco é medido e empilhado,
+    // então um título de duas linhas não pode invadir o artista.
+    const titleLayer = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.072, color: '#f2edf5', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.28, uppercase: true, wrap: true }))
+    ctx.scene.add(titleLayer.mesh)
+    const artistLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#a99eae', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
+    ctx.scene.add(artistLayer.mesh)
+    const albumLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#a99eae', tracking: 3, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(albumLayer.mesh)
     const cta = track(new TextLayer({ font: 'ui', weight: 600, sizeFrac: 0.05, color: '#cf8aff', tracking: 5, align: 'center', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(cta.mesh)
@@ -133,16 +139,22 @@ export const MirageTemplate: VisualTemplate = {
         particles.update(dt, bass, 0.4 + visual.cameraSpeed)
         particles.setOpacity((0.35 + frame.energy * 0.4) * (0.4 + visual.intensity * 0.6))
 
-        // Capa suspensa: flutuação, rotação lenta, pulso sutil nos graves.
-        const coverSize = viewW * 0.62
+        // Capa suspensa: em 16:9 ela vai para a direita e o texto ocupa a
+        // esquerda; em retrato fica centralizada acima dos metadados.
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
+        const coverSize = coverSide(viewW, viewH, mode)
+        const coverX = landscape ? viewW * 0.22 : 0
+        const coverY = landscape ? 0.12 : mode === 'square' ? 0.58 : 0.5
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.25 + visual.glow * 0.5 + bass * 0.35)
-        cover.group.position.y = Math.sin(time * 0.5) * 0.09 + bass * 0.06
-        cover.group.position.z = 0
-        cover.group.rotation.y = Math.sin(time * 0.22) * 0.055 + frame.mid * 0.05
-        cover.group.rotation.x = Math.cos(time * 0.17) * 0.02
+        cover.group.position.set(coverX, coverY + Math.sin(time * 0.5) * 0.09 + bass * 0.06, 0)
+        cover.group.rotation.y = Math.sin(time * 0.22) * 0.022 + frame.mid * 0.02
+        cover.group.rotation.x = Math.cos(time * 0.17) * 0.008
         const coverPulse = 1 + bass * 0.035 + frame.beatPulse * 0.012
         cover.group.scale.setScalar(coverPulse)
+        ring.mesh.position.set(coverX, coverY, 0)
+        ringOuter.mesh.position.set(coverX, coverY, 0)
 
         // Anéis espectrais reativos (graves + batida detectada)
         ring.update(2.35 + bass * 0.45 + frame.beatPulse * 0.14, frame.bars, 0.85, 0.05, time * 0.12, (0.35 + frame.treble * 0.5) * intensity)
@@ -155,29 +167,31 @@ export const MirageTemplate: VisualTemplate = {
         tagline.setOpacity(taglineOpacity)
         tagline.mesh.position.set(0, safe.topY - 0.55, 0)
 
-        // Bloco de metadados ancorado pelo topo, com borda inferior na linha segura.
+        // Bloco de metadados empilhado de baixo para cima com alturas reais.
         const metaOpacity = type.showArtist || type.showTrack ? 1 : 0
-        const metaLines = [
-          ...(type.showTrack ? [type.trackTitle] : []),
-          ...(type.showArtist ? [type.artistName] : []),
-        ]
-        const metaW = viewW * 0.8
-        const metaH = artistTrack.set(metaLines, metaW, {})
-        artistTrack.setOpacity(0.95 * metaOpacity)
-        artistTrack.mesh.position.set(safe.leftX, safe.bottomY + metaH, 0)
-
-        if (type.showAlbum) {
-          const albumH = albumLayer.set([type.albumTitle], metaW, {})
-          albumLayer.setOpacity(0.85)
-          albumLayer.mesh.position.set(safe.leftX, safe.bottomY + metaH + albumH + 0.14, 0)
-        } else {
-          albumLayer.setOpacity(0)
-        }
+        const metaW = landscape ? viewW * 0.4 : viewW * 0.8
+        const titleH = titleLayer.set([type.showTrack ? type.trackTitle : ''], metaW, {})
+        titleLayer.setOpacity(0.96 * metaOpacity)
+        const artistH = artistLayer.set([type.showArtist ? type.artistName : ''], metaW, {})
+        artistLayer.setOpacity(0.85 * metaOpacity)
+        const albumH = type.showAlbum ? albumLayer.set([type.albumTitle], metaW, {}) : 0
+        albumLayer.setOpacity(type.showAlbum ? 0.72 : 0)
+        const meta = stackMirageMeta({
+          safeBottomY: safe.bottomY,
+          artistHeight: artistH,
+          titleHeight: titleH,
+          albumHeight: albumH,
+          showAlbum: type.showAlbum && albumH > 0,
+          gap: 0.14,
+        })
+        titleLayer.mesh.position.set(safe.leftX, meta.titleTop, 0)
+        artistLayer.mesh.position.set(safe.leftX, meta.artistTop, 0)
+        if (type.showAlbum) albumLayer.mesh.position.set(safe.leftX, meta.albumTop, 0)
 
         const ctaOpacity = type.showCta ? (p > 0.82 ? (p - 0.82) / 0.08 : 0) : 0
-        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
+        cta.set([type.ctaText], landscape ? viewW * 0.3 : viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
-        cta.mesh.position.set(0, safe.bottomY - 0.45, 0)
+        cta.mesh.position.set(landscape ? coverX : 0, safe.bottomY + 0.12, 0)
 
         // Câmera: dolly lento + orbit sutil (amplitude baixa para preservar as
         // zonas seguras do texto) + kick curto no transiente

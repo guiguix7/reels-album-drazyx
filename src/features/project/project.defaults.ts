@@ -5,8 +5,10 @@ import { createDefaultStoryboard } from '../storyboard/storyboard.utils'
 export const APP_NAME = 'DRAZYX VISUALIZER STUDIO'
 
 /** Limite de duração de divulgação (Reels/Shorts/TikTok). */
-export const MAX_CLIP_SECONDS = 30
+export const MAX_CLIP_SECONDS = 45
 export const MIN_CLIP_SECONDS = 5
+/** Duração inicial do clipe social (o usuário pode estender até 45 s). */
+export const DEFAULT_CLIP_SECONDS = 30
 
 export const VISUAL_LIMITS = {
   intensity: { min: 0, max: 1, step: 0.01 },
@@ -20,7 +22,20 @@ export const VISUAL_LIMITS = {
   clipDuration: { min: MIN_CLIP_SECONDS, max: MAX_CLIP_SECONDS, step: 0.5 },
 } as const
 
-export const TEMPLATE_IDS: TemplateId[] = ['mirage', 'afterimage', 'void', 'spectrum', 't3', 't4', 't5']
+export const TEMPLATE_IDS: TemplateId[] = [
+  'mirage',
+  'afterimage',
+  'void',
+  'spectrum',
+  't1',
+  't2',
+  't3',
+  't4',
+  't5',
+  't6',
+  't7',
+  't8',
+]
 
 /** Paleta padrão quando não há capa (identidade Drazyx). */
 export const DEFAULT_PALETTE: PaletteSettings = {
@@ -32,6 +47,9 @@ export const DEFAULT_PALETTE: PaletteSettings = {
 
 /** Preset inicial: primeiro lançamento Drazyx. */
 export const DEFAULT_PROJECT: ProjectConfig = {
+  productionMode: 'social',
+  cameraPreset: 'auto',
+  cameraIntensity: 1,
   platform: 'custom',
   aspectRatio: '9:16',
   quality: 'full',
@@ -39,7 +57,9 @@ export const DEFAULT_PROJECT: ProjectConfig = {
   templateId: 'mirage',
   palette: { ...DEFAULT_PALETTE },
   clipStart: 0,
-  clipDuration: MAX_CLIP_SECONDS,
+  // O máximo é 45 s, mas o preset social começa em 30 s para não esticar o
+  // storyboard padrão sem escolha do usuário.
+  clipDuration: DEFAULT_CLIP_SECONDS,
   visual: {
     intensity: 0.72,
     particleCount: 0.6,
@@ -66,6 +86,7 @@ export const DEFAULT_PROJECT: ProjectConfig = {
     tracking: 6,
   },
   storyboard: createDefaultStoryboard(),
+  elements: [],
 }
 
 /** Valores padrão de cena por template — usado no botão "restaurar preset". */

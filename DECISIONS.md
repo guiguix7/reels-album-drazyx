@@ -3,6 +3,28 @@
 Decisões de produto e engenharia que governam a evolução do app.
 Tooling de agentes/OpenCode não pertence a este arquivo.
 
+## 2026-11-25 — Fase 5: elementos editáveis
+
+- A customização usa uma camada declarativa separada do template (`CompositionLayer`): os templates continuam sendo pontos de partida e nenhum elemento original é sobrescrito. O usuário pode cobrir/editar a composição com camadas extras; esconder a tipografia original ainda é feito pelos toggles de Tipografia.
+- Elementos vivem em `ProjectConfig.elements`, em porcentagem do palco. O renderer desenha no WebGL (portanto entra na gravação); o overlay HTML só converte gestos em store.
+- O overlay suporta texto, capa, forma, waveform e progresso. Player completo e importação de imagem ficam para a fase de music video/expansão; a UI não finge que existem.
+- Presets usam `localStorage` e JSON exportável; a mídia nunca é incluída. A ordem do array é a ordem de camadas e vira `renderOrder` explícito.
+
+## 2026-11-25 — Fase 4: composição por formato
+
+- O formato é derivado do aspecto real do palco (`getFormatMode`), não do rótulo da UI: retrato abaixo de 0,8, paisagem acima de 1,2, quadrado no meio.
+- Templates recebem tamanhos de capa limitados pela altura (`coverSide`) e reposicionam blocos conforme o formato. Não há escala uniforme de coordenadas de retrato para 16:9.
+- Em 16:9, MIRAGE, T6 e T8 usam split editorial (arte de um lado, texto do outro); T4 empilha texto e arte em retrato/quadrado. Em 9:16, T2 troca waveforms laterais por uma waveform larga.
+- O fundo de capa ampliada e o dimmer do T3 foram removidos: eram profundidade 2.5D arbitrária sem função narrativa. As rotações de capa restantes são mínimas e não alteram a leitura.
+
+## 2026-11-25 — Fase 3: trecho, waveform e storyboard
+
+- O máximo social é 45 s, mas o projeto nasce com 30 s; `clearAudio` volta a 30 s. A duração padrão não deve consumir o novo máximo sem escolha do usuário.
+- `setClipRange(start, end)` é a operação atômica das bordas da waveform. `setClipDuration` calcula o limite a partir de `clipStart`, não como um fim absoluto; isso permite estender o trecho perto do final da faixa.
+- A waveform usa picos RMS normalizados calculados no navegador e cacheados por object URL. Nada é enviado a servidor; áudios grandes podem demorar na primeira decodificação.
+- O storyboard usa uma timeline de botões (uma cena = um alvo), uma faixa horizontal de cenas e um único inspector. Editar a duração continua redistribuindo as demais cenas porque o total do trecho é fixo.
+- Preview de cena e de sequência usam `playClip`; o áudio e o playhead param no fim selecionado.
+
 ## Produto e escopo
 
 - App local-first: áudio e capa nunca saem do navegador; sem backend obrigatório,
@@ -75,6 +97,42 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
   trecho) e as inconsistências aparecem como avisos, sem bloquear o download.
 - O lote reutiliza o mesmo pipeline da gravação individual, um job por vez, com
   manifest e download próprios; não há ZIP.
+
+## Modos de produção e câmera
+
+- `productionMode: 'social' | 'full'` no `ProjectConfig`. O modo é explícito na UI e não é inferido do
+  aspecto: social tem teto de 45 s; full aceita a faixa inteira e usa 16:9 como saída principal.
+- `getMaxClipSeconds` centraliza o limite (45 s no social, duração do áudio no full). O store reaplica o
+  limite em `setClipDuration`, `setClipRange` e `setAudioMeta`; nenhum desses caminhos pode divergir.
+- Ao entrar em full, o trecho vira a faixa inteira e a plataforma volta para `custom`; ao voltar ao
+  social, o formato volta a 9:16 e o trecho é reaplicado ao teto. Escolher uma plataforma social também
+  força o modo social.
+- Player é um elemento declarativo (`type: 'player'`) renderizado no WebGL: capa, título editável,
+  progresso e relógio vêm do áudio real; não há valores fabricados.
+- Câmera global é opcional (`auto` preserva o template). Presets são poses determinísticas por progresso
+  e tempo, aplicadas depois do update do template, com `lookAt` no centro para manter o enquadramento.
+
+## Persistência, histórico e marca
+
+- Autosave usa `localStorage` (configuração pequena, leitura síncrona no boot) e fica separado do
+  IndexedDB de projetos. Mídia nunca é serializada; o aviso de recarregar áudio/capa permanece.
+- O botão de projeto guarda o id salvo na sessão: o primeiro clique cria, os seguintes sobrescrevem o
+  mesmo registro. Duplicar continua criando um id novo.
+- Undo/redo é um histórico de snapshots da `ProjectConfig` (40 posições, coalescência de 350 ms), não
+  um command log. Isso cobre qualquer editor que passe pelo store e evita armazenar buffers; em troca,
+  uma sessão contínua de digitação vira um passo de undo.
+- Presets de marca são globais e guardam somente decisões reutilizáveis (paleta, visual, flags/medidas
+  tipográficas, CTA, template, aspecto, câmera e elementos). Artista, faixa e álbum ficam no projeto.
+- A restauração do autosave limpa o histórico para não transformar o boot em um passo de undo.
+
+## QA e release
+
+- QA visual usa contact sheets gerados a partir do próprio canvas WebGL (12 templates × 3 formatos),
+  além de screenshots do editor em desktop e mobile; as imagens ficam em `docs/qa/`.
+- O relatório distingue o que foi executado do que permanece limitação: a captura longa nesta máquina
+  rendeu ~10,6 fps reais (1.571 frames em 147,49 s), então 30 fps não são declarados como comprovados.
+- Push e deploy não fazem parte do fluxo local sem credenciais/configuração de Vercel; a produção não é
+  considerada sincronizada só porque o build local passou.
 
 ## Storyboard, persistência e processo
 

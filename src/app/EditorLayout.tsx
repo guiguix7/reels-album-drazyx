@@ -6,6 +6,7 @@ import { useProjectStore } from '../features/project/project.store'
 import { APP_NAME } from '../features/project/project.defaults'
 import { SourcePanel } from '../components/editor/SourcePanel'
 import { TemplateGallery } from '../components/editor/TemplateGallery'
+import { CompositionPanel } from '../components/editor/CompositionPanel'
 import { StoryboardPanel } from '../components/editor/StoryboardPanel'
 import { ClipPanel } from '../components/editor/ClipPanel'
 import { PalettePanel, VisualPanel, TextPanel } from '../components/editor/VisualPanel'
@@ -16,6 +17,9 @@ import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
 import { RecipePanel } from '../components/editor/RecipePanel'
 import { BatchPanel } from '../components/editor/BatchPanel'
+import { RecordAction } from '../components/editor/RecordAction'
+import { HistoryControls } from '../components/editor/HistoryControls'
+import { Onboarding } from '../components/editor/Onboarding'
 import styles from './app.module.css'
 
 export function EditorLayout(): JSX.Element {
@@ -32,33 +36,32 @@ export function EditorLayout(): JSX.Element {
           <span className={styles.brandMark}>DRAZYX</span>
           <span className={styles.brandRest}>VISUALIZER STUDIO</span>
         </div>
+        <HistoryControls />
         <p className={styles.topbarNote}>{APP_NAME} — local-first · nada sai do seu navegador</p>
+        <RecordAction onStart={startRecording} onCancel={cancelRecording} />
       </header>
 
       <main className={styles.grid}>
         <section className={styles.stageCol}>
           <div className={styles.stageHolder}>
             <Stage canvasRef={canvasRef} />
-            {!audioMeta && !audioLoading ? (
-              <div className={styles.stageOverlay}>
-                <div className={styles.overlayCard}>
-                  <p className={styles.overlayTitle}>Sem áudio carregado</p>
-                  <p className={styles.overlayText}>
-                    A cena está rodando com a arte padrão. Carregue um arquivo de áudio no painel
-                    <strong> Fonte</strong> para montar o visualizer real.
-                  </p>
-                </div>
-              </div>
-            ) : null}
           </div>
+          {!audioMeta && !audioLoading ? (
+            <div className={styles.emptyHint} role="status">
+              <strong>Sem áudio carregado.</strong> A arte padrão está no Stage; carregue o áudio no
+              painel Fonte para liberar o trecho e a gravação.
+            </div>
+          ) : null}
           <Transport />
         </section>
 
         <aside className={styles.panelCol} aria-label="Painéis do editor">
+          <Onboarding />
           <fieldset className={styles.panelFieldset} disabled={recording}>
             <SourcePanel />
             <RecipePanel />
             <TemplateGallery />
+            <CompositionPanel />
             <StoryboardPanel />
             <PalettePanel />
             <ClipPanel />

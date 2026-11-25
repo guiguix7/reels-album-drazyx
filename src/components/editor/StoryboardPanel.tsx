@@ -4,10 +4,16 @@ import type { TemplateId } from '../../features/project/project.types'
 import { getAudioEngine } from '../../features/audio/AudioEngine'
 import { analyzeClipAudio } from '../../features/audio/offline-analysis'
 import { TEMPLATE_LIST } from '../../features/visualizer/templates/registry'
-import { HOOK_OPTIONS, MOTION_OPTIONS, ROLE_LABELS, TRANSITION_OPTIONS } from '../../features/storyboard/storyboard.utils'
+import {
+  HOOK_OPTIONS,
+  MOTION_OPTIONS,
+  ROLE_HINTS,
+  ROLE_LABELS,
+  TRANSITION_OPTIONS,
+} from '../../features/storyboard/storyboard.utils'
 import type { SceneMotion, SceneRole, SceneTransition } from '../../features/storyboard/storyboard.types'
 import { formatTime } from '../../lib/format-time'
-import { Button, Notice, Panel, Slider, TextInput, Toggle } from '../ui/ui'
+import { Button, Notice, Panel, Select, Slider, TextInput, Toggle } from '../ui/ui'
 import styles from './panels.module.css'
 
 function segmentClass(role: SceneRole): string {
@@ -41,14 +47,24 @@ export function StoryboardPanel(): JSX.Element {
   const removeScene = useProjectStore((s) => s.removeScene)
   const moveScene = useProjectStore((s) => s.moveScene)
 
+  const [selectedId, setSelectedId] = useState<string | null>(storyboard.scenes[0]?.id ?? null)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const playheadRef = useRef<HTMLSpanElement | null>(null)
 
   const { scenes, hook, enabled } = storyboard
-  const hookScene = scenes[0]?.role === 'hook' ? scenes[0] : null
-  const hookMax = Math.min(5, Math.max(0.5, clipDuration - 0.5 * Math.max(0, scenes.length - 1)))
+  const selected = scenes.find((scene) => scene.id === selectedId) ?? scenes[0] ?? null
+  const selectedIndex = selected ? scenes.findIndex((scene) => scene.id === selected.id) : -1
   const sceneMax = Math.max(0.5, clipDuration - 0.5 * Math.max(0, scenes.length - 1))
+  const clipEnd = clipStart + clipDuration
+
+  useEffect(() => {
+    if (!scenes.length) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !scenes.some((scene) => scene.id === selectedId)) setSelectedId(scenes[0].id)
+  }, [scenes, selectedId])
 
   // Playhead lê o tempo real do áudio sem re-renderizar o painel.
   useEffect(() => {
@@ -65,13 +81,22 @@ export function StoryboardPanel(): JSX.Element {
     return () => cancelAnimationFrame(raf)
   }, [clipStart, clipDuration])
 
-  /** Toca o trecho a partir da cena escolhida, usando o tempo real do áudio. */
-  const previewScene = async (sceneStart: number): Promise<void> => {
+  const previewScene = (id: string): void => {
     if (!audioMeta) return
-    const engine = getAudioEngine()
-    const absolute = Math.min(clipStart + sceneStart, clipStart + clipDuration - 0.1)
-    engine.seek(Math.max(clipStart, absolute))
-    await engine.play()
+    const scene = scenes.find((item) => item.id === id)
+    if (!scene) return
+    setSelectedId(id)
+    getAudioEngine().playClip(clipStart + scene.start, clipStart + scene.end)
+  }
+
+  const previewStory = (): void => {
+    if (!audioMeta) return
+    getAudioEngine().playClip(clipStart, clipEnd)
+  }
+
+  const seekScene = (scene: (typeof scenes)[number]): void => {
+    setSelectedId(scene.id)
+    getAudioEngine().seek(clipStart + scene.start)
   }
 
   const handleAuto = async (): Promise<void> => {
@@ -91,196 +116,212 @@ export function StoryboardPanel(): JSX.Element {
   return (
     <Panel
       title="Storyboard"
-      hint="Hook, revelação, desenvolvimento, pico e fechamento sincronizados com o tempo real do áudio."
+      hint="Uma sequência de cenas; selecione uma para editar. O playhead usa o tempo real do áudio."
     >
-      <Toggle label="Ativar storyboard" checked={enabled} onChange={setStoryboardEnabled} />
-
-      <div className={styles.sbToolbar}>
-        <Button onClick={() => applyStoryboardPreset(15)}>Preset 15s</Button>
-        <Button onClick={() => applyStoryboardPreset(30)}>Preset 30s</Button>
-        <Button variant="primary" onClick={() => void handleAuto()} disabled={!audioMeta || analyzing}>
-          {analyzing ? 'Analisando…' : 'Auto pelo áudio'}
-        </Button>
+      <div className={styles.sbTop}>
+        <Toggle label="Ativar storyboard" checked={enabled} onChange={setStoryboardEnabled} />
+        <div className={styles.sbToolbar}>
+          <Button onClick={() => applyStoryboardPreset(15)}>15s</Button>
+          <Button onClick={() => applyStoryboardPreset(30)}>30s</Button>
+          <Button onClick={() => applyStoryboardPreset(45)}>45s</Button>
+          <Button variant="primary" onClick={() => void handleAuto()} disabled={!audioMeta || analyzing}>
+            {analyzing ? 'Analisando…' : 'Auto pelo áudio'}
+          </Button>
+        </div>
       </div>
 
       {error ? <Notice tone="error">{error}</Notice> : null}
 
-      {enabled ? (
+      {!enabled ? (
+        <p className={styles.sbNote}>
+          Ative para trocar o template fixo por uma sequência de cenas com abertura, revelação, desenvolvimento, pico e fechamento.
+        </p>
+      ) : (
         <>
-          <div className={styles.sbHook}>
-            <label className={styles.sbField}>
-              <span>Tipo de hook</span>
-              <select
-                className={styles.sbSelect}
-                value={hook.type}
-                onChange={(event) => setHook({ type: event.target.value as typeof hook.type })}
-              >
-                {HOOK_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <TextInput label="Frase do hook" value={hook.text} maxLength={90} onChange={(text) => setHook({ text })} />
-            {hookScene ? (
-              <Slider
-                label="Duração do hook"
-                min={0.5}
-                max={hookMax}
-                step={0.5}
-                value={hookScene.end - hookScene.start}
-                format={(value) => `${value.toFixed(1)}s`}
-                onChange={(seconds) => setSceneDuration(hookScene.id, seconds)}
-              />
-            ) : null}
-            <p className={styles.sbNote}>
-              Interesse em 0–1s · curiosidade em 1–3s · revelação em 3–5s. Total: {formatTime(clipDuration)}.
-            </p>
-          </div>
-
-          <div className={styles.sbTimeline} aria-hidden="true">
+          <div className={styles.sbTimeline} role="group" aria-label="Linha de cenas do storyboard">
             {scenes.map((scene) => (
-              <span
+              <button
                 key={scene.id}
-                className={`${styles.sbSegment} ${segmentClass(scene.role)}`}
+                type="button"
+                className={`${styles.sbSegment} ${segmentClass(scene.role)} ${selected?.id === scene.id ? styles.sbSegmentActive : ''}`}
                 style={{ flexGrow: Math.max(0.01, scene.end - scene.start) }}
-                title={`${ROLE_LABELS[scene.role]} · ${formatTime(scene.start)} → ${formatTime(scene.end)}`}
-              />
+                onClick={() => seekScene(scene)}
+                aria-label={`${ROLE_LABELS[scene.role]} de ${formatTime(scene.start)} a ${formatTime(scene.end)}`}
+                aria-current={selected?.id === scene.id ? 'true' : undefined}
+              >
+                <span>{ROLE_LABELS[scene.role]}</span>
+              </button>
             ))}
-            <span ref={playheadRef} className={styles.sbPlayhead} />
+            <span ref={playheadRef} className={styles.sbPlayhead} aria-hidden="true" />
           </div>
 
-          <div className={styles.sbSceneList}>
+          <div className={styles.sbSceneStrip} aria-label="Cenas">
             {scenes.map((scene, index) => (
-              <div key={scene.id} className={styles.sbScene}>
-                <div className={styles.sbSceneHead}>
-                  <span className={styles.sbSceneRole}>{ROLE_LABELS[scene.role]}</span>
-                  <span className={styles.sbSceneActions}>
-                    <span className={styles.sbSceneTime}>
-                      {formatTime(scene.start)} → {formatTime(scene.end)}
-                    </span>
-                    <Button onClick={() => void previewScene(scene.start)} disabled={!audioMeta}>
-                      ▶ Cena
-                    </Button>
+              <button
+                key={scene.id}
+                type="button"
+                className={`${styles.sbSceneCard} ${selected?.id === scene.id ? styles.sbSceneCardActive : ''}`}
+                onClick={() => setSelectedId(scene.id)}
+                aria-pressed={selected?.id === scene.id}
+              >
+                <span className={styles.sbSceneCardIndex}>{String(index + 1).padStart(2, '0')}</span>
+                <span className={styles.sbSceneCardRole}>{ROLE_LABELS[scene.role]}</span>
+                <span className={styles.sbSceneCardTime}>
+                  {formatTime(scene.start)}–{formatTime(scene.end)}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {selected ? (
+            <div className={styles.sbInspector}>
+              <div className={styles.sbInspectorHead}>
+                <div>
+                  <strong>{ROLE_LABELS[selected.role]}</strong>
+                  <span>
+                    {formatTime(selected.start)} → {formatTime(selected.end)} · {(selected.end - selected.start).toFixed(1)}s
                   </span>
                 </div>
+                <Button onClick={() => previewScene(selected.id)} disabled={!audioMeta}>
+                  Ouvir cena
+                </Button>
+              </div>
+              <p className={styles.sbNote}>{ROLE_HINTS[selected.role]}</p>
 
-                <div className={styles.sbSceneGrid}>
-                  <label className={styles.sbField}>
-                    <span>Layout</span>
-                    <select
-                      className={styles.sbSelect}
-                      value={scene.layoutId}
-                      onChange={(event) => updateScene(scene.id, { layoutId: event.target.value as TemplateId })}
-                    >
-                      {TEMPLATE_LIST.map((template) => (
-                        <option key={template.id} value={template.id}>
-                          {template.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={styles.sbField}>
-                    <span>Paleta</span>
-                    <select
-                      className={styles.sbSelect}
-                      value={scene.visualStyleId}
-                      onChange={(event) =>
-                        updateScene(scene.id, { visualStyleId: event.target.value as 'album' | 'violet' })
-                      }
-                    >
-                      <option value="album">Da capa</option>
-                      <option value="violet">Violeta Drazyx</option>
-                    </select>
-                  </label>
-                  <label className={styles.sbField}>
-                    <span>Transição</span>
-                    <select
-                      className={styles.sbSelect}
-                      value={scene.transition}
-                      onChange={(event) =>
-                        updateScene(scene.id, { transition: event.target.value as SceneTransition })
-                      }
-                    >
-                      {TRANSITION_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className={styles.sbField}>
-                    <span>Movimento</span>
-                    <select
-                      className={styles.sbSelect}
-                      value={scene.motion}
-                      onChange={(event) => updateScene(scene.id, { motion: event.target.value as SceneMotion })}
-                    >
-                      {MOTION_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
+              <Slider
+                label="Duração"
+                min={0.5}
+                max={sceneMax}
+                step={0.5}
+                value={selected.end - selected.start}
+                format={(value) => `${value.toFixed(1)}s`}
+                hint="A duração total do trecho é fixa; ajustar esta cena redistribui as outras."
+                onChange={(seconds) => setSceneDuration(selected.id, seconds)}
+              />
 
-                <Slider
-                  label="Duração"
-                  min={0.5}
-                  max={sceneMax}
-                  step={0.5}
-                  value={scene.end - scene.start}
-                  format={(value) => `${value.toFixed(1)}s`}
-                  onChange={(seconds) => setSceneDuration(scene.id, seconds)}
-                />
-                <Slider
-                  label="Intensidade"
-                  min={0.3}
-                  max={1}
-                  step={0.05}
-                  value={scene.audioIntensity}
-                  format={(value) => `${Math.round(value * 100)}%`}
-                  onChange={(audioIntensity) => updateScene(scene.id, { audioIntensity })}
-                />
-
+              {selected.role === 'hook' ? (
+                <>
+                  <Select
+                    label="Tipo de hook"
+                    value={hook.type}
+                    options={HOOK_OPTIONS}
+                    onChange={(type) => setHook({ type })}
+                  />
+                  <TextInput label="Frase do hook" value={hook.text} maxLength={90} onChange={(text) => setHook({ text })} />
+                </>
+              ) : (
                 <TextInput
                   label="Frase da cena"
-                  value={scene.text}
+                  value={selected.text}
                   maxLength={90}
                   placeholder="Opcional"
-                  onChange={(text) => updateScene(scene.id, { text })}
+                  onChange={(text) => updateScene(selected.id, { text })}
                 />
-                <Toggle
-                  label="Mostrar frase"
-                  checked={scene.showText}
-                  onChange={(showText) => updateScene(scene.id, { showText })}
-                />
+              )}
+              <Toggle
+                label="Mostrar frase nesta cena"
+                checked={selected.showText}
+                onChange={(showText) => updateScene(selected.id, { showText })}
+              />
+              <p className={styles.sbNote}>
+                A frase entra como tagline; os metadados globais (artista, faixa, álbum, CTA) continuam sendo controlados em Tipografia.
+              </p>
 
-                <div className={styles.sbActions}>
-                  <Button onClick={() => moveScene(scene.id, -1)} disabled={index === 0}>
-                    ↑
-                  </Button>
-                  <Button onClick={() => moveScene(scene.id, 1)} disabled={index === scenes.length - 1}>
-                    ↓
-                  </Button>
-                  <Button onClick={() => duplicateScene(scene.id)}>Duplicar</Button>
-                  <Button onClick={() => addScene(scene.id)}>Adicionar após</Button>
-                  <Button variant="danger" onClick={() => removeScene(scene.id)} disabled={scenes.length <= 1}>
-                    Remover
-                  </Button>
-                </div>
+              <div className={styles.sbSceneGrid}>
+                <label className={styles.sbField}>
+                  <span>Layout</span>
+                  <select
+                    className={styles.sbSelect}
+                    value={selected.layoutId}
+                    onChange={(event) => updateScene(selected.id, { layoutId: event.target.value as TemplateId })}
+                  >
+                    {TEMPLATE_LIST.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.sbField}>
+                  <span>Paleta</span>
+                  <select
+                    className={styles.sbSelect}
+                    value={selected.visualStyleId}
+                    onChange={(event) =>
+                      updateScene(selected.id, { visualStyleId: event.target.value as 'album' | 'violet' })
+                    }
+                  >
+                    <option value="album">Da capa</option>
+                    <option value="violet">Violeta Drazyx</option>
+                  </select>
+                </label>
+                <label className={styles.sbField}>
+                  <span>Transição</span>
+                  <select
+                    className={styles.sbSelect}
+                    value={selected.transition}
+                    onChange={(event) =>
+                      updateScene(selected.id, { transition: event.target.value as SceneTransition })
+                    }
+                  >
+                    {TRANSITION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.sbField}>
+                  <span>Movimento</span>
+                  <select
+                    className={styles.sbSelect}
+                    value={selected.motion}
+                    onChange={(event) => updateScene(selected.id, { motion: event.target.value as SceneMotion })}
+                  >
+                    {MOTION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
-            ))}
-          </div>
 
-          <p className={styles.sbNote}>Preview e gravação usam este mesmo storyboard e o tempo real do áudio.</p>
+              <Slider
+                label="Intensidade"
+                min={0.3}
+                max={1}
+                step={0.05}
+                value={selected.audioIntensity}
+                format={(value) => `${Math.round(value * 100)}%`}
+                hint="Multiplica a reação ao áudio apenas nesta cena."
+                onChange={(audioIntensity) => updateScene(selected.id, { audioIntensity })}
+              />
+
+              <div className={styles.sbActions}>
+                <Button onClick={() => moveScene(selected.id, -1)} disabled={selectedIndex <= 0} aria-label="Mover cena para cima">
+                  ↑
+                </Button>
+                <Button onClick={() => moveScene(selected.id, 1)} disabled={selectedIndex >= scenes.length - 1} aria-label="Mover cena para baixo">
+                  ↓
+                </Button>
+                <Button onClick={() => duplicateScene(selected.id)}>Duplicar</Button>
+                <Button onClick={() => addScene(selected.id)}>Adicionar após</Button>
+                <Button variant="danger" onClick={() => removeScene(selected.id)} disabled={scenes.length <= 1}>
+                  Remover
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className={styles.sbFooter}>
+            <span>{scenes.length} cenas · total {formatTime(clipDuration)}</span>
+            <Button onClick={previewStory} disabled={!audioMeta}>
+              Tocar história
+            </Button>
+          </div>
+          <p className={styles.sbNote}>Preview e gravação usam este storyboard e o tempo real do áudio; o áudio para no fim do trecho.</p>
         </>
-      ) : (
-        <p className={styles.sbNote}>
-          Ative para substituir o template fixo por uma sequência de cenas com hook, revelação, pico e CTA.
-        </p>
       )}
     </Panel>
   )

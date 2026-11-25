@@ -1,9 +1,11 @@
 import { useProjectStore } from '../../features/project/project.store'
 import { useAudioEngineMeta } from '../../features/audio/useAudioEngine'
-import { getClipEnd, getEffectiveClipSeconds } from '../../features/project/project.types'
+import { getClipEnd, getClipReadiness } from '../../features/project/project.types'
 import { MAX_CLIP_SECONDS, MIN_CLIP_SECONDS, VISUAL_LIMITS } from '../../features/project/project.defaults'
+import { getMaxClipSeconds } from '../../features/project/clip-limit'
 import { formatTime, formatTimePrecise } from '../../lib/format-time'
 import { Panel, Slider } from '../ui/ui'
+import { WaveformTimeline } from './WaveformTimeline'
 import styles from './panels.module.css'
 
 function clipSecondsLabel(seconds: number): string {
@@ -18,19 +20,28 @@ export function ClipPanel(): JSX.Element {
 
   const audioDuration = meta.duration || null
   const clipEnd = getClipEnd(config, audioDuration)
-  const effective = getEffectiveClipSeconds(config, audioDuration)
+  const readiness = getClipReadiness(config, audioDuration, MIN_CLIP_SECONDS)
+  const effective = readiness.effective
   const hasAudio = audioDuration != null && audioDuration > 0
+  const isFull = config.productionMode === 'full'
+  const limit = getMaxClipSeconds(config, audioDuration)
+  const available = hasAudio
+    ? Math.max(0.5, Math.min(limit, audioDuration - config.clipStart))
+    : MAX_CLIP_SECONDS
+  const sliderMin = hasAudio ? Math.min(MIN_CLIP_SECONDS, available) : MIN_CLIP_SECONDS
+  const sliderMax = Math.max(sliderMin, available)
 
   return (
     <Panel
-      title="Trecho do vídeo"
-      hint={`Escolha o pedaço da faixa que vira vídeo (até ${MAX_CLIP_SECONDS}s).`}
+      title={isFull ? 'Trecho do music video' : 'Trecho do vídeo'}
+      hint={isFull ? 'No modo completo a faixa inteira é permitida; você ainda pode começar em outro ponto.' : `Escolha o pedaço da faixa que vira vídeo (até ${MAX_CLIP_SECONDS}s).`}
     >
+      <WaveformTimeline />
       <div className={styles.clipSummary}>
         <span className={styles.clipRange}>
           {formatTime(config.clipStart)} → {formatTime(clipEnd)}
         </span>
-        <span className={`${styles.clipBadge} ${effective > MAX_CLIP_SECONDS - 0.01 ? styles.clipBadgeMax : ''}`}>
+        <span className={`${styles.clipBadge} ${!isFull && effective > MAX_CLIP_SECONDS - 0.01 ? styles.clipBadgeMax : ''}`}>
           {formatTimePrecise(effective)}
         </span>
       </div>
@@ -42,15 +53,17 @@ export function ClipPanel(): JSX.Element {
         step={0.5}
         value={config.clipStart}
         format={clipSecondsLabel}
+        hint="Onde o trecho começa na faixa. O fim é limitado pela duração real do áudio."
         onChange={(value) => setClipStart(value, audioDuration)}
       />
       <Slider
         label="Duração"
-        min={MIN_CLIP_SECONDS}
-        max={hasAudio ? Math.min(MAX_CLIP_SECONDS, Math.max(MIN_CLIP_SECONDS, audioDuration)) : MAX_CLIP_SECONDS}
+        min={sliderMin}
+        max={sliderMax}
         step={0.5}
-        value={config.clipDuration}
+        value={Math.min(Math.max(config.clipDuration, sliderMin), sliderMax)}
         format={clipSecondsLabel}
+        hint={isFull ? 'No modo completo o máximo é a faixa inteira; não há teto de 45 s.' : 'Quanto tempo do trecho entra no vídeo; o máximo respeita o que resta da faixa.'}
         onChange={(value) => setClipDuration(value, audioDuration)}
       />
 
@@ -58,9 +71,10 @@ export function ClipPanel(): JSX.Element {
         <p className={styles.panelNote}>Carregue um áudio para posicionar o trecho com precisão.</p>
       ) : (
         <p className={styles.panelNote}>
-          Faixa inteira: {formatTime(audioDuration)} · cada vídeo usa no máximo {MAX_CLIP_SECONDS}s.
+          Faixa inteira: {formatTime(audioDuration)} · máximo disponível: {formatTimePrecise(available)}{isFull ? ' (sem teto social)' : ''}.
         </p>
       )}
+      {!readiness.recordable ? <p className={styles.panelWarn}>{readiness.reason}</p> : null}
     </Panel>
   )
 }

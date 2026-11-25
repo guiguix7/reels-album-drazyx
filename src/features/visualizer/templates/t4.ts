@@ -7,6 +7,7 @@ import { TextLayer } from '../objects/text-layer'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { coverSide, getFormatMode } from './composition'
 
 /**
  * LAYOUT 04 — EDITORIAL COVER
@@ -76,41 +77,73 @@ export const Template04: VisualTemplate = {
         const bass = frame.bass * visual.bassForce
         background.update(time, 0.26 + visual.glow * 0.35 + bass * 0.2, Math.sin(time * 0.06 + 2) * 0.05)
 
-        // Coluna de waveform: da área superior esquerda para baixo
-        const colX = safe.leftX + 0.09
-        const colTopY = safe.topY - 0.6
-        const colHeight = viewH * 0.34
-        bars.updateColumn(colX, colTopY, colHeight, frame.bars, { maxLength: 0.85 + bass * 0.5 + frame.beatPulse * 0.18, minLength: 0.04, growDown: true })
-        bars.setOpacity(0.8 + frame.energy * 0.2)
-
-        // Texto abaixo da coluna
-        const textWidth = viewW * 0.44
-        const textY = colTopY - colHeight - 0.35
-        const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textWidth, {})
-        trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(colX - 0.09, textY, 0)
-
-        const artistH = artist.set([type.showArtist ? type.artistName : ''], textWidth, {})
-        artist.setOpacity(type.showArtist ? 0.85 : 0)
-        artist.mesh.position.set(colX - 0.09, textY - titleH - 0.22, 0)
-
-        album.set([type.showAlbum ? type.albumTitle : ''], textWidth, {})
-        album.setOpacity(type.showAlbum ? 0.7 : 0)
-        album.mesh.position.set(colX - 0.09, textY - titleH - artistH - 0.4, 0)
-
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], textWidth, { color: pal.glow })
-        cta.setOpacity(ctaOpacity)
-        cta.mesh.position.set(safe.leftX, safe.bottomY + 0.1, 0)
 
-        // Capa grande à direita, limitada pela altura em 16:9.
-        const coverSize = Math.min(viewW * 0.5, viewH * 0.6)
-        cover.setSize(coverSize, coverSize)
-        cover.setGlowIntensity(0.25 + visual.glow * 0.4 + bass * 0.3)
-        cover.group.position.set(viewW * 0.17, 0.5 + Math.sin(time * 0.4) * 0.07, 0)
-        cover.group.rotation.y = Math.sin(time * 0.17) * 0.05
-        cover.group.rotation.z = 0.012
-        cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
+        if (landscape) {
+          // Paisagem: coluna vertical à esquerda, texto abaixo, capa à direita.
+          const colX = safe.leftX + 0.09
+          const colTopY = safe.topY - 0.6
+          const colHeight = viewH * 0.34
+          bars.updateColumn(colX, colTopY, colHeight, frame.bars, { maxLength: 0.85 + bass * 0.5 + frame.beatPulse * 0.18, minLength: 0.04, growDown: true })
+          bars.setOpacity(0.8 + frame.energy * 0.2)
+
+          const textWidth = viewW * 0.44
+          const textY = colTopY - colHeight - 0.35
+          const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textWidth, {})
+          trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
+          trackTitle.mesh.position.set(safe.leftX, textY, 0)
+
+          const artistH = artist.set([type.showArtist ? type.artistName : ''], textWidth, {})
+          artist.setOpacity(type.showArtist ? 0.85 : 0)
+          artist.mesh.position.set(safe.leftX, textY - titleH - 0.18, 0)
+
+          album.set([type.showAlbum ? type.albumTitle : ''], textWidth, {})
+          album.setOpacity(type.showAlbum ? 0.7 : 0)
+          album.mesh.position.set(safe.leftX, textY - titleH - artistH - 0.22, 0)
+
+          const coverSize = coverSide(viewW, viewH, mode, 0.5, 0.3, 0.5)
+          cover.setSize(coverSize, coverSize)
+          cover.setGlowIntensity(0.25 + visual.glow * 0.4 + bass * 0.3)
+          cover.group.position.set(viewW * 0.17, 0.35 + Math.sin(time * 0.4) * 0.06, 0)
+          cover.group.rotation.y = Math.sin(time * 0.17) * 0.02
+          cover.group.rotation.z = 0.006
+          cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
+        } else {
+          // Retrato/quadrado: bloco de texto no topo, capa central e barras na base.
+          const coverSize = coverSide(viewW, viewH, mode, 0.5, 0.3, 0.5)
+          cover.setSize(coverSize, coverSize)
+          cover.setGlowIntensity(0.25 + visual.glow * 0.4 + bass * 0.3)
+          cover.group.position.set(0, -0.75 + Math.sin(time * 0.4) * 0.06, 0)
+          cover.group.rotation.y = Math.sin(time * 0.17) * 0.025
+          cover.group.rotation.z = 0.005
+          cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
+
+          const textWidth = viewW * 0.8
+          const titleTop = safe.topY - 0.2
+          const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textWidth, {})
+          trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
+          trackTitle.mesh.position.set(safe.leftX, titleTop, 0)
+
+          const artistH = artist.set([type.showArtist ? type.artistName : ''], textWidth, {})
+          artist.setOpacity(type.showArtist ? 0.85 : 0)
+          artist.mesh.position.set(safe.leftX, titleTop - titleH - 0.14, 0)
+
+          album.set([type.showAlbum ? type.albumTitle : ''], textWidth, {})
+          album.setOpacity(type.showAlbum ? 0.7 : 0)
+          album.mesh.position.set(safe.leftX, titleTop - titleH - artistH - 0.32, 0)
+
+          bars.updateRow(safe.leftX, safe.bottomY + 0.2, safe.width * 0.82, frame.bars, {
+            maxHeight: 0.42 + bass * 0.3 + frame.beatPulse * 0.1,
+            minHeight: 0.03,
+          })
+          bars.setOpacity(0.7 + frame.energy * 0.25)
+        }
+
+        cta.set([type.ctaText], landscape ? viewW * 0.44 : viewW * 0.6, { color: pal.glow })
+        cta.setOpacity(ctaOpacity)
+        cta.mesh.position.set(landscape ? safe.leftX : 0, safe.bottomY + 0.12, 0)
 
         // Câmera com leve deriva
         const camSpeed = 0.2 + visual.cameraSpeed * 0.5

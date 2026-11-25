@@ -8,6 +8,7 @@ import { TextLayer } from '../objects/text-layer'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { darken, mixHex } from '../../palette/palette'
+import { coverSide, getFormatMode } from './composition'
 
 /**
  * SPECTRUM — composição musical: espectro elegante na base, waveform fina
@@ -94,33 +95,42 @@ export const SpectrumTemplate: VisualTemplate = {
 
         wave.update(frame.waveform, safe.leftX, barBaseY + 0.9, safe.width * 0.9, 0.4 + frame.beatPulse * 0.08, 0.5 + frame.treble * 0.4)
 
-        // Capa menor no alto
-        const coverSize = viewW * 0.44
+        // Capa menor no alto; em 16:9 vai à direita para o texto respirar.
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
+        const coverSize = coverSide(viewW, viewH, mode, 0.44, 0.34, 0.28)
+        const coverX = landscape ? viewW * 0.3 : 0
+        const coverY = landscape ? 0.1 : safe.topY - coverSize / 2 - 0.25
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.3 + visual.glow * 0.4 + bass * 0.25)
-        cover.group.position.set(0, safe.topY - coverSize / 2 - 0.7, 0)
-        cover.group.rotation.y = Math.sin(time * 0.2) * 0.06
+        cover.group.position.set(coverX, coverY, 0)
+        cover.group.rotation.y = Math.sin(time * 0.2) * 0.025
         cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
 
-        const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.84, {})
+        // Em paisagem, bloco editorial à esquerda; nos demais, acima do espectro.
+        const textW = landscape ? viewW * 0.4 : viewW * 0.84
+        const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textW, {})
         trackTitle.setOpacity(type.showTrack ? 0.95 : 0)
 
-        const artistH = artist.set([type.showArtist ? type.artistName : ''], viewW * 0.84, {})
+        const artistH = artist.set([type.showArtist ? type.artistName : ''], textW, {})
         artist.setOpacity(type.showArtist ? 0.9 : 0)
 
-        const albumH = album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.84, {})
+        const albumH = album.set([type.showAlbum ? type.albumTitle : ''], textW, {})
         album.setOpacity(type.showAlbum ? 0.75 : 0)
 
         const gap = 0.14
-        const blockTop = barPeakY + 0.55 + titleH + gap + artistH + 0.22 + albumH
-        trackTitle.mesh.position.set(safe.leftX, blockTop, 0)
-        artist.mesh.position.set(safe.leftX, blockTop - titleH - gap, 0)
-        album.mesh.position.set(safe.leftX, blockTop - titleH - gap - artistH - 0.22, 0)
+        const blockTop = landscape
+          ? safe.topY - 0.35
+          : barPeakY + 0.55 + titleH + gap + artistH + 0.22 + albumH
+        const textX = landscape ? safe.leftX : safe.leftX
+        trackTitle.mesh.position.set(textX, blockTop, 0)
+        artist.mesh.position.set(textX, blockTop - titleH - gap, 0)
+        album.mesh.position.set(textX, blockTop - titleH - gap - artistH - 0.22, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
+        cta.set([type.ctaText], viewW * 0.6, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
-        cta.mesh.position.set(0, blockTop + 0.6, 0)
+        cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 
         // Câmera: leve inclinação orbital
         const camSpeed = 0.3 + visual.cameraSpeed * 0.7

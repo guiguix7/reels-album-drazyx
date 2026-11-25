@@ -1,11 +1,13 @@
 import { create } from 'zustand'
-import type { AspectRatioId, AudioMeta, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import type { AspectRatioId, AudioMeta, CameraPreset, CompositionElement, CompositionElementType, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProductionMode, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import { getMaxClipSeconds } from './clip-limit'
+import { createCompositionElement } from '../composition/composition.defaults'
 import { applyRecipeToConfig } from '../recipes/apply-recipe'
 import { RECIPES } from '../recipes/recipes'
 import type { RecipeId } from '../recipes/recipes'
 import { applyPlatformToConfig } from '../platform/platform.profiles'
 import { getClipEnd } from './project.types'
-import { DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
+import { DEFAULT_CLIP_SECONDS, DEFAULT_PALETTE, DEFAULT_PROJECT, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
 import type { ClipAnalysis } from '../audio/offline-analysis'
 import type { HookSettings, StoryboardScene } from '../storyboard/storyboard.types'
 import {
@@ -31,18 +33,23 @@ interface ProjectState {
   coverMeta: CoverMeta | null
   /** Paleta extraída da capa (fonte para o modo automático). */
   coverPalette: CoverPalette | null
+  /** Elemento selecionado no Stage / inspetor. Não persiste no projeto. */
+  selectedElementId: string | null
 
   /* ações — configuração */
   setConfig: (config: ProjectConfig) => void
   applyRecipe: (id: RecipeId) => void
   setPlatform: (id: PlatformId) => void
+  setProductionMode: (mode: ProductionMode) => void
   setTemplate: (id: TemplateId) => void
   setAspect: (aspect: AspectRatioId) => void
   setQuality: (quality: OutputQuality) => void
   setFps: (fps: number) => void
   setClipStart: (seconds: number, audioDuration: number | null) => void
   setClipDuration: (seconds: number, audioDuration: number | null) => void
+  setClipRange: (start: number, end: number, audioDuration: number | null) => void
   setVisual: (patch: Partial<VisualSettings>) => void
+  setCameraPreset: (preset: CameraPreset, intensity?: number) => void
   setGlitch: (level: GlitchLevel) => void
   setType: (patch: Partial<TypeSettings>) => void
   setPalette: (patch: Partial<CoverPalette>) => void
@@ -50,9 +57,19 @@ interface ProjectState {
   setCoverPalette: (palette: CoverPalette | null) => void
   resetVisualToTemplateDefault: () => void
 
+  /* ações — composição */
+  addElement: (type: CompositionElementType, overrides?: Partial<CompositionElement>) => void
+  updateElement: (id: string, patch: Partial<CompositionElement>) => void
+  removeElement: (id: string) => void
+  duplicateElement: (id: string) => void
+  moveElementLayer: (id: string, direction: -1 | 1) => void
+  replaceElements: (elements: CompositionElement[]) => void
+  clearElements: () => void
+  selectElement: (id: string | null) => void
+
   /* ações — storyboard */
   setStoryboardEnabled: (enabled: boolean) => void
-  applyStoryboardPreset: (kind: 15 | 30) => void
+  applyStoryboardPreset: (kind: 15 | 30 | 45) => void
   setAutoStoryboard: (analysis: ClipAnalysis) => void
   setHook: (patch: Partial<HookSettings>) => void
   updateScene: (id: string, patch: Partial<StoryboardScene>) => void
@@ -88,6 +105,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   audioError: null,
   coverMeta: null,
   coverPalette: null,
+  selectedElementId: null,
 
   setConfig: (config) => set({ config: fitStoryboard(config) }),
 
@@ -98,8 +116,38 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   setPlatform: (id) =>
     set((state) => ({
-      config: applyPlatformToConfig(state.config, id),
+      config: applyPlatformToConfig(
+        id === 'custom' ? state.config : { ...state.config, productionMode: 'social' },
+        id,
+      ),
     })),
+
+  setProductionMode: (mode) =>
+    set((state) => {
+      const config = state.config
+      if (mode === 'full') {
+        const duration = state.audioMeta?.duration
+        return {
+          config: fitStoryboard({
+            ...config,
+            productionMode: mode,
+            platform: 'custom',
+            aspectRatio: '16:9',
+            clipStart: 0,
+            clipDuration: duration && duration > 0 ? duration : config.clipDuration,
+          }),
+        }
+      }
+      const max = getMaxClipSeconds({ ...config, productionMode: mode }, state.audioMeta?.duration ?? null)
+      return {
+        config: fitStoryboard({
+          ...config,
+          productionMode: mode,
+          aspectRatio: '9:16',
+          clipDuration: Math.min(config.clipDuration, max),
+        }),
+      }
+    }),
 
   setTemplate: (id) =>
     set((state) => {
@@ -117,11 +165,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setClipStart: (seconds, audioDuration) =>
     set((state) => {
       const duration = audioDuration ?? Infinity
-      const maxStart = Math.max(0, Math.min(duration, state.config.clipDuration ? duration - 1 : duration))
+      const maxStart = Math.max(0, Math.min(duration, state.config.clipDuration ? duration - 0.5 : duration))
       const clipStart = clamp(seconds, 0, Number.isFinite(maxStart) ? maxStart : seconds)
       const end = getClipEnd({ ...state.config, clipStart }, audioDuration)
-      // Duração efetiva respeita o fim da faixa.
-      const clipDuration = Math.max(1, Math.min(state.config.clipDuration, end - clipStart))
+      // Duração efetiva respeita o fim da faixa. O piso é 0,5 s para que a UI
+      // represente áudios curtos; a gravação usa getClipReadiness (mínimo 5 s).
+      const clipDuration = Math.max(0.5, Math.min(state.config.clipDuration, end - clipStart))
       return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
     }),
 
@@ -129,13 +178,40 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     set((state) => {
       // Limite = o que resta da faixa a partir do início escolhido, até MAX_CLIP_SECONDS.
       // Não usa o fim atual: senão reduzir a duração uma vez travaria o valor para sempre.
-      const maxEnd = Math.min(MAX_CLIP_SECONDS, audioDuration ?? MAX_CLIP_SECONDS)
-      const available = Math.max(1, maxEnd - state.config.clipStart)
-      const clipDuration = clamp(seconds, 1, available)
+      const limit = Number.isFinite(audioDuration ?? Infinity)
+        ? (audioDuration as number)
+        : state.config.clipStart + getMaxClipSeconds(state.config, null)
+      const available = Math.max(
+        0.5,
+        Math.min(limit - state.config.clipStart, getMaxClipSeconds(state.config, audioDuration ?? null)),
+      )
+      const clipDuration = clamp(seconds, Math.min(0.5, available), available)
       return { config: fitStoryboard({ ...state.config, clipDuration }) }
     }),
 
+  setClipRange: (start, end, audioDuration) =>
+    set((state) => {
+      const duration = audioDuration ?? Infinity
+      const maxSpan = getMaxClipSeconds(state.config, audioDuration ?? null)
+      const limit = Number.isFinite(duration) ? duration : start + maxSpan
+      const clipStart = clamp(start, 0, Math.max(0, limit - 0.5))
+      const clipEnd = clamp(end, clipStart + 0.5, Math.min(limit, clipStart + maxSpan))
+      const clipDuration = clamp(clipEnd - clipStart, 0.5, maxSpan)
+      return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
+    }),
+
   setVisual: (patch) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, ...patch } } })),
+
+  setCameraPreset: (cameraPreset, cameraIntensity) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        cameraPreset,
+        cameraIntensity: cameraIntensity == null
+          ? state.config.cameraIntensity ?? 1
+          : Math.max(0, Math.min(2, cameraIntensity)),
+      },
+    })),
 
   setGlitch: (level) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, glitch: level } } })),
 
@@ -168,6 +244,82 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         : state.config.palette
       return { coverPalette: palette, config: { ...state.config, palette: next } }
     }),
+
+  addElement: (type, overrides) =>
+    set((state) => {
+      const ratio = state.config.aspectRatio === '9:16' ? 9 / 16 : state.config.aspectRatio === '1:1' ? 1 : 16 / 9
+      const element = createCompositionElement(type, ratio, overrides)
+      return {
+        config: { ...state.config, elements: [...state.config.elements, element] },
+        selectedElementId: element.id,
+      }
+    }),
+
+  updateElement: (id, patch) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        elements: state.config.elements.map((element) => {
+          if (element.id !== id) return element
+          const next = { ...element, ...patch }
+          return {
+            ...next,
+            x: Math.max(-100, Math.min(200, next.x)),
+            y: Math.max(-100, Math.min(200, next.y)),
+            width: Math.max(1, Math.min(220, next.width)),
+            height: Math.max(0.5, Math.min(220, next.height)),
+            rotation: Math.max(-180, Math.min(180, next.rotation)),
+            opacity: Math.max(0, Math.min(1, next.opacity)),
+            fontSize: Math.max(0.5, Math.min(30, next.fontSize)),
+            tracking: Math.max(-2, Math.min(24, next.tracking)),
+            motionAmount: Math.max(0, Math.min(100, next.motionAmount)),
+          }
+        }),
+      },
+    })),
+
+  removeElement: (id) =>
+    set((state) => ({
+      config: { ...state.config, elements: state.config.elements.filter((element) => element.id !== id) },
+      selectedElementId: state.selectedElementId === id ? null : state.selectedElementId,
+    })),
+
+  duplicateElement: (id) =>
+    set((state) => {
+      const source = state.config.elements.find((element) => element.id === id)
+      if (!source) return state
+      const copy: CompositionElement = {
+        ...source,
+        id: `el-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        name: `${source.name} 2`,
+        x: Math.min(100, source.x + 4),
+        y: Math.min(100, source.y + 4),
+      }
+      return { config: { ...state.config, elements: [...state.config.elements, copy] }, selectedElementId: copy.id }
+    }),
+
+  moveElementLayer: (id, direction) =>
+    set((state) => {
+      const elements = [...state.config.elements]
+      const index = elements.findIndex((element) => element.id === id)
+      const target = index + direction
+      if (index < 0 || target < 0 || target >= elements.length) return state
+      const [item] = elements.splice(index, 1)
+      elements.splice(target, 0, item)
+      return { config: { ...state.config, elements } }
+    }),
+
+  replaceElements: (elements) => set((state) => ({
+    config: { ...state.config, elements },
+    selectedElementId: elements[0]?.id ?? null,
+  })),
+
+  clearElements: () => set((state) => ({
+    config: { ...state.config, elements: [] },
+    selectedElementId: null,
+  })),
+
+  selectElement: (selectedElementId) => set({ selectedElementId }),
 
   resetVisualToTemplateDefault: () => {
     const id = get().config.templateId
@@ -357,9 +509,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         return { audioMeta: meta, audioError: null, audioStatus: 'ready' }
       }
       // Áudio novo pode ser mais curto: o trecho antigo não pode continuar fora da faixa.
-      const clipStart = clamp(config.clipStart, 0, Math.max(0, duration - 1))
-      const available = Math.max(1, Math.min(MAX_CLIP_SECONDS, duration - clipStart))
-      const clipDuration = clamp(config.clipDuration, 1, available)
+      // O slider aceita 0,5 s; o recorder bloqueia com getClipReadiness se < 5 s.
+      const clipStart = config.productionMode === 'full' ? 0 : clamp(config.clipStart, 0, Math.max(0, duration - 0.5))
+      const available = Math.max(
+        0.5,
+        Math.min(getMaxClipSeconds(config, duration), duration - clipStart),
+      )
+      const clipDuration = config.productionMode === 'full'
+        ? duration
+        : clamp(config.clipDuration, Math.min(0.5, available), available)
       return {
         audioMeta: meta,
         audioError: null,
@@ -379,7 +537,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       audioMeta: null,
       audioStatus: 'idle',
       audioError: null,
-      config: fitStoryboard({ ...config, clipStart: 0, clipDuration: MAX_CLIP_SECONDS }),
+      config: fitStoryboard({ ...config, clipStart: 0, clipDuration: DEFAULT_CLIP_SECONDS }),
     })
   },
 

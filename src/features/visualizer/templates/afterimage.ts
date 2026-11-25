@@ -7,6 +7,7 @@ import { TextLayer } from '../objects/text-layer'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { coverSide, getFormatMode } from './composition'
 
 /**
  * AFTERIMAGE — a capa como memória persistente: ecos em rastro com atrasos
@@ -55,11 +56,11 @@ export const AfterimageTemplate: VisualTemplate = {
       disposables.push(material)
     }
 
-    const trackTitle = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.085, color: '#f2edf5', tracking: 4, align: 'center', lineHeight: 1.25, uppercase: true }))
+    const trackTitle = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.085, color: '#f2edf5', tracking: 4, align: 'center', anchor: 'topLeft', lineHeight: 1.25, uppercase: true, wrap: true }))
     ctx.scene.add(trackTitle.mesh)
-    const artist = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#a99eae', tracking: 6, align: 'center', lineHeight: 1.3, uppercase: true }))
+    const artist = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#a99eae', tracking: 6, align: 'center', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(artist.mesh)
-    const album = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#8d8398', tracking: 3, align: 'center', lineHeight: 1.3, uppercase: true }))
+    const album = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#8d8398', tracking: 3, align: 'center', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(album.mesh)
     const cta = track(new TextLayer({ font: 'ui', weight: 600, sizeFrac: 0.05, color: '#cf8aff', tracking: 5, align: 'center', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(cta.mesh)
@@ -106,15 +107,19 @@ export const AfterimageTemplate: VisualTemplate = {
         particles.update(dt, bass * 0.7, 0.8 + visual.cameraSpeed * 1.4)
         particles.setOpacity(0.3 + frame.energy * 0.35)
 
-        // Capa principal flutuando com deriva lateral contínua
-        const coverSize = viewW * 0.58
+        // Capa principal flutuando com deriva lateral contínua. Em paisagem
+        // ela fica à direita, deixando a coluna de texto à esquerda.
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
+        const coverSize = coverSide(viewW, viewH, mode, 0.58, 0.5, 0.46)
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.3 + visual.glow * 0.45)
-        const mainX = Math.sin(time * 0.16) * viewW * 0.1
-        const mainY = Math.sin(time * 0.42) * 0.12 + bass * 0.05
+        const baseX = landscape ? viewW * 0.22 : 0
+        const mainX = baseX + Math.sin(time * 0.16) * viewW * 0.04
+        const mainY = (landscape ? 0.1 : mode === 'square' ? -0.2 : 0.2) + Math.sin(time * 0.42) * 0.12 + bass * 0.05
         cover.group.position.set(mainX, mainY, 0)
-        cover.group.rotation.y = Math.sin(time * 0.2) * 0.07
-        cover.group.rotation.z = Math.sin(time * 0.13) * 0.02
+        cover.group.rotation.y = Math.sin(time * 0.2) * 0.025
+        cover.group.rotation.z = Math.sin(time * 0.13) * 0.008
         cover.group.scale.setScalar(1 + bass * 0.03 + frame.beatPulse * 0.012)
 
         // Ecos perseguem com lag; graves abrem o espaçamento
@@ -134,21 +139,25 @@ export const AfterimageTemplate: VisualTemplate = {
           material.opacity = (0.34 - i * 0.07) * (0.55 + frame.energy * 0.6)
         })
 
-        const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.84, {})
+        // Bloco editorial no topo (esquerda em 16:9); a arte respira abaixo.
+        const textW = landscape ? viewW * 0.44 : viewW * 0.8
+        const textX = landscape ? safe.leftX : -textW / 2
+        const titleTop = safe.topY - 0.18
+        const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textW, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(0, safe.bottomY + 1.15, 0)
+        trackTitle.mesh.position.set(textX, titleTop, 0)
 
-        const artistH = artist.set([type.showArtist ? type.artistName : ''], viewW * 0.8, {})
+        const artistH = artist.set([type.showArtist ? type.artistName : ''], textW, {})
         artist.setOpacity(type.showArtist ? 0.9 : 0)
-        artist.mesh.position.set(0, safe.bottomY + 0.95 - titleH, 0)
-        void artistH
+        const artistTop = titleTop - titleH - 0.14
+        artist.mesh.position.set(textX, artistTop, 0)
 
-        album.set([type.showAlbum ? type.albumTitle : ''], viewW * 0.7, {})
+        album.set([type.showAlbum ? type.albumTitle : ''], textW, {})
         album.setOpacity(type.showAlbum ? 0.8 : 0)
-        album.mesh.position.set(0, safe.topY - 0.75, 0)
+        album.mesh.position.set(textX, artistTop - artistH - 0.1, 0)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
+        cta.set([type.ctaText], viewW * 0.6, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 

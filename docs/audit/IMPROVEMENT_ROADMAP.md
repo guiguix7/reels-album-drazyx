@@ -1,109 +1,225 @@
-# Roadmap de melhorias — DRAZYX VISUALIZER STUDIO
+# Roadmap de melhorias — DRAZYX
 
 Data: 2026-11-25
-Base: achados de `MASTER_FINDINGS.md`. Ordem por **impacto no usuário × esforço**,
-não por preferência estética. Nenhuma correção foi aplicada nesta auditoria.
+Base: achados desta auditoria; nenhuma correção de produção foi implementada.
+Ordem: impacto para o usuário × custo × dependências. Não é uma estimativa de
+prazo.
 
 ## Princípios
 
-1. **Restaurar confiança antes de adicionar recursos.** Cinco layouts mortos e
-   uma prévia distorcida custam mais que qualquer feature nova.
-2. **Uma ação principal visível.** O usuário nunca deve rolar 3.500 px para
-   exportar.
-3. **Fidelidade preview = arquivo.** O que se vê no Stage é o que sai no WebM.
-4. **Progressive disclosure.** O básico primeiro; sliders avançados depois.
-5. **Cada correção com teste de aceitação.** Especialmente layouts e formatos.
+1. Primeiro fazer o que existe funcionar (layouts, 16:9, 45 s, preview).
+2. Depois simplificar as interfaces confusas (storyboard, Visual, gravação).
+3. Depois criar composições específicas por formato e o modo música completa.
+4. Por último, a camada de customização total — mas com o modelo certo desde
+   o início.
+5. Nenhuma declaração de sucesso sem arquivo/gravação verificada.
 
-## Fase 0 — Correções de confiança (1–2 dias)
+## Backlog priorizado — 15 itens
 
-| Ordem | Item | Achado | Esforço | Critério de pronto |
-|---|---|---|---|---|
-| 1 | Incluir todos os ids no `TEMPLATE_IDS` / derivar do registry | BUG-01 | S | Clicar em cada um dos 8 cards muda `aria-selected` e o Stage; teste cobre os 8. |
-| 2 | Corrigir o contêiner do Stage para 16:9 | BUG-02 | S | Canvas e contêiner com a mesma razão em 1440×900 e viewport alta; 1:1/9:16 preservados. |
-| 3 | Transformar “Gravar trecho” em CTA persistente | UX-01 | S/M | Botão visível sem rolar no desktop e no mobile; estado de progresso; mantém o painel. |
-| 4 | Corrigir colisão título/artista no MIRAGE | QUALITY-01 | M | Títulos curtos e longos sem sobreposição no preview e no export. |
-| 5 | Publicar o branch atualizado após QA | PRODUCT-01 | S/M | Produção com o mesmo bundle/feature set do branch; hash verificável. |
+| # | Melhoria | Achado | Impacto | Esforço | Depende de |
+|---:|---|---|---|---|---|
+| 1 | Corrigir o registro dos 8 layouts | TPL-01 | Alto | S | — |
+| 2 | Corrigir a razão do Stage 16:9 | LAND-01 | Alto | S | — |
+| 3 | Implementar 45 s de ponta a ponta | CLIP-01 | Alto | M | #1 |
+| 4 | Fazer “Tocar cena” parar no fim | SB-02 | Alto | S | — |
+| 5 | Microcopy e agrupamento do Visual | VIS-01/02 | Alto | S | — |
+| 6 | CTA de gravação fixo e painel enxuto | UX-01/02 | Alto | S/M | — |
+| 7 | Storyboard: faixa de cenas + inspector + timeline | SB-01/03/04/05 | Alto | M/L | #4 |
+| 8 | Composições 1:1 dedicadas e correção de T6–T8 | SQ-01..05 | Alto | M | #1 |
+| 9 | Modo FULL MUSIC VIDEO + recorder longo | LAND-02/06 | Muito alto | XL | #2, #3 |
+| 10 | Sistema de composições paisagem | LAND-03/07 | Muito alto | XL | #2, #9 |
+| 11 | Modelo de elementos + seleção direta | CUST-01/05 | Muito alto | XL | #7 |
+| 12 | Inspector, camadas e tipografia por elemento | CUST-02/03/06 | Alto | L | #11 |
+| 13 | Player configurável | LAND-04 | Médio/alto | M/L | #10, #11 |
+| 14 | Presets customizados + export/import | CUST-04 | Médio | M | #11 |
+| 15 | Acessibilidade e regressão dos fluxos críticos | A11Y/TEST | Médio | M | contínuo |
 
-**Por que primeiro:** são os cinco P1; quatro são correções pequenas e a quinta
-é processo. Sem isso, melhorias de UX são construídas sobre uma base quebrada.
+Itens 1–6 são **quick wins** de alto impacto e baixo custo; devem entrar antes
+de qualquer redesign grande. Itens 9–12 são estruturais e exigem contratos
+antes de paralelizar.
 
-## Fase 1 — Fluxo e validação (1 semana)
+## Fase 1 — Correções fundamentais (P1)
 
-| Item | Achado | Esforço | Critério de pronto |
-|---|---|---|---|
-| Estado vazio integrado ao Stage (sem cobrir texto) | UX-03 | S | Nenhuma sobreposição; CTA de upload no Stage. |
-| Validação de áudio curto no load | BUG-03 | S | Áudio <5 s desabilita gravar com explicação, ou mínimo real de 2 s; slider clampado. |
-| Contraste do botão primário | ACCESS-02 | S | ≥4,5:1 para texto normal. |
-| Alvos de toque 44 px | ACCESS-01 | S | Botões/segmentados/sliders com área mínima no mobile. |
-| `aria-live` para status/erros + canvas nomeado | ACCESS-03 | S | Upload, BPM, gravação e erro anunciados; canvas com `role`/label. |
-| Reduzir texto <12 px e agrupar avançados | UX-04 | M | Nenhum texto auxiliar abaixo de 12 px; “Avançado” recolhido. |
-| Onboarding em 5 passos | UX-05 | M | Primeira visita mostra 1 Fonte → 2 Estilo → 3 Trecho → 4 Texto → 5 Exportar. |
+### 1.1 Layouts selecionáveis
 
-**Por que agora:** depois de restaurar o núcleo, o próximo gargalo é o usuário
-não saber o que fazer nem confiar no que vê.
+- Derivar `TEMPLATE_IDS` de `TEMPLATE_REGISTRY`.
+- Testar os oito cards: clique → `aria-selected` → `templateId` → canvas.
+- Remover ids legados mortos (`t1`, `t2`, `t6`–`t8` não devem ser rejeitados).
 
-## Fase 2 — Utilidade criativa (2–4 semanas)
+**Aceite:** 8/8 layouts selecionáveis em 9:16, 1:1 e 16:9.
 
-| Item | Achado | Esforço | Critério de pronto |
-|---|---|---|---|
-| Waveform com seleção do trecho | MISSING-02 | M/L | Arrastar seleção, zoom, prévia do trecho, duração precisa. |
-| Persistência local + autosave + “meus projetos” | MISSING-01 | M | Recarregar restaura áudio/capa/config; lista de projetos; sem upload. |
-| Undo/redo de configurações | UX-06 | M | Pelo menos texto, paleta, visual e formato. |
-| Safe area 9:16 + guias de UI | MISSING-05 | S/M | Overlay opcional com zonas de Reels/TikTok/Shorts. |
-| Presets de plataforma | MISSING-03 | S | Reels/TikTok/Shorts/Feed ajustam formato, resolução, fps. |
-| Corrigir T1/T2 e equilibrar T4 | QUALITY-03/04 | M | T2 visivelmente diferente; T4 sem vazio involuntário. |
-| Remover/reduzir fantasmas de capa | QUALITY-02 | S | Nenhum texto fantasma atrás do bloco principal. |
-| CTA animado e teste de safe area | QUALITY-05 | S | Entrada do CTA nos últimos 2 s; dentro da zona segura. |
+### 1.2 Stage 16:9 correto
 
-## Fase 3 — Diferenciação e retenção (4–8 semanas)
+- Corrigir CSS para respeitar `aspect-ratio`; letterbox.
+- Teste de razão nos três formatos.
 
-| Item | Achado | Esforço | Observação |
-|---|---|---|---|
-| Publicar MOVIMENTO/RECIPES/BATCH/RETENTION do branch | PRODUCT-01 | M | Só depois de QA; não misturar com correções. |
-| Storyboard curto por padrão (hook → reveal → CTA) | QUALITY-05 | M | Testar retenção com métricas reais. |
-| Legendas/letra sincronizada | MISSING-02/novo | L | Diferencial para TikTok/Reels. |
-| Presets de marca salvos | MISSING-07 | M | Reuso semanal. |
-| Crop/enquadramento de capa | UX-07 | M | Zoom/posição com máscara. |
-| Loop perfeito e validação de sync | AUDIOVISUAL | M | Medir offset de beat e loop. |
-| 720p/60 fps/30 s com validação de arquivo | TEST-01 | S/M | Cobrir matriz de export. |
-| Performance: preview adaptativo + orçamento de FPS | PERF-01/02 | M | Medir em hardware real. |
+**Aceite:** 1432×805 (ou equivalente) para 16:9; razão 1,778 ±0,005.
 
-## Matriz impacto × esforço
+### 1.3 45 segundos
 
-| | Esforço baixo | Esforço médio | Esforço alto |
-|---|---|---|---|
-| **Impacto alto** | BUG-01, BUG-02, UX-01, ACCESS-02, BUG-03 | QUALITY-01, waveform, persistência, onboarding | — |
-| **Impacto médio** | UX-03, ACCESS-01/03, QUALITY-02, presets de plataforma | T1/T2, T4, safe area, undo | legendas, batch |
-| **Impacto baixo** | copy de privacidade, tooltips | crop, loop | — |
+- `MAX_CLIP_SECONDS = 45`.
+- Limite efetivo `min(45, duration - clipStart)`.
+- UI com máximo dinâmico; storyboard 15/30/45; testes e nomes.
+- Áudio curto: bloquear ou permitir coerente com o mínimo.
 
-## Cinco próximas ações
+**Aceite:** 45 s aceito perto do início; reduzido perto do fim; 45,1
+rejeitado; gravação usa o range exato.
 
-1. **Corrigir os oito layouts** (BUG-01): uma linha de dados + teste de
-   aceitação. É a correção de maior impacto por menor custo.
-2. **Consertar o Stage 16:9** (BUG-02): uma regra de layout; impede decisões
-   criativas erradas.
-3. **Fixar o CTA de gravação** (UX-01): barra no Stage/rodapé; torna o produto
-   descobrível.
-4. **Corrigir a tipografia do MIRAGE** (QUALITY-01): o arquivo padrão precisa
-   sair legível.
-5. **Publicar o branch com QA e versionar o deploy** (PRODUCT-01): alinhar
-   produção e repositório; sem isso, o trabalho já feito não chega ao usuário.
+### 1.4 Preview de cena
 
-## Métricas para validar o roadmap
+- `playRange(start,end)` com stop no fim; botão parar.
+- Teste: 3 s de cena → áudio para em 3 s.
 
-- **Ativação**: % de visitantes que carregam áudio e chegam a “Gravação
-  concluída”.
-- **Tempo até o primeiro export**: meta <3 min no caminho feliz.
-- **Sucesso de export**: % de gravações com Blob >0 e áudio presente.
-- **Erros por layout**: zero cards sem efeito.
-- **Acessibilidade**: contraste ≥4,5:1; 0 violações críticas de axe; CTA
-  alcançável em ≤10 Tabs.
-- **Performance**: 30 fps estáveis em mobile médio; preview ≤720p fora do
-  export.
+### 1.5 Gravação visível
 
-## Não fazer agora
+- CTA fixo no Stage/rodapé, sem depender do scroll de 13 painéis.
+- Estado de gravação claro; erro acionável.
 
-- Redesign visual completo: a identidade funciona; o problema é hierarquia.
-- Novos templates antes de os oito existentes funcionarem.
-- Analytics/integrações de terceiros antes de resolver privacidade e copy.
-- Batch/recipes em produção antes de um export 9:16 confiável e testado.
+## Fase 2 — Interfaces confusas (P1/P2)
+
+### 2.1 Storyboard
+
+- Faixa compacta de cenas (miniatura, papel, duração, play).
+- Uma cena selecionada; inspector único.
+- Timeline clicável, com segmentos, rótulos e foco.
+- Duração com regra explícita; desfazer.
+- “Tocar história” com destaque da cena e stop no fim.
+- Remover duplicação do hook global.
+
+**Aceite:** painel ≤700 px; 1 clique para selecionar; 0 campos duplicados;
+preview limitado à cena; teste de teclado.
+
+### 2.2 Painel Visual
+
+- Descrição de uma linha por controle; tooltip com exemplo.
+- Grupos: Movimento, Reação ao áudio, Luz e textura, Efeitos.
+- Renomear “Brilho” → “Glow”; “Câmera” → “Velocidade da câmera”.
+- Reset individual e indicador de alterado.
+
+### 2.3 Seleção de trecho
+
+- Waveform clicável, seleção arrastável, tempo restante visível.
+- Snap opcional a batidas.
+- Preview do range.
+
+### 2.4 Painel
+
+- Reordenar seções por frequência de uso: Fonte, Composição, Trecho, Visual,
+  Storyboard, Tipografia, Formato, Gravação, Projetos, avançados.
+- Recolher seções; lembretes de estado.
+- Alvos ≥44 px, texto ≥12 px, contraste.
+
+## Fase 3 — Formatos e produção (P0/P1)
+
+### 3.1 Quadrado dedicado
+
+- Grid e zonas de texto por layout; capa 1:1; sem sobreposição.
+- Corrigir T6 (corte), T7 (linha), T8 (comb), T3/T4 (vazio).
+- Teste visual e de contraste nos oito layouts.
+
+### 3.2 Modo FULL MUSIC VIDEO
+
+- `productionMode` explícito; duração do áudio; sem cap de 45 s.
+- Recorder em chunks, progresso, cancelamento, stop no fim real.
+- Teste com faixa completa; verificar arquivo, áudio e duração.
+- UI de produção longa, aviso de memória, codec real.
+
+### 3.3 Composições paisagem
+
+- Pelo menos 3 direções distintas: Cinematic Artwork, Editorial Player,
+  Atmospheric Wide/Minimal.
+- Grid horizontal, safe area, tipografia, espaço negativo.
+- Corrigir MIRAGE/AFTERIMAGE/SPECTRUM para não estourar a altura.
+
+### 3.4 Player e câmera
+
+- Player como elemento configurável, progresso/tempo reais.
+- Câmera com presets (dolly, track, orbit, parallax, static, handheld),
+  intensidade/velocidade/easing; keyframes depois.
+
+## Fase 4 — Customização total (P0 de produto)
+
+### 4.1 Modelo
+
+- `VisualElement`, `SceneComposition`, `TypographyStyle`, `ElementMotion`.
+- Templates como factories de composição; migração versionada.
+
+### 4.2 Edição direta
+
+- Overlay de seleção, mover/redimensionar/rotacionar, snap, teclado.
+- Inspector contextual; camadas; visibilidade/bloqueio.
+- Tipografia e animação por elemento.
+
+### 4.3 Biblioteca e presets
+
+- Cover, textos, waveform, spectrum, player, frame, background, imagem.
+- Salvar/aplicar/duplicar/exportar/importar; restaurar padrão.
+- Não sobrescrever presets originais.
+
+**Aceite:** Test D completo (mover capa, redimensionar, adicionar texto,
+fonte/cor, camada, waveform, animação, salvar/recarregar) sem código.
+
+## Fase 5 — Qualidade de produção (P2/P3)
+
+- Performance: FPS em 1080p/60, memória, partículas, longa duração.
+- Acessibilidade: live regions, canvas nomeado, timeline focável, contraste,
+  reduced motion, alvos.
+- Cross-browser: Firefox/Safari, codecs, autoplay.
+- Regressão: testes de UI/e2e para layouts, formatos, 45 s, storyboard,
+  gravação, download e modos.
+- Release: publicar o branch; versionar o bundle.
+
+## Estratégia de testes
+
+### Unitários
+
+- `getClipBounds` (5/45/restante/áudio curto).
+- Seleção de template para os 8 ids.
+- `playRange`/stop no fim (com fake timers).
+- Serialização/migração de `SceneComposition`.
+
+### Integração/UI
+
+- Clicar cada card → template ativo + canvas.
+- Cada formato → razão do Stage.
+- 45 s → store/UI/recorder coerentes.
+- Storyboard → selecionar, editar, reordenar, preview limitado.
+- Elemento → mover, redimensionar, camada, salvar preset, reload.
+
+### Manual/real
+
+- Gravar 5 s, 45 s e faixa completa; abrir os três arquivos.
+- 1:1 e 16:9; 30/60 fps; 720/1080.
+- Aba oculta/visível; cancelar gravação; erro de codec.
+- Leitor de tela e teclado.
+
+## Critérios de não-regressão
+
+- O fluxo upload → preview → trecho → gravação → download continua funcionando
+  em 9:16.
+- Nenhum overlay de edição aparece na gravação.
+- Nenhuma gravação é declarada válida sem áudio, duração e resolução
+  verificados.
+- Nenhum preset original é sobrescrito por custom.
+
+## O que não fazer
+
+- Não trocar 30 por 45 apenas no slider.
+- Não adicionar 50 sliders ao painel atual.
+- Não redesenhar todos os templates antes de corrigir o registry e o 16:9.
+- Não prometer full song sem gravar uma faixa completa.
+- Não declarar customização total enquanto posição/camada/fonte estiverem
+  hardcoded.
+- Não publicar sem atualizar o deploy.
+
+## Sequência recomendada
+
+1. **Semana de correções:** #1–#6.
+2. **Redesenho do storyboard e do painel:** #7.
+3. **Formatos:** #8; em paralelo, contrato do modo FULL e do recorder.
+4. **Full song + paisagem:** #9–#10.
+5. **Customização:** #11–#14.
+6. **Qualidade contínua:** #15.
+
+O produto só deve ser chamado de “estúdio de music video” depois das fases 3 e
+4. Até lá, é um gerador de clipes verticais com boa base técnica.

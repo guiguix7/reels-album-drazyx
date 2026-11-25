@@ -4,6 +4,8 @@ import type { StoryboardConfig } from '../storyboard/storyboard.types'
 import type { MotionProfileId } from '../visualizer/motion/motion.types'
 
 export type AspectRatioId = '9:16' | '1:1' | '16:9'
+export type ProductionMode = 'social' | 'full'
+export type CameraPreset = 'auto' | 'static' | 'dolly-in' | 'dolly-out' | 'pan' | 'tilt' | 'orbit' | 'drift'
 export type PlatformId = 'custom' | 'tiktok' | 'reels' | 'shorts'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
@@ -80,6 +82,40 @@ export interface TypeSettings {
   tracking: number
 }
 
+export type CompositionElementType = 'text' | 'artwork' | 'shape' | 'waveform' | 'progress' | 'player'
+export type CompositionFont = 'title' | 'ui'
+export type CompositionMotion = 'none' | 'float' | 'pulse'
+
+/**
+ * Camada editável desenhada no Stage por cima do template. Coordenadas em
+ * porcentagem do palco; width/height em porcentagem da largura/altura.
+ */
+export interface CompositionElement {
+  id: string
+  type: CompositionElementType
+  name: string
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  opacity: number
+  visible: boolean
+  locked: boolean
+  color: string
+  text: string
+  font: CompositionFont
+  /** Tamanho do texto como fração da altura do palco (1–40). */
+  fontSize: number
+  weight: number
+  align: 'left' | 'center' | 'right'
+  tracking: number
+  motion: CompositionMotion
+  /** Intensidade do movimento (0–100). */
+  motionAmount: number
+  reactive: boolean
+}
+
 export interface AudioMeta {
   fileName: string
   duration: number
@@ -92,6 +128,11 @@ export interface CoverMeta {
 }
 
 export interface ProjectConfig {
+  /** Social clip (limite de 45 s) ou music video com a faixa inteira. */
+  productionMode: ProductionMode
+  /** Câmera global sobre a composição; `auto` mantém a câmera do template. */
+  cameraPreset?: CameraPreset
+  cameraIntensity?: number
   /** Perfil de plataforma aplicado ao export (configuração, sem integração externa). */
   platform: PlatformId
   aspectRatio: AspectRatioId
@@ -105,6 +146,8 @@ export interface ProjectConfig {
   visual: VisualSettings
   type: TypeSettings
   storyboard: StoryboardConfig
+  /** Elementos editáveis da composição; vazio preserva o template puro. */
+  elements: CompositionElement[]
 }
 
 /** Dimensões de saída por proporção/qualidade. */
@@ -130,4 +173,32 @@ export function getClipEnd(config: Pick<ProjectConfig, 'clipStart' | 'clipDurati
 export function getEffectiveClipSeconds(config: ProjectConfig, audioDuration: number | null): number {
   const end = getClipEnd(config, audioDuration)
   return Math.max(0, end - config.clipStart)
+}
+
+/**
+ * Contrato único para o trecho: store, UI, storyboard e recorder não podem
+ * discordar sobre o que é um range possível. O mínimo de gravação é 5 s, mas
+ * a UI ainda precisa representar áudios menores sem criar um slider inválido.
+ */
+export function getClipReadiness(
+  config: Pick<ProjectConfig, 'clipStart' | 'clipDuration'>,
+  audioDuration: number | null,
+  minimumSeconds = 5,
+): { recordable: boolean; effective: number; maxDuration: number; reason: string | null } {
+  const effective = getEffectiveClipSeconds(config as ProjectConfig, audioDuration)
+  const maxDuration = audioDuration == null
+    ? Infinity
+    : Math.max(0, audioDuration - config.clipStart)
+  if (audioDuration == null || audioDuration <= 0) {
+    return { recordable: false, effective, maxDuration, reason: 'Carregue um áudio para habilitar a gravação.' }
+  }
+  if (effective < minimumSeconds) {
+    return {
+      recordable: false,
+      effective,
+      maxDuration,
+      reason: `Este áudio permite apenas ${effective.toFixed(1)}s de trecho; o mínimo para gravar é ${minimumSeconds}s.`,
+    }
+  }
+  return { recordable: true, effective, maxDuration, reason: null }
 }

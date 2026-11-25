@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { getAudioEngine } from '../audio/AudioEngine'
 import { useProjectStore } from '../project/project.store'
-import { getClipEnd, getOutputDimensions } from '../project/project.types'
+import { getClipEnd, getClipReadiness, getOutputDimensions } from '../project/project.types'
 import { MIN_CLIP_SECONDS } from '../project/project.defaults'
 import { StageRecorder } from './recorder'
 import { useRecorderStore } from './recording.store'
@@ -51,11 +51,12 @@ export function useRecordingFlow(
 
     const config = project.config
     const clipEnd = getClipEnd(config, meta.duration)
-    const effective = clipEnd - config.clipStart
-    if (effective < MIN_CLIP_SECONDS) {
-      recStore.setError(`O trecho selecionado é muito curto (mínimo de ${MIN_CLIP_SECONDS}s).`)
+    const readiness = getClipReadiness(config, meta.duration, MIN_CLIP_SECONDS)
+    if (!readiness.recordable) {
+      recStore.setError(readiness.reason ?? 'O trecho selecionado não pode ser gravado.')
       return
     }
+    const effective = readiness.effective
 
     recStore.reset() // limpa preview anterior, se houver
     recStore.setStatus('preparing', 'Preparando gravação...')

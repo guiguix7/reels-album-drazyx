@@ -9,6 +9,7 @@ import { WaveformLine } from '../objects/waveform-line'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { getFormatMode } from './composition'
 
 /**
  * LAYOUT 02 — STEREO FRAME
@@ -96,32 +97,49 @@ export const Layout02: VisualTemplate = {
         cover.group.rotation.y = Math.sin(time * 0.14) * 0.04
         cover.group.scale.setScalar(1 + bass * 0.028 + frame.beatPulse * 0.012)
 
-        // Waveforms espelhadas ocupando as laterais da capa.
+        // Em retrato não há laterais úteis: uma waveform larga substitui o par.
+        const mode = getFormatMode(viewW, viewH)
         const sideWidth = Math.max(0.6, viewW * 0.5 - size / 2 - 0.25)
         const waveAmp = 0.16 + bass * 0.3 + frame.transient * 0.12
-        waveLeft.update(frame.waveform, -viewW / 2 + 0.12, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
-        waveRight.update(frame.waveform, size / 2 + 0.18, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
+        if (mode === 'portrait') {
+          waveLeft.update(frame.waveform, safe.leftX, coverY - size / 2 - 0.35, safe.width, waveAmp * 1.4, 0.55 + frame.treble * 0.35)
+          waveRight.update(frame.waveform, 0, 0, 0, 0, 0)
+        } else {
+          waveLeft.update(frame.waveform, -viewW / 2 + 0.12, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
+          waveRight.update(frame.waveform, size / 2 + 0.18, coverY, sideWidth, waveAmp, 0.4 + frame.treble * 0.4)
+        }
 
         // Espectro de apoio entre a capa e o bloco de metadados.
         const barWidth = Math.min(viewW * 0.5, viewH * 0.42)
         const barTop = coverY - size / 2 - 0.4
         const barMax = 0.38 + bass * 0.24
         bars.updateRow(-barWidth / 2, barTop, barWidth, frame.bars, { maxHeight: barMax, minHeight: 0.03 })
-        bars.setOpacity(0.5 + frame.energy * 0.3)
+        bars.setOpacity(mode === 'portrait' ? 0 : 0.5 + frame.energy * 0.3)
 
         // Metadados empilhados de cima para baixo dentro do espaço restante.
         const blockTop = barTop - barMax - 0.22
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], viewW * 0.74, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
-        trackTitle.mesh.position.set(0, blockTop - titleH / 2, 0)
 
         const artistH = artist.set([type.showArtist ? type.artistName : ''], Math.min(viewW * 0.72, 5), {})
         artist.setOpacity(type.showArtist ? 0.9 : 0)
-        artist.mesh.position.set(0, blockTop - titleH - 0.1 - artistH / 2, 0)
 
         const albumH = album.set([type.showAlbum ? type.albumTitle : ''], Math.min(viewW * 0.68, 4), {})
         album.setOpacity(type.showAlbum ? 0.7 : 0)
-        album.mesh.position.set(0, blockTop - titleH - artistH - 0.18 - albumH / 2, 0)
+
+        if (mode === 'portrait') {
+          // Em retrato o bloco desce para a base segura, preenchendo a vertical.
+          const albumCenter = safe.bottomY + 0.45 + albumH / 2
+          const artistCenter = albumCenter + albumH / 2 + 0.14 + artistH / 2
+          const titleCenter = artistCenter + artistH / 2 + 0.16 + titleH / 2
+          trackTitle.mesh.position.set(0, titleCenter, 0)
+          artist.mesh.position.set(0, artistCenter, 0)
+          album.mesh.position.set(0, albumCenter, 0)
+        } else {
+          trackTitle.mesh.position.set(0, blockTop - titleH / 2, 0)
+          artist.mesh.position.set(0, blockTop - titleH - 0.1 - artistH / 2, 0)
+          album.mesh.position.set(0, blockTop - titleH - artistH - 0.18 - albumH / 2, 0)
+        }
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.84 ? Math.min(1, (args.clip.progress - 0.84) / 0.08) : 0
         cta.set([type.ctaText], viewW * 0.76, { color: pal.glow })

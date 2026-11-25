@@ -377,8 +377,10 @@ export class AudioEngine {
 
   /** Encerra o trecho armado quando o áudio alcança o fim (chamado por eventos/timer). */
   private checkClipEnd(): void {
-    if (this.armedEnd == null || this.audio.paused) return
-    if (this.audio.currentTime < this.armedEnd - 0.015) return
+    if (this.armedEnd == null) return
+    // Não exigir audio.paused === false: no fim natural o elemento já está
+    // pausado/ended, e a checagem anterior nunca disparava o callback.
+    if (this.audio.currentTime < this.armedEnd - 0.015 && !this.audio.ended) return
     this.pause()
     this.armedEnd = null
     if (this.clipEndFired) return

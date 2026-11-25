@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useProjectStore } from '../features/project/project.store'
 import { DEFAULT_PROJECT } from '../features/project/project.defaults'
+import { LAYOUT_LIST } from '../features/visualizer/templates/registry'
 
 describe('project.store', () => {
   beforeEach(() => {
@@ -24,6 +25,14 @@ describe('project.store', () => {
     expect(useProjectStore.getState().config.templateId).toBe('t3')
   })
 
+  it('aceita todos os oito layouts exibidos na galeria', () => {
+    const store = useProjectStore.getState()
+    for (const layout of LAYOUT_LIST) {
+      store.setTemplate(layout.id)
+      expect(useProjectStore.getState().config.templateId).toBe(layout.id)
+    }
+  })
+
   it('setTemplate rejeita id desconhecido', () => {
     const before = useProjectStore.getState().config.templateId
     // @ts-expect-error teste de proteção em runtime
@@ -39,10 +48,37 @@ describe('project.store', () => {
     expect(useProjectStore.getState().config.clipDuration).toBeLessThanOrEqual(5)
   })
 
-  it('setClipDuration limita a 30s', () => {
+  it('setClipDuration aceita 45s e limita acima disso', () => {
     const s = useProjectStore.getState()
+    s.setClipDuration(45, 300)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
     s.setClipDuration(120, 300)
-    expect(useProjectStore.getState().config.clipDuration).toBe(30)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
+  })
+
+  it('setClipDuration usa o que resta a partir do início, não 45 s absolutos', () => {
+    const s = useProjectStore.getState()
+    s.setClipStart(90, 97.4)
+    expect(useProjectStore.getState().config.clipDuration).toBeCloseTo(7.4, 1)
+    s.setClipDuration(20, 97.4)
+    expect(useProjectStore.getState().config.clipStart + useProjectStore.getState().config.clipDuration).toBeLessThanOrEqual(97.4)
+  })
+
+  it('setClipRange respeita o áudio restante e o teto de 45s', () => {
+    const s = useProjectStore.getState()
+    s.setClipRange(0, 50, 97.4)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
+    s.setClipRange(90, 97.4, 97.4)
+    const config = useProjectStore.getState().config
+    expect(config.clipStart).toBeGreaterThanOrEqual(90)
+    expect(config.clipStart + config.clipDuration).toBeLessThanOrEqual(97.4)
+  })
+
+  it('áudio de 2 s não cria range impossível', () => {
+    useProjectStore.getState().setAudioMeta({ fileName: 'short.wav', objectUrl: '', duration: 2 })
+    const config = useProjectStore.getState().config
+    expect(config.clipStart).toBe(0)
+    expect(config.clipDuration).toBe(2)
   })
 
   it('setAudioMeta re-clampa o trecho quando o áudio novo é mais curto', () => {
@@ -56,8 +92,9 @@ describe('project.store', () => {
     s.setClipStart(20, 300)
     s.setAudioMeta({ fileName: 'shorter.wav', objectUrl: '', duration: 12 })
     config = useProjectStore.getState().config
-    expect(config.clipStart).toBeLessThanOrEqual(11)
+    expect(config.clipStart).toBeLessThanOrEqual(11.5)
     expect(config.clipStart + config.clipDuration).toBeLessThanOrEqual(12)
+    expect(config.clipDuration).toBeGreaterThanOrEqual(0.5)
 
     useProjectStore.getState().clearAudio()
     expect(useProjectStore.getState().config.clipDuration).toBe(30)

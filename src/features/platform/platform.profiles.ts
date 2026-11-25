@@ -21,7 +21,7 @@ export const PLATFORM_PROFILES: Record<Exclude<PlatformId, 'custom'>, PlatformPr
     fps: 30,
     maxSeconds: 30,
     ctaText: 'OUÇA COMPLETO · LINK NA BIO',
-    note: '9:16 · 1080×1920 · até 30 s. Safe areas cobertas pela UI do app.',
+    note: '9:16 · 1080×1920 · até 45 s. Safe areas cobertas pela UI do app.',
   },
   reels: {
     id: 'reels',
@@ -31,7 +31,7 @@ export const PLATFORM_PROFILES: Record<Exclude<PlatformId, 'custom'>, PlatformPr
     fps: 30,
     maxSeconds: 30,
     ctaText: 'OUÇA NO SPOTIFY · LINK NA BIO',
-    note: '9:16 · 1080×1920 · até 30 s. Evite texto nos 12% superiores e 16% inferiores.',
+    note: '9:16 · 1080×1920 · até 45 s. Evite texto nos 12% superiores e 16% inferiores.',
   },
   shorts: {
     id: 'shorts',
@@ -41,7 +41,7 @@ export const PLATFORM_PROFILES: Record<Exclude<PlatformId, 'custom'>, PlatformPr
     fps: 30,
     maxSeconds: 30,
     ctaText: 'FAÇA PARTE · LINK NA BIO',
-    note: '9:16 · 1080×1920 · até 30 s. Título curto melhora a leitura no feed.',
+    note: '9:16 · 1080×1920 · até 45 s. Título curto melhora a leitura no feed.',
   },
 }
 

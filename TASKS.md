@@ -1,6 +1,15 @@
 # TASKS — DRAZYX VISUALIZER STUDIO
 
-Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → baixar vídeo com áudio.
+## Melhoria de produto (2026-11-25)
+
+- [x] Fase 0 — Baseline: branch `feat/product-quality-improvements`, `npm ci` + lint + typecheck + 117 testes + build verdes, produção reconciliada (`index-DZ5U_6t5.js`), `docs/IMPROVEMENT_BASELINE.md`
+- [x] Fase 1 — Correções críticas: 8 layouts selecionáveis, Stage com razão medida, MIRAGE sem colisão, validação única de áudio curto e empty state fora do palco — 129 testes verdes
+- [x] Fase 2 — Workspace/onboarding: CTA persistente de gravação, guia de 5 passos, descrições e grupos no Visual, tipografia/alvos/contraste, chrome compacto — validação DOM desktop/mobile
+- [x] Fase 5 — Elementos editáveis: overlay WebGL com texto/capa/forma/waveform/progresso, seleção e drag no Stage, inspetor, camadas, presets locais e import/export JSON — 137 testes
+- [x] Fase 4 — Composições por formato: modo retrato/quadrado/paisagem, capas limitadas pela altura, layouts editoriais específicos (MIRAGE/T4/T6/T8/AFTERIMAGE/SPECTRUM), T2 e T6 sem laterais apertadas em retrato, remoção do fundo 2.5D do T3 — 135 testes
+- [x] Fase 3 — Storyboard/trecho: 45 s, preset 45 s, waveform com seleção arrastável, timeline clicável, inspector único, preview por cena/sequência com parada no fim — 133 testes
+
+Fluxo-alvo: carregar áudio → visualizar → selecionar até 45 s → gravar → baixar vídeo com áudio.
 
 ## Fase 0 — Inspeção e planejamento
 - [x] Ler PROMPT.md (salvo na raiz) e AGENTS.md
@@ -71,3 +80,22 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
   - QA visual em contact sheet único (sem screenshots nativos por layout); codecs não foram re-testados e não houve benchmark em GPU fraca.
 - [x] Fase 8 — Regressão final + documentação — `text-metrics` testável, regressão de safe area/lote/CSV (117 testes), README com recipes/storyboard/movimento/lote/persistência/Retention Lab/limitações e QA real do fluxo individual (WAV → trecho de 5 s → WebM 1080×1920 com áudio, 5,16 s, manifest no IndexedDB) — commit `test: add comprehensive visualizer regression coverage`
   - Lote completo e round-trip visual do Retention Lab não foram re-executados nesta rodada; codecs não foram re-testados e não houve benchmark em GPU fraca.
+
+## Plano Product Quality (master prompt)
+
+- [x] Fase 0 — Baseline e reconciliação do repositório — commit `chore: establish product improvement baseline`
+- [x] Fase 1 — Correções críticas de template, Stage, MIRAGE, áudio curto e estado vazio — commit `fix: resolve critical template and rendering issues`
+- [x] Fase 2 — Workspace, onboarding, ação de gravação persistente, tipografia e alvos — commit `feat: improve editor workspace and onboarding UX`
+- [x] Fase 3 — Storyboard e seleção de trecho por waveform, limite social de 45 s — commit `feat: redesign storyboard and audio clip selection`
+- [x] Fase 4 — Composições específicas para 9:16, 1:1 e 16:9 — commit `feat: introduce format-specific visual compositions`
+- [x] Fase 5 — Elementos editáveis no Stage, inspetor, camadas e presets de composição — commit `feat: add comprehensive UI composition editing`
+- [x] Fase 6 — Modo Music video 16:9 com faixa inteira, player opcional e presets de câmera — commit `feat: introduce full-length landscape music video mode`
+  - A gravação real validada foi de 8 s em 1920×1080; a faixa completa de 02:27 e o comportamento de memória em gravações muito longas não foram medidos.
+- [ ] Fase 7 — Persistência de projeto com autosave, undo/redo e presets de marca
+- [ ] Fase 8 — QA final, screenshots de todos os formatos, export longo real e release verificável
+
+- [x] Fase 7 — Persistência e presets criativos: autosave local com restauração, salvar/sobrescrever projeto, undo/redo com Ctrl/Cmd+Z e presets de marca — commit `feat: add project persistence and creative presets`
+  - Autosave e histórico guardam somente configuração; áudio/capa são recarregados a cada sessão. Presets de marca não têm import/export próprio.
+
+- [x] Fase 8 — QA final e regressão: lint/typecheck, 153 testes, build, contact sheets dos 12 templates em 9:16/1:1/16:9, matriz de áudio, autosave/undo/presets no navegador, clipe curto e faixa completa reais — commit `test: validate product improvements and regression coverage`
+  - Deploy/push não executados (sem configuração/credenciais); produção não está sincronizada. FPS da faixa longa ficou em ~10,6 nesta máquina.

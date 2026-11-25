@@ -8,6 +8,7 @@ import { radialGlowTexture } from '../objects/textures'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { getFormatMode } from './composition'
 
 /**
  * LAYOUT 08 — MONOCHROME FOCUS
@@ -85,15 +86,18 @@ export const Layout08: VisualTemplate = {
         }
 
         background.update(time, 0.18 + visual.glow * 0.22 + bass * 0.1, 0)
-        const size = Math.min(viewW * 0.5, viewH * 0.38)
-        const coverY = 0.6 + Math.sin(time * 0.2) * 0.04
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
+        const size = Math.min(viewW * (landscape ? 0.26 : 0.5), viewH * 0.38)
+        const coverX = landscape ? -viewW * 0.24 : 0
+        const coverY = (landscape ? 0.2 : 0.6) + Math.sin(time * 0.2) * 0.04
         cover.setSize(size, size)
         cover.setGlowIntensity(0.12 + visual.glow * 0.24 + bass * 0.14)
-        cover.group.position.set(0, coverY, 0)
-        cover.group.rotation.z = Math.sin(time * 0.08) * 0.008
+        cover.group.position.set(coverX, coverY, 0)
+        cover.group.rotation.z = Math.sin(time * 0.08) * 0.004
         cover.group.scale.setScalar(1 + bass * 0.018)
 
-        glow.position.set(0, coverY, -0.5)
+        glow.position.set(coverX, coverY, -0.5)
         glow.scale.setScalar(size * 2.4)
         glowMaterial.opacity = 0.12 + bass * 0.12
 
