@@ -32,7 +32,7 @@ export const Template05: VisualTemplate = {
 
     // Textura atmosférica duplicada da capa (não destrói a arte original).
     const washGeometry = new THREE.PlaneGeometry(1, 1)
-    const washMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.09, depthWrite: false, toneMapped: false })
+    const washMaterial = new THREE.MeshBasicMaterial({ map: radialGlowTexture(), color: '#b84dff', transparent: true, opacity: 0.12, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending })
     const wash = new THREE.Mesh(washGeometry, washMaterial)
     wash.position.z = -4.5
     wash.renderOrder = -5
@@ -56,7 +56,7 @@ export const Template05: VisualTemplate = {
     ctx.scene.add(panelGlow)
     disposables.push(panelGlowMaterial)
 
-    const trackTitle = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.072, color: '#f2edf5', tracking: 2, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true, wrap: true, panel: { fill: 'rgba(24, 19, 29, 0.94)', border: 'rgba(184, 77, 255, 0.25)', padFrac: 0.05 } }))
+    const trackTitle = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.058, color: '#f2edf5', tracking: 2, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true, wrap: true, panel: { fill: 'rgba(24, 19, 29, 0.94)', border: 'rgba(184, 77, 255, 0.25)', padFrac: 0.035 } }))
     ctx.scene.add(trackTitle.mesh)
     const artist = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.042, color: '#a99eae', tracking: 5, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(artist.mesh)
@@ -114,6 +114,7 @@ export const Template05: VisualTemplate = {
       cover.setAccent(colors.accent, withAlpha(colors.accent, 0.5))
       progressFillMaterial.color.set(colors.accent)
       playMaterial.color.set(colors.glow)
+      washMaterial.color.set(colors.accent)
     }
 
     const formatClock = (seconds: number): string => {
@@ -136,19 +137,14 @@ export const Template05: VisualTemplate = {
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
           cover.setTexture(lastTexture)
-          washMaterial.map = lastTexture
-          washMaterial.needsUpdate = true
         }
 
         background.update(time, 0.24 + visual.glow * 0.3 + bass * 0.16, Math.sin(time * 0.04) * 0.05)
-        wash.scale.set(viewW * 1.6, viewH * 1.6, 1)
-        wash.position.set(0, 0.4, -4.5)
-        washMaterial.opacity = 0.05 + frame.energy * 0.05
 
         const portrait = viewH > viewW * 1.15
-        const coverSize = portrait ? Math.min(viewW * 0.66, viewH * 0.34) : Math.min(viewW * 0.42, viewH * 0.58)
+        const coverSize = portrait ? Math.min(viewW * 0.6, viewH * 0.3) : Math.min(viewW * 0.42, viewH * 0.58)
         const coverX = portrait ? 0 : -viewW * 0.22
-        const coverY = portrait ? viewH * 0.19 : 0.45
+        const coverY = portrait ? viewH * 0.21 : 0.45
 
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.22 + visual.glow * 0.4 + bass * 0.26)
@@ -157,10 +153,15 @@ export const Template05: VisualTemplate = {
         cover.group.rotation.y = Math.sin(time * 0.18) * 0.04
         cover.group.scale.setScalar(1 + bass * 0.024 + frame.beatPulse * 0.01)
 
-        const panelW = portrait ? viewW * 0.82 : viewW * 0.44
-        const panelH = portrait ? viewH * 0.34 : viewH * 0.62
+        // Halo da capa: brilho suave da paleta (não duplica a arte como fundo).
+        wash.scale.set(coverSize * 2.4, coverSize * 2.4, 1)
+        wash.position.set(coverX, coverY, -4.5)
+        washMaterial.opacity = 0.07 + frame.energy * 0.04
+
+        const panelW = portrait ? viewW * 0.87 : viewW * 0.44
+        const panelH = portrait ? viewH * 0.3 : viewH * 0.62
         const panelX = portrait ? 0 : viewW * 0.23
-        const panelY = portrait ? -viewH * 0.16 : 0.3
+        const panelY = portrait ? -viewH * 0.15 : 0.3
         panel.scale.set(panelW, panelH, 1)
         panel.position.set(panelX, panelY, 0)
         panelGlow.position.set(panelX, panelY, -0.2)
@@ -168,38 +169,38 @@ export const Template05: VisualTemplate = {
 
         const left = panelX - panelW / 2 + panelW * 0.07
         const contentW = panelW * 0.86
-        const top = panelY + panelH / 2 - panelH * 0.1
+        const top = panelY + panelH / 2 - panelH * 0.09
 
         status.set(['NOW PLAYING'], contentW, { color: pal.glow })
         status.setOpacity(0.85)
         status.mesh.position.set(left, top, 0)
 
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], contentW, {
-          panel: { fill: 'rgba(24, 19, 29, 0.94)', border: withAlpha(pal.accent, 0.3), padFrac: 0.05 },
+          panel: { fill: 'rgba(24, 19, 29, 0.94)', border: withAlpha(pal.accent, 0.3), padFrac: 0.035 },
         })
         trackTitle.setOpacity(type.showTrack ? 0.98 : 0)
-        trackTitle.mesh.position.set(left, top - 0.3, 0)
+        const titleTop = top - panelH * 0.1
+        trackTitle.mesh.position.set(left, titleTop, 0)
 
-        artist.set([type.showArtist ? type.artistName : ''], contentW, {})
+        const artistH = artist.set([type.showArtist ? type.artistName : ''], contentW, {})
         artist.setOpacity(type.showArtist ? 0.9 : 0)
-        artist.mesh.position.set(left, top - 0.36 - titleH, 0)
+        artist.mesh.position.set(left, titleTop - titleH - 0.12, 0)
 
-        album.set([type.showAlbum ? type.albumTitle : ''], contentW, {})
+        const albumH = album.set([type.showAlbum ? type.albumTitle : ''], contentW, {})
         album.setOpacity(type.showAlbum ? 0.7 : 0)
-        album.mesh.position.set(left, top - 0.62 - titleH, 0)
-
-        // Ear: barras de frequência dentro do painel.
-        const barsY = panelY + panelH * 0.06
-        bars.updateRow(left, barsY, contentW, frame.bars, {
-          maxHeight: panelH * 0.18 + bass * 0.2 + frame.beatPulse * 0.08,
-          minHeight: 0.02,
-        })
-        bars.setOpacity(0.55 + frame.energy * 0.35)
+        const albumTop = titleTop - titleH - artistH - 0.24
+        album.mesh.position.set(left, albumTop, 0)
 
         // Progresso real do trecho selecionado.
         const progressW = contentW
-        const progressY = panelY - panelH * 0.18
+        const progressY = panelY - panelH * 0.35
         const progressH = Math.max(0.028, panelH * 0.016)
+
+        // Ear: barras no vão restante, sem invadir texto nem progresso.
+        const barsTop = albumTop - albumH - 0.22
+        const barsMax = Math.max(0.06, Math.min(panelH * 0.18 + bass * 0.16, barsTop - progressY - 0.16))
+        bars.updateRow(left, barsTop, contentW, frame.bars, { maxHeight: barsMax, minHeight: 0.02 })
+        bars.setOpacity(0.55 + frame.energy * 0.35)
         progressTrack.scale.set(progressW, progressH, 1)
         progressTrack.position.set(left + progressW / 2, progressY, 0)
         const filled = Math.max(0.0001, Math.min(1, clip.progress)) * progressW
@@ -207,7 +208,7 @@ export const Template05: VisualTemplate = {
         progressFill.position.set(left + filled / 2, progressY, 0.01)
 
         // Símbolos decorativos abaixo do progresso.
-        const glyphY = progressY - panelH * 0.1
+        const glyphY = progressY - panelH * 0.07
         const glyphSize = Math.max(0.09, panelH * 0.045)
         playGlyph.scale.set(glyphSize, glyphSize, 1)
         playGlyph.position.set(left + glyphSize * 0.9, glyphY, 0)
@@ -224,7 +225,8 @@ export const Template05: VisualTemplate = {
         const ctaOpacity = type.showCta && clip.progress > 0.84 ? Math.min(1, (clip.progress - 0.84) / 0.08) : 0
         cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
-        cta.mesh.position.set(0, portrait ? -viewH * 0.42 : -viewH * 0.42, 0)
+        // CTA sempre dentro da zona segura inferior (o painel não o cobre).
+        cta.mesh.position.set(0, -viewH / 2 + viewH * 0.16 + 0.2, 0)
 
         const camSpeed = 0.14 + visual.cameraSpeed * 0.35
         ctx.camera.position.set(Math.sin(time * 0.04) * 0.08 * camSpeed, Math.cos(time * 0.03) * 0.06 * camSpeed, 10 - clip.progress * 0.2 * camSpeed)

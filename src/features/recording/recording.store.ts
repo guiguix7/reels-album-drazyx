@@ -12,6 +12,8 @@ export interface RecordedPreview {
   width: number
   height: number
   durationSeconds: number
+  /** Avisos da validação do arquivo (vazio = passou nas checagens). */
+  warnings: string[]
 }
 
 interface RecorderStore {
@@ -21,7 +23,7 @@ interface RecorderStore {
   preview: RecordedPreview | null
   setStatus: (status: RecorderStatus, statusMessage?: string | null) => void
   setError: (error: string) => void
-  setResult: (result: RecorderResult, fileName: string) => void
+  setResult: (result: RecorderResult, fileName: string, warnings?: string[]) => void
   reset: () => void
 }
 
@@ -33,7 +35,7 @@ export const useRecorderStore = create<RecorderStore>((set, get) => ({
   setStatus: (status, statusMessage = null) =>
     set({ status, statusMessage, error: status === 'error' ? get().error : null }),
   setError: (error) => set({ status: 'error', error }),
-  setResult: (result, fileName) => {
+  setResult: (result, fileName, warnings = []) => {
     const previous = get().preview
     if (previous) URL.revokeObjectURL(previous.url)
     set({
@@ -47,6 +49,7 @@ export const useRecorderStore = create<RecorderStore>((set, get) => ({
         width: result.width,
         height: result.height,
         durationSeconds: result.durationSeconds,
+        warnings,
       },
     })
   },

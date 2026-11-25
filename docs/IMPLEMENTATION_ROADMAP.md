@@ -89,13 +89,25 @@ Limitações registradas: áudio/capa não são persistidos (Object URLs da sess
 não há gráficos históricos nem filtros avançados, e o CSV não carrega contexto de
 plataforma/hook/layout — o contexto vem do projeto no momento da importação.
 
-## Fase 7 — Performance, qualidade visual e export
+## Fase 7 — Performance, qualidade visual e export *(concluída)*
 
-- Ciclo de vida Three.js, reuso de recursos, partículas e shaders.
-- Perfis draft/standard/export/lightweight sem perder 720p/1080p.
-- Auditoria dos 8 layouts nas 3 proporções com screenshots.
-- Validação do export: MIME/extensão, áudio presente, duração, seek e cleanup.
+- [x] Ciclo de vida Three.js: engine é destruída/reconstruída com `dispose`, texturas e
+  materiais seguem sendo liberados pelos templates; nenhum recurso novo persistente.
+- [x] Perfis draft/standard/export/lightweight e `AdaptiveResolution`: no preview a
+  escala de render cai quando o frame estoura o orçamento; no export volta a 1.0.
+- [x] Export em resolução cheia via `beginExport()`/`endExport()` no registry da engine,
+  usado pela gravação individual e por cada job do lote.
+- [x] Auditoria dos 8 layouts nas 3 proporções em `docs/qa/layouts-audit.jpg`
+  (contact sheet 8×3); texto limitado a 60% da altura do palco, T2/T4/T6 reempilhados
+  e capas de T3/T4 limitadas pela altura.
+- [x] Validação do export: arquivo não vazio, MIME × extensão e duração do vídeo contra
+  o trecho, exibidos como avisos no painel de gravação (sem bloquear o download).
 - Commit: `perf: optimize rendering and export pipeline`.
+
+Limitações registradas: a auditoria visual usou um contact sheet único, sem screenshot
+nativo por layout; codecs não foram re-testados após as mudanças e não houve medição de
+performance em GPU fraca. A presença de faixa de áudio continua garantida pelo pipeline
+(track live obrigatória), não por inspeção do container gravado.
 
 ## Fase 8 — Regressão final
 

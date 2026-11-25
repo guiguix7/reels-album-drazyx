@@ -4,7 +4,7 @@
 
 ## Estado atual
 
-MVP original (Fases 0–5) implementado. Evolução retention-driven: Fases 0 a 6 do novo
+MVP original (Fases 0–5) implementado. Evolução retention-driven: Fases 0 a 7 do novo
 master prompt concluídas na branch `feat/retention-driven-visualizer`
 (baseline documentado, hardening de áudio/gravação/editor, storyboard com hook engine,
 oito layouts de composição, motion engine com perfis determinísticos,
@@ -30,6 +30,8 @@ recipes/batch creator com perfis de plataforma e persistência local + Retention
 - Ritmo: BPM estimado por autocorrelação de onsets com prior em ~110 BPM (evita erro de oitava); `beatPhase`/`beatPulse` no `AudioFrame` alimentam os templates junto com bandas e transientes.
 
 ## Log de execução
+
+- 2026-11-24 — Fase 7 retention-driven concluída: `features/visualizer/performance.ts` com perfis draft/standard/export/lightweight e `AdaptiveResolution` (escala de render cai no preview quando o frame estoura o orçamento e volta a 1 no export); `engine-registry` expõe `beginExport()`/`endExport()` e a gravação individual e cada job do lote passam a renderizar em resolução cheia; `export-validation` confere arquivo não vazio, extensão × MIME e duração do vídeo contra o trecho (avisos no painel de gravação, sem bloquear o download); auditoria visual dos 8 layouts × 3 proporções registrada em `docs/qa/layouts-audit.jpg` (contact sheet). A auditoria revelou texto crescendo junto com a largura em 16:9 e colisões em T1/T2/T3/T4/T5/T6/T8; a largura de qualquer `TextLayer` agora é limitada a 60% da altura do palco, T2/T4/T6 foram reempilhados e T3/T4 tiveram a capa limitada pela altura. Checks: typecheck + lint + 113 testes + build verdes. Limitações: auditoria feita em um único contact sheet (sem screenshot nativo por layout), codecs não foram re-testados após a mudança e não houve medição de performance em GPU fraca.
 
 - 2026-11-13 — Fase 0 concluída: inspeção, ambiente (Node v25, npm 11.6.2), PROMPT.md salvo, TASKS.md/PROGRESS.md criados.
 - 2026-11-13 — Fase 1 concluída: esqueleto Vite+React+TS, tokens, layout de estúdio, Stage 9:16, build/typecheck verdes.

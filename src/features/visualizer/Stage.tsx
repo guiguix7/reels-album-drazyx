@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { VisualEngine } from './VisualEngine'
+import { setVisualEngine } from './engine-registry'
 import { useProjectStore } from '../project/project.store'
 import { getClipEnd } from '../project/project.types'
 import { getOutputDimensions } from '../project/project.types'
@@ -31,11 +32,14 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     const store = useProjectStore.getState()
     const engine = new VisualEngine(canvas, store.config.visual, store.config.type)
     engineRef.current = engine
+    setVisualEngine(engine)
     engine.setPalette(store.config.palette)
     engine.setStoryboard(store.config.storyboard, store.config.templateId)
     engine.start()
     if (import.meta.env.DEV) {
+      // Apenas em desenvolvimento: permite inspecionar/auditar os layouts no navegador.
       ;(window as unknown as Record<string, unknown>).__drazyxEngine = engine
+      ;(window as unknown as Record<string, unknown>).__drazyxStore = useProjectStore
     }
 
     const onVisibility = (): void => engine.handleVisibility(document.visibilityState === 'visible')
@@ -43,6 +47,7 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       engine.dispose()
+      setVisualEngine(null)
       engineRef.current = null
     }
     // canvasRef é estável durante a vida do componente.

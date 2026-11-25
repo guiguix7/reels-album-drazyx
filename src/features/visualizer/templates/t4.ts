@@ -103,8 +103,8 @@ export const Template04: VisualTemplate = {
         cta.setOpacity(ctaOpacity)
         cta.mesh.position.set(safe.leftX, safe.bottomY + 0.1, 0)
 
-        // Capa grande à direita
-        const coverSize = viewW * 0.54
+        // Capa grande à direita, limitada pela altura em 16:9.
+        const coverSize = Math.min(viewW * 0.5, viewH * 0.6)
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.25 + visual.glow * 0.4 + bass * 0.3)
         cover.group.position.set(viewW * 0.17, 0.5 + Math.sin(time * 0.4) * 0.07, 0)

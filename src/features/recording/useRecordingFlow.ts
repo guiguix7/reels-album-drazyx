@@ -6,6 +6,8 @@ import { MIN_CLIP_SECONDS } from '../project/project.defaults'
 import { StageRecorder } from './recorder'
 import { useRecorderStore } from './recording.store'
 import { buildRecordingFileName } from './file-name'
+import { validateRecording } from './export-validation'
+import { beginVisualExport, endVisualExport } from '../visualizer/engine-registry'
 import { buildExportManifest } from '../persistence/manifest.types'
 import { saveExportManifest } from '../persistence/db'
 
@@ -75,6 +77,8 @@ export function useRecordingFlow(
 
     const dims = getOutputDimensions(config.aspectRatio, config.quality)
     recorderRef.current?.setCanvasSize(dims.width, dims.height)
+    // Export sempre em resolução cheia: preview adaptativo não reduz o arquivo.
+    beginVisualExport()
     const started = recorderRef.current?.start({
       canvas,
       fps: config.fps,
@@ -82,6 +86,7 @@ export function useRecordingFlow(
       videoBitsPerSecond: config.quality === 'full' ? 12_000_000 : 6_000_000,
     })
     if (!started || !started.ok) {
+      endVisualExport()
       recStore.setError(started && !started.ok ? started.error : 'Falha ao iniciar a gravação.')
       return
     }
@@ -102,7 +107,12 @@ export function useRecordingFlow(
           clipSeconds: effective,
           extension: result.extension,
         })
-        recStore.setResult(result, fileName)
+        const warnings = validateRecording(result, {
+          width: dims.width,
+          height: dims.height,
+          clipSeconds: effective,
+        })
+        recStore.setResult(result, fileName, warnings)
         // Manifest local por export (auxiliar): falha de IndexedDB não invalida o arquivo.
         void saveExportManifest(
           buildExportManifest({
@@ -117,6 +127,8 @@ export function useRecordingFlow(
         ).catch(() => undefined)
       } catch (err) {
         recStore.setError(`Falha ao finalizar a gravação: ${err instanceof Error ? err.message : 'erro desconhecido'}`)
+      } finally {
+        endVisualExport()
       }
     }
 
@@ -131,6 +143,7 @@ export function useRecordingFlow(
     const recStore = useRecorderStore.getState()
     getAudioEngine().pause()
     await recorderRef.current?.cancel()
+    endVisualExport()
     recStore.reset()
   }, [])
 

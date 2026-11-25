@@ -67,5 +67,6 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → ba
   - O lote baixa um arquivo por vez (link por job); não há ZIP nem download automático em massa.
 - [x] Fase 6 — Persistência local + Retention Lab — IndexedDB (projetos/exports/métricas), JSON versionado, manifest por export, entrada manual e CSV de métricas com taxas de denominador real — commit `feat: add local project persistence and retention lab`
   - Áudio e capa não são salvos: são Object URLs da sessão; recarregue após abrir um projeto.
-- [ ] Fase 7 — Performance, QA visual e export — commit `perf: optimize rendering and export pipeline`
+- [x] Fase 7 — Performance, QA visual e export — perfis de render + resolução adaptativa no preview, export em resolução cheia via `beginExport`/`endExport`, validação de arquivo/duração, auditoria visual 8 layouts × 3 proporções em `docs/qa/layouts-audit.jpg` e limite tipográfico por altura do palco — commit `perf: optimize rendering and export pipeline`
+  - QA visual em contact sheet único (sem screenshots nativos por layout); codecs não foram re-testados e não houve benchmark em GPU fraca.
 - [ ] Fase 8 — Regressão final + documentação — commit `test: add comprehensive visualizer regression coverage`

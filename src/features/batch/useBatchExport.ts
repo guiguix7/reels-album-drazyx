@@ -5,6 +5,7 @@ import { getClipEnd, getOutputDimensions } from '../project/project.types'
 import { MIN_CLIP_SECONDS } from '../project/project.defaults'
 import { StageRecorder } from '../recording/recorder'
 import { buildBatchFileName } from './batch.utils'
+import { beginVisualExport, endVisualExport } from '../visualizer/engine-registry'
 import { buildExportManifest } from '../persistence/manifest.types'
 import { saveExportManifest } from '../persistence/db'
 import { useBatchStore } from './batch.store'
@@ -47,7 +48,8 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
       batch.setError('O Stage não está pronto. Recarregue a página.')
       return
     }
-    const meta = getAudioEngine().getMeta()
+    const engine = getAudioEngine()
+    const meta = engine.getMeta()
     if (!meta.duration || project.audioStatus === 'idle' || project.audioStatus === 'error') {
       batch.setError('Carregue um arquivo de áudio antes de gravar o lote.')
       return
@@ -60,7 +62,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
     const snapshot = project.config
 
     try {
-      await getAudioEngine().ensureRunning()
+      await engine.ensureRunning()
       const jobs = useBatchStore.getState().jobs
       for (let index = 0; index < jobs.length; index += 1) {
         if (cancelledRef.current) break
@@ -85,7 +87,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
           continue
         }
 
-        const audioTrack = getAudioEngine().getRecordingTrack()
+        const audioTrack = engine.getRecordingTrack()
         if (!audioTrack) {
           store.patchJob(job.id, { status: 'error', error: 'Track de áudio indisponível.' })
           continue
@@ -95,6 +97,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
         recorderRef.current = recorder
         const dims = getOutputDimensions(config.aspectRatio, config.quality)
         recorder.setCanvasSize(dims.width, dims.height)
+        beginVisualExport()
         const started = recorder.start({
           canvas,
           fps: config.fps,
@@ -102,6 +105,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
           videoBitsPerSecond: config.quality === 'full' ? 12_000_000 : 6_000_000,
         })
         if (!started.ok) {
+          endVisualExport()
           store.patchJob(job.id, { status: 'error', error: started.error })
           continue
         }
@@ -164,6 +168,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
             error: error instanceof Error ? error.message : 'Falha ao gravar este job.',
           })
         } finally {
+          endVisualExport()
           recorderRef.current = null
         }
       }
@@ -172,6 +177,7 @@ export function useBatchExport(canvasRef: React.RefObject<HTMLCanvasElement | nu
         .getState()
         .setError(error instanceof Error ? error.message : 'Falha ao iniciar o lote.')
     } finally {
+      endVisualExport()
       // O projeto do usuário volta exatamente como estava antes do lote.
       useProjectStore.getState().setConfig(snapshot)
       useBatchStore.getState().setRunning(false)
