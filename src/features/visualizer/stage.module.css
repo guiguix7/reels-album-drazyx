@@ -11,7 +11,7 @@
     var(--surface);
   border: 1px solid var(--surface-line);
   box-shadow: var(--shadow-1);
-  padding: clamp(8px, 1.4vw, 18px);
+  padding: clamp(6px, 1vw, 12px);
 }
 
 .stageInner {

@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import styles from './ui.module.css'
 
@@ -34,6 +35,7 @@ export function Slider({
   step,
   onChange,
   format,
+  hint,
 }: {
   label: string
   value: number
@@ -42,21 +44,33 @@ export function Slider({
   step: number
   onChange: (value: number) => void
   format?: (value: number) => string
+  hint?: string
 }): JSX.Element {
+  const hintId = useId()
+  const valueText = format ? format(value) : String(value)
   return (
-    <label className={styles.sliderRow}>
-      <span className={styles.rowLabel}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={styles.range}
-      />
-      <span className={styles.rowValue}>{format ? format(value) : String(value)}</span>
-    </label>
+    <div className={styles.sliderBlock}>
+      <label className={styles.sliderRow}>
+        <span className={styles.rowLabel}>{label}</span>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className={styles.range}
+          aria-valuetext={valueText}
+          aria-describedby={hint ? hintId : undefined}
+        />
+        <span className={styles.rowValue}>{valueText}</span>
+      </label>
+      {hint ? (
+        <p className={styles.sliderHint} id={hintId}>
+          {hint}
+        </p>
+      ) : null}
+    </div>
   )
 }
 

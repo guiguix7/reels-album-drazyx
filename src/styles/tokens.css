@@ -10,6 +10,8 @@
   --text-dim: #a99eae;
   --accent: #b84dff;
   --accent-strong: #cf8aff;
+  --accent-cta: #7426a8;
+  --accent-cta-hover: #8b2fc4;
   --accent-soft: rgba(184, 77, 255, 0.14);
   --accent-glow: rgba(184, 77, 255, 0.35);
   --danger: #ff5d5d;

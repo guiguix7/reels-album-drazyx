@@ -48,6 +48,7 @@ export function ClipPanel(): JSX.Element {
         step={0.5}
         value={config.clipStart}
         format={clipSecondsLabel}
+        hint="Onde o trecho começa na faixa. O fim é limitado pela duração real do áudio."
         onChange={(value) => setClipStart(value, audioDuration)}
       />
       <Slider
@@ -57,6 +58,7 @@ export function ClipPanel(): JSX.Element {
         step={0.5}
         value={Math.min(Math.max(config.clipDuration, sliderMin), sliderMax)}
         format={clipSecondsLabel}
+        hint="Quanto tempo do trecho entra no vídeo; o máximo respeita o que resta da faixa."
         onChange={(value) => setClipDuration(value, audioDuration)}
       />
 

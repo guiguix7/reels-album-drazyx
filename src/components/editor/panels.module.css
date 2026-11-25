@@ -297,6 +297,14 @@
   border-color: rgba(123, 224, 168, 0.35);
 }
 
+.groupLabel {
+  margin: 8px 0 0;
+  font: 700 11px/1 var(--font-title);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
 .panelNote {
   margin: 0;
   font-size: 12px;

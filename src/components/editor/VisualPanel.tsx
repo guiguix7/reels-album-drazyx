@@ -115,16 +115,17 @@ export function VisualPanel(): JSX.Element {
         </Button>
       }
     >
-      <Slider label="Intensidade" min={VISUAL_LIMITS.intensity.min} max={VISUAL_LIMITS.intensity.max} step={VISUAL_LIMITS.intensity.step} value={visual.intensity} onChange={(v) => setVisual({ intensity: v })} format={percent} />
-      <Slider label="Partículas" min={VISUAL_LIMITS.particleCount.min} max={VISUAL_LIMITS.particleCount.max} step={VISUAL_LIMITS.particleCount.step} value={visual.particleCount} onChange={(v) => setVisual({ particleCount: v })} format={percent} />
-      <Slider label="Força do grave" min={VISUAL_LIMITS.bassForce.min} max={VISUAL_LIMITS.bassForce.max} step={VISUAL_LIMITS.bassForce.step} value={visual.bassForce} onChange={(v) => setVisual({ bassForce: v })} format={percent} />
-      <Slider label="Brilho" min={VISUAL_LIMITS.glow.min} max={VISUAL_LIMITS.glow.max} step={VISUAL_LIMITS.glow.step} value={visual.glow} onChange={(v) => setVisual({ glow: v })} format={percent} />
-      <Slider label="Grão" min={VISUAL_LIMITS.grain.min} max={VISUAL_LIMITS.grain.max} step={VISUAL_LIMITS.grain.step} value={visual.grain} onChange={(v) => setVisual({ grain: v })} format={percent} />
-      <Slider label="Câmera" min={VISUAL_LIMITS.cameraSpeed.min} max={VISUAL_LIMITS.cameraSpeed.max} step={VISUAL_LIMITS.cameraSpeed.step} value={visual.cameraSpeed} onChange={(v) => setVisual({ cameraSpeed: v })} format={percent} />
-      <div className={styles.inlineField}>
-        <span className={styles.rowLabel}>Glitch</span>
-        <Segmented options={GLITCH_OPTIONS} value={visual.glitch} onChange={(v) => setGlitch(v)} />
-      </div>
+      <p className={styles.groupLabel}>Movimento</p>
+      <Slider
+        label="Velocidade da câmera"
+        min={VISUAL_LIMITS.cameraSpeed.min}
+        max={VISUAL_LIMITS.cameraSpeed.max}
+        step={VISUAL_LIMITS.cameraSpeed.step}
+        value={visual.cameraSpeed}
+        onChange={(v) => setVisual({ cameraSpeed: v })}
+        format={percent}
+        hint="Ritmo da deriva e do zoom da câmera. Baixo mantém um plano quase estático."
+      />
       <Select
         label="Movimento"
         value={visual.motionProfile}
@@ -137,6 +138,67 @@ export function VisualPanel(): JSX.Element {
         checked={visual.loopVisual}
         onChange={(loopVisual) => setVisual({ loopVisual })}
       />
+
+      <p className={styles.groupLabel}>Reação ao áudio</p>
+      <Slider
+        label="Intensidade"
+        min={VISUAL_LIMITS.intensity.min}
+        max={VISUAL_LIMITS.intensity.max}
+        step={VISUAL_LIMITS.intensity.step}
+        value={visual.intensity}
+        onChange={(v) => setVisual({ intensity: v })}
+        format={percent}
+        hint="Quanto a cena reage ao áudio. Valores altos deixam o movimento mais forte; baixos, mais contido."
+      />
+      <Slider
+        label="Força do grave"
+        min={VISUAL_LIMITS.bassForce.min}
+        max={VISUAL_LIMITS.bassForce.max}
+        step={VISUAL_LIMITS.bassForce.step}
+        value={visual.bassForce}
+        onChange={(v) => setVisual({ bassForce: v })}
+        format={percent}
+        hint="Quanto os graves empurram o pulso, a capa e os elementos reativos."
+      />
+
+      <p className={styles.groupLabel}>Luz e textura</p>
+      <Slider
+        label="Glow"
+        min={VISUAL_LIMITS.glow.min}
+        max={VISUAL_LIMITS.glow.max}
+        step={VISUAL_LIMITS.glow.step}
+        value={visual.glow}
+        onChange={(v) => setVisual({ glow: v })}
+        format={percent}
+        hint="Intensidade da luz e do halo ao redor da capa e dos elementos."
+      />
+      <Slider
+        label="Grão"
+        min={VISUAL_LIMITS.grain.min}
+        max={VISUAL_LIMITS.grain.max}
+        step={VISUAL_LIMITS.grain.step}
+        value={visual.grain}
+        onChange={(v) => setVisual({ grain: v })}
+        format={percent}
+        hint="Textura de filme e ruído sutil sobre a imagem."
+      />
+      <Slider
+        label="Partículas"
+        min={VISUAL_LIMITS.particleCount.min}
+        max={VISUAL_LIMITS.particleCount.max}
+        step={VISUAL_LIMITS.particleCount.step}
+        value={visual.particleCount}
+        onChange={(v) => setVisual({ particleCount: v })}
+        format={percent}
+        hint="Quantidade de partículas visíveis. Reduza para uma imagem mais limpa."
+      />
+
+      <p className={styles.groupLabel}>Efeitos</p>
+      <div className={styles.inlineField}>
+        <span className={styles.rowLabel}>Glitch</span>
+        <Segmented options={GLITCH_OPTIONS} value={visual.glitch} onChange={(v) => setGlitch(v)} />
+      </div>
+      <p className={styles.panelNote}>Distorção digital nos transientes. Desligado mantém a imagem limpa.</p>
     </Panel>
   )
 }
@@ -159,8 +221,25 @@ export function TextPanel(): JSX.Element {
         <Toggle label="CTA" checked={type.showCta} onChange={(v) => setType({ showCta: v })} />
         <Toggle label="Tagline" checked={type.showTagline} onChange={(v) => setType({ showTagline: v })} />
       </div>
-      <Slider label="Escala" min={VISUAL_LIMITS.typeScale.min} max={VISUAL_LIMITS.typeScale.max} step={VISUAL_LIMITS.typeScale.step} value={type.scale} onChange={(v) => setType({ scale: v })} format={percent} />
-      <Slider label="Tracking" min={VISUAL_LIMITS.tracking.min} max={VISUAL_LIMITS.tracking.max} step={VISUAL_LIMITS.tracking.step} value={type.tracking} onChange={(v) => setType({ tracking: v })} />
+      <Slider
+        label="Escala"
+        min={VISUAL_LIMITS.typeScale.min}
+        max={VISUAL_LIMITS.typeScale.max}
+        step={VISUAL_LIMITS.typeScale.step}
+        value={type.scale}
+        onChange={(v) => setType({ scale: v })}
+        format={percent}
+        hint="Tamanho global dos textos dentro do vídeo."
+      />
+      <Slider
+        label="Tracking"
+        min={VISUAL_LIMITS.tracking.min}
+        max={VISUAL_LIMITS.tracking.max}
+        step={VISUAL_LIMITS.tracking.step}
+        value={type.tracking}
+        onChange={(v) => setType({ tracking: v })}
+        hint="Espaço entre letras. Valores altos dão um tom mais editorial."
+      />
     </Panel>
   )
 }

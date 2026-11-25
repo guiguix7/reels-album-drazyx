@@ -16,6 +16,8 @@ import { Transport } from '../components/editor/Transport'
 import { RecordPanel } from '../components/editor/RecordPanel'
 import { RecipePanel } from '../components/editor/RecipePanel'
 import { BatchPanel } from '../components/editor/BatchPanel'
+import { RecordAction } from '../components/editor/RecordAction'
+import { Onboarding } from '../components/editor/Onboarding'
 import styles from './app.module.css'
 
 export function EditorLayout(): JSX.Element {
@@ -33,6 +35,7 @@ export function EditorLayout(): JSX.Element {
           <span className={styles.brandRest}>VISUALIZER STUDIO</span>
         </div>
         <p className={styles.topbarNote}>{APP_NAME} — local-first · nada sai do seu navegador</p>
+        <RecordAction onStart={startRecording} onCancel={cancelRecording} />
       </header>
 
       <main className={styles.grid}>
@@ -50,6 +53,7 @@ export function EditorLayout(): JSX.Element {
         </section>
 
         <aside className={styles.panelCol} aria-label="Painéis do editor">
+          <Onboarding />
           <fieldset className={styles.panelFieldset} disabled={recording}>
             <SourcePanel />
             <RecipePanel />

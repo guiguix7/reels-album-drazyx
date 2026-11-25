@@ -4,6 +4,7 @@
 
 - [x] Fase 0 — Baseline: branch `feat/product-quality-improvements`, `npm ci` + lint + typecheck + 117 testes + build verdes, produção reconciliada (`index-DZ5U_6t5.js`), `docs/IMPROVEMENT_BASELINE.md`
 - [x] Fase 1 — Correções críticas: 8 layouts selecionáveis, Stage com razão medida, MIRAGE sem colisão, validação única de áudio curto e empty state fora do palco — 129 testes verdes
+- [x] Fase 2 — Workspace/onboarding: CTA persistente de gravação, guia de 5 passos, descrições e grupos no Visual, tipografia/alvos/contraste, chrome compacto — validação DOM desktop/mobile
 
 Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → baixar vídeo com áudio.
 
