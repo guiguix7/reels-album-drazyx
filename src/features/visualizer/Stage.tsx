@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { VisualEngine } from './VisualEngine'
 import { setVisualEngine } from './engine-registry'
 import { useProjectStore } from '../project/project.store'
 import { getClipEnd } from '../project/project.types'
 import { getOutputDimensions } from '../project/project.types'
 import { getAudioEngine } from '../audio/AudioEngine'
+import { fitStageSize } from './stage-size'
 import styles from './stage.module.css'
 
 /**
@@ -13,6 +14,8 @@ import styles from './stage.module.css'
  */
 export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElement | null> }): JSX.Element {
   const engineRef = useRef<VisualEngine | null>(null)
+  const frameRef = useRef<HTMLDivElement | null>(null)
+  const [available, setAvailable] = useState({ width: 0, height: 0 })
 
   const templateId = useProjectStore((s) => s.config.templateId)
   const aspect = useProjectStore((s) => s.config.aspectRatio)
@@ -96,9 +99,41 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
 
   const dims = getOutputDimensions(aspect, quality)
 
+  // O CSS sozinho não preserva a razão quando a largura é limitada e a altura
+  // continua em 100%: medimos o espaço real e ajustamos o retângulo.
+  useLayoutEffect(() => {
+    const frame = frameRef.current
+    if (!frame) return
+    const measure = (): void => {
+      const style = window.getComputedStyle(frame)
+      const padX = Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight)
+      const padY = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom)
+      const next = {
+        width: Math.max(0, frame.clientWidth - padX),
+        height: Math.max(0, frame.clientHeight - padY),
+      }
+      setAvailable((prev) =>
+        Math.abs(prev.width - next.width) < 1 && Math.abs(prev.height - next.height) < 1 ? prev : next,
+      )
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(frame)
+    window.addEventListener('orientationchange', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('orientationchange', measure)
+    }
+  }, [])
+
+  const fitted = fitStageSize(dims, available)
+  const stageStyle = fitted.width > 0
+    ? { width: `${fitted.width}px`, height: `${fitted.height}px`, aspectRatio: `${dims.width} / ${dims.height}` }
+    : { aspectRatio: `${dims.width} / ${dims.height}` }
+
   return (
-    <div className={styles.stageFrame}>
-      <div className={styles.stageInner} style={{ aspectRatio: `${dims.width} / ${dims.height}` }}>
+    <div className={styles.stageFrame} ref={frameRef}>
+      <div className={styles.stageInner} style={stageStyle}>
         <canvas ref={canvasRef as React.Ref<HTMLCanvasElement>} width={dims.width} height={dims.height} className={styles.canvas} />
       </div>
     </div>

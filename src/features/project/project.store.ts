@@ -117,11 +117,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setClipStart: (seconds, audioDuration) =>
     set((state) => {
       const duration = audioDuration ?? Infinity
-      const maxStart = Math.max(0, Math.min(duration, state.config.clipDuration ? duration - 1 : duration))
+      const maxStart = Math.max(0, Math.min(duration, state.config.clipDuration ? duration - 0.5 : duration))
       const clipStart = clamp(seconds, 0, Number.isFinite(maxStart) ? maxStart : seconds)
       const end = getClipEnd({ ...state.config, clipStart }, audioDuration)
-      // Duração efetiva respeita o fim da faixa.
-      const clipDuration = Math.max(1, Math.min(state.config.clipDuration, end - clipStart))
+      // Duração efetiva respeita o fim da faixa. O piso é 0,5 s para que a UI
+      // represente áudios curtos; a gravação usa getClipReadiness (mínimo 5 s).
+      const clipDuration = Math.max(0.5, Math.min(state.config.clipDuration, end - clipStart))
       return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
     }),
 
@@ -130,8 +131,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       // Limite = o que resta da faixa a partir do início escolhido, até MAX_CLIP_SECONDS.
       // Não usa o fim atual: senão reduzir a duração uma vez travaria o valor para sempre.
       const maxEnd = Math.min(MAX_CLIP_SECONDS, audioDuration ?? MAX_CLIP_SECONDS)
-      const available = Math.max(1, maxEnd - state.config.clipStart)
-      const clipDuration = clamp(seconds, 1, available)
+      const available = Math.max(0.5, maxEnd - state.config.clipStart)
+      const clipDuration = clamp(seconds, Math.min(0.5, available), available)
       return { config: fitStoryboard({ ...state.config, clipDuration }) }
     }),
 
@@ -357,9 +358,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         return { audioMeta: meta, audioError: null, audioStatus: 'ready' }
       }
       // Áudio novo pode ser mais curto: o trecho antigo não pode continuar fora da faixa.
-      const clipStart = clamp(config.clipStart, 0, Math.max(0, duration - 1))
-      const available = Math.max(1, Math.min(MAX_CLIP_SECONDS, duration - clipStart))
-      const clipDuration = clamp(config.clipDuration, 1, available)
+      // O slider aceita 0,5 s; o recorder bloqueia com getClipReadiness se < 5 s.
+      const clipStart = clamp(config.clipStart, 0, Math.max(0, duration - 0.5))
+      const available = Math.max(0.5, Math.min(MAX_CLIP_SECONDS, duration - clipStart))
+      const clipDuration = clamp(config.clipDuration, Math.min(0.5, available), available)
       return {
         audioMeta: meta,
         audioError: null,

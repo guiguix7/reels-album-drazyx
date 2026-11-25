@@ -131,3 +131,31 @@ export function getEffectiveClipSeconds(config: ProjectConfig, audioDuration: nu
   const end = getClipEnd(config, audioDuration)
   return Math.max(0, end - config.clipStart)
 }
+
+/**
+ * Contrato único para o trecho: store, UI, storyboard e recorder não podem
+ * discordar sobre o que é um range possível. O mínimo de gravação é 5 s, mas
+ * a UI ainda precisa representar áudios menores sem criar um slider inválido.
+ */
+export function getClipReadiness(
+  config: Pick<ProjectConfig, 'clipStart' | 'clipDuration'>,
+  audioDuration: number | null,
+  minimumSeconds = 5,
+): { recordable: boolean; effective: number; maxDuration: number; reason: string | null } {
+  const effective = getEffectiveClipSeconds(config as ProjectConfig, audioDuration)
+  const maxDuration = audioDuration == null
+    ? Infinity
+    : Math.max(0, audioDuration - config.clipStart)
+  if (audioDuration == null || audioDuration <= 0) {
+    return { recordable: false, effective, maxDuration, reason: 'Carregue um áudio para habilitar a gravação.' }
+  }
+  if (effective < minimumSeconds) {
+    return {
+      recordable: false,
+      effective,
+      maxDuration,
+      reason: `Este áudio permite apenas ${effective.toFixed(1)}s de trecho; o mínimo para gravar é ${minimumSeconds}s.`,
+    }
+  }
+  return { recordable: true, effective, maxDuration, reason: null }
+}

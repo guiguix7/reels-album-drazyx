@@ -39,18 +39,13 @@ export function EditorLayout(): JSX.Element {
         <section className={styles.stageCol}>
           <div className={styles.stageHolder}>
             <Stage canvasRef={canvasRef} />
-            {!audioMeta && !audioLoading ? (
-              <div className={styles.stageOverlay}>
-                <div className={styles.overlayCard}>
-                  <p className={styles.overlayTitle}>Sem áudio carregado</p>
-                  <p className={styles.overlayText}>
-                    A cena está rodando com a arte padrão. Carregue um arquivo de áudio no painel
-                    <strong> Fonte</strong> para montar o visualizer real.
-                  </p>
-                </div>
-              </div>
-            ) : null}
           </div>
+          {!audioMeta && !audioLoading ? (
+            <div className={styles.emptyHint} role="status">
+              <strong>Sem áudio carregado.</strong> A arte padrão está no Stage; carregue o áudio no
+              painel Fonte para liberar o trecho e a gravação.
+            </div>
+          ) : null}
           <Transport />
         </section>
 

@@ -299,9 +299,17 @@
 
 .panelNote {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--text-dim);
+}
+
+/* Aviso acionável de validação (ex.: áudio curto demais para gravar). */
+.panelWarn {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--warn);
 }
 
 .inlineField {

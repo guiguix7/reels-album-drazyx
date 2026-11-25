@@ -20,7 +20,20 @@ export const VISUAL_LIMITS = {
   clipDuration: { min: MIN_CLIP_SECONDS, max: MAX_CLIP_SECONDS, step: 0.5 },
 } as const
 
-export const TEMPLATE_IDS: TemplateId[] = ['mirage', 'afterimage', 'void', 'spectrum', 't3', 't4', 't5']
+export const TEMPLATE_IDS: TemplateId[] = [
+  'mirage',
+  'afterimage',
+  'void',
+  'spectrum',
+  't1',
+  't2',
+  't3',
+  't4',
+  't5',
+  't6',
+  't7',
+  't8',
+]
 
 /** Paleta padrão quando não há capa (identidade Drazyx). */
 export const DEFAULT_PALETTE: PaletteSettings = {

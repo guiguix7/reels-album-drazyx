@@ -9,6 +9,7 @@ import { radialGlowTexture } from '../objects/textures'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { stackMirageMeta } from './mirage-layout'
 
 /**
  * MIRAGE — preset principal. Storyboard de 30s: tagline → capa suspensa →
@@ -68,9 +69,13 @@ export const MirageTemplate: VisualTemplate = {
 
     const tagline = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#f2edf5', tracking: 6, align: 'center', lineHeight: 1.35, uppercase: true }))
     ctx.scene.add(tagline.mesh)
-    const artistTrack = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.085, color: '#f2edf5', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.28, lineColors: ['#f2edf5', '#a99eae'], uppercase: true }))
-    ctx.scene.add(artistTrack.mesh)
-    const albumLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.05, color: '#a99eae', tracking: 3, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
+    // Título e artista em camadas separadas: cada bloco é medido e empilhado,
+    // então um título de duas linhas não pode invadir o artista.
+    const titleLayer = track(new TextLayer({ font: 'title', weight: 700, sizeFrac: 0.072, color: '#f2edf5', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.28, uppercase: true, wrap: true }))
+    ctx.scene.add(titleLayer.mesh)
+    const artistLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#a99eae', tracking: 4, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
+    ctx.scene.add(artistLayer.mesh)
+    const albumLayer = track(new TextLayer({ font: 'ui', weight: 500, sizeFrac: 0.045, color: '#a99eae', tracking: 3, align: 'left', anchor: 'topLeft', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(albumLayer.mesh)
     const cta = track(new TextLayer({ font: 'ui', weight: 600, sizeFrac: 0.05, color: '#cf8aff', tracking: 5, align: 'center', lineHeight: 1.3, uppercase: true }))
     ctx.scene.add(cta.mesh)
@@ -155,24 +160,26 @@ export const MirageTemplate: VisualTemplate = {
         tagline.setOpacity(taglineOpacity)
         tagline.mesh.position.set(0, safe.topY - 0.55, 0)
 
-        // Bloco de metadados ancorado pelo topo, com borda inferior na linha segura.
+        // Bloco de metadados empilhado de baixo para cima com alturas reais.
         const metaOpacity = type.showArtist || type.showTrack ? 1 : 0
-        const metaLines = [
-          ...(type.showTrack ? [type.trackTitle] : []),
-          ...(type.showArtist ? [type.artistName] : []),
-        ]
         const metaW = viewW * 0.8
-        const metaH = artistTrack.set(metaLines, metaW, {})
-        artistTrack.setOpacity(0.95 * metaOpacity)
-        artistTrack.mesh.position.set(safe.leftX, safe.bottomY + metaH, 0)
-
-        if (type.showAlbum) {
-          const albumH = albumLayer.set([type.albumTitle], metaW, {})
-          albumLayer.setOpacity(0.85)
-          albumLayer.mesh.position.set(safe.leftX, safe.bottomY + metaH + albumH + 0.14, 0)
-        } else {
-          albumLayer.setOpacity(0)
-        }
+        const titleH = titleLayer.set([type.showTrack ? type.trackTitle : ''], metaW, {})
+        titleLayer.setOpacity(0.96 * metaOpacity)
+        const artistH = artistLayer.set([type.showArtist ? type.artistName : ''], metaW, {})
+        artistLayer.setOpacity(0.85 * metaOpacity)
+        const albumH = type.showAlbum ? albumLayer.set([type.albumTitle], metaW, {}) : 0
+        albumLayer.setOpacity(type.showAlbum ? 0.72 : 0)
+        const meta = stackMirageMeta({
+          safeBottomY: safe.bottomY,
+          artistHeight: artistH,
+          titleHeight: titleH,
+          albumHeight: albumH,
+          showAlbum: type.showAlbum && albumH > 0,
+          gap: 0.14,
+        })
+        titleLayer.mesh.position.set(safe.leftX, meta.titleTop, 0)
+        artistLayer.mesh.position.set(safe.leftX, meta.artistTop, 0)
+        if (type.showAlbum) albumLayer.mesh.position.set(safe.leftX, meta.albumTop, 0)
 
         const ctaOpacity = type.showCta ? (p > 0.82 ? (p - 0.82) / 0.08 : 0) : 0
         cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })

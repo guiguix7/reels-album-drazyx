@@ -67,45 +67,19 @@
   min-height: 0;
 }
 
-.stageOverlay {
-  position: absolute;
-  inset: clamp(8px, 1.4vw, 18px);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6%;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Estado vazio discreto: informa sem tapar a composição do Stage. */
-.overlayCard {
-  pointer-events: auto;
-  max-width: 300px;
-  background: rgba(7, 8, 16, 0.85);
+/* Estado vazio fora do palco: informa sem cobrir a composição. */
+.emptyHint {
+  flex-shrink: 0;
+  padding: 8px 12px;
   border: 1px solid var(--surface-line-strong);
-  border-radius: var(--radius-m);
-  padding: 12px 16px;
-  backdrop-filter: blur(6px);
-  text-align: center;
-}
-
-.overlayTitle {
-  margin: 0 0 6px;
-  font: 700 13px/1.2 var(--font-title);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent-strong);
-}
-
-.overlayText {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
+  border-radius: var(--radius-s);
+  background: var(--surface);
   color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.overlayText strong {
+.emptyHint strong {
   color: var(--text);
   font-weight: 600;
 }
@@ -193,9 +167,5 @@
 
   .stageHolder {
     height: min(58svh, 520px);
-  }
-
-  .overlayCard {
-    padding: 14px 16px;
   }
 }
