@@ -1,0 +1,63 @@
+{
+  "errors": [],
+  "panel": {
+    "height": 2849,
+    "asideScrollHeight": 7863,
+    "sceneCards": 6.25,
+    "selects": 25,
+    "sliders": 13,
+    "buttons": 39,
+    "texts": 7,
+    "timelineAriaHidden": "true",
+    "sceneCardsHeights": [
+      2348,
+      383,
+      110,
+      383,
+      110,
+      383,
+      110,
+      383,
+      110,
+      383,
+      110,
+      383,
+      110
+    ]
+  },
+  "clipPanel": {
+    "durationMax": "30",
+    "durationMin": "5",
+    "durationValue": "30",
+    "hint": "TRECHO DO VÍDEO |  | Escolha o pedaço da faixa que vira vídeo (até 30s)."
+  },
+  "scenePreview": {
+    "time1": "00:00 / 01:37",
+    "time2": "00:03 / 01:37",
+    "playingAfter1s": true,
+    "playingAfter4s": true,
+    "firstSceneEnd": 3
+  },
+  "aside": {
+    "asideScrollHeight": 7863,
+    "recordTop": 7442,
+    "sectionTitles": [
+      "FONTE",
+      "RECIPES",
+      "COMPOSIÇÃO",
+      "STORYBOARD",
+      "PALETA",
+      "TRECHO DO VÍDEO",
+      "VISUAL",
+      "TIPOGRAFIA DO VÍDEO",
+      "FORMATO",
+      "PROJETOS",
+      "RETENTION LAB",
+      "GRAVAÇÃO",
+      "BATCH CREATOR"
+    ]
+  },
+  "duration45": {
+    "stored": 30
+  }
+}

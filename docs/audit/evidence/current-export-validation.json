@@ -1,0 +1,33 @@
+{
+  "environment": "Build local atual (http://127.0.0.1:5175/), Chrome visível, 2026-11-25",
+  "config": {
+    "template": "t3",
+    "aspect": "9:16",
+    "quality": "full",
+    "fps": 30,
+    "clip": "5,0 s",
+    "storyboard": false
+  },
+  "input": {
+    "audio": "outfoxing.mp3 (1.831.788 bytes, 01:37)",
+    "cover": "cover wake up.jpg (230.212 bytes, asset local do repositório)"
+  },
+  "result": {
+    "fileName": "Drazyx_Wake-Up-Slowed-Reverb_5s_Visualizer.webm",
+    "bytes": 2544640,
+    "mimeType": "video/webm",
+    "durationSeconds": 5.173,
+    "width": 1080,
+    "height": 1920,
+    "vp9": true,
+    "opusHead": true,
+    "audioDecodedBytes": 274619,
+    "uiText": "1080×1920 · 00:05.0 · 2.4 MB"
+  },
+  "notTested": [
+    "Música completa (modo inexistente)",
+    "45 s (limite atual é 30 s)",
+    "720p, 60 fps, 1:1 e 16:9 em gravação",
+    "Longa duração, memória e estabilidade de track"
+  ]
+}
