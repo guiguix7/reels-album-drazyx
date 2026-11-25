@@ -3,6 +3,14 @@
 Decisões de produto e engenharia que governam a evolução do app.
 Tooling de agentes/OpenCode não pertence a este arquivo.
 
+## 2026-11-25 — Fase 3: trecho, waveform e storyboard
+
+- O máximo social é 45 s, mas o projeto nasce com 30 s; `clearAudio` volta a 30 s. A duração padrão não deve consumir o novo máximo sem escolha do usuário.
+- `setClipRange(start, end)` é a operação atômica das bordas da waveform. `setClipDuration` calcula o limite a partir de `clipStart`, não como um fim absoluto; isso permite estender o trecho perto do final da faixa.
+- A waveform usa picos RMS normalizados calculados no navegador e cacheados por object URL. Nada é enviado a servidor; áudios grandes podem demorar na primeira decodificação.
+- O storyboard usa uma timeline de botões (uma cena = um alvo), uma faixa horizontal de cenas e um único inspector. Editar a duração continua redistribuindo as demais cenas porque o total do trecho é fixo.
+- Preview de cena e de sequência usam `playClip`; o áudio e o playhead param no fim selecionado.
+
 ## Produto e escopo
 
 - App local-first: áudio e capa nunca saem do navegador; sem backend obrigatório,

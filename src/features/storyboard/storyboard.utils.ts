@@ -90,6 +90,14 @@ export const ROLE_LABELS: Record<SceneRole, string> = {
   payoff: 'Fechamento',
 }
 
+export const ROLE_HINTS: Record<SceneRole, string> = {
+  hook: 'Prende a atenção nos primeiros segundos.',
+  reveal: 'Mostra a capa e a identidade da faixa.',
+  development: 'Desenvolve o clima enquanto a música avança.',
+  peak: 'Concentra a parte mais intensa da faixa.',
+  payoff: 'Fecha com CTA e informação para lembrar.',
+}
+
 interface SceneSpec {
   role: SceneRole
   layoutId: TemplateId
@@ -109,7 +117,7 @@ interface SceneBlueprint {
   seconds: number
 }
 
-const PRESET_BLUEPRINTS: Record<15 | 30, SceneBlueprint[]> = {
+const PRESET_BLUEPRINTS: Record<15 | 30 | 45, SceneBlueprint[]> = {
   15: [
     { role: 'hook', layoutId: 'void', transition: 'fade', motion: 'slow', seconds: 2 },
     { role: 'reveal', layoutId: 'mirage', transition: 'fade', motion: 'slow', seconds: 3 },
@@ -124,6 +132,15 @@ const PRESET_BLUEPRINTS: Record<15 | 30, SceneBlueprint[]> = {
     { role: 'development', layoutId: 'afterimage', transition: 'cut', motion: 'slow', seconds: 7 },
     { role: 'peak', layoutId: 't3', transition: 'flash', motion: 'pulse', seconds: 4 },
     { role: 'payoff', layoutId: 't5', transition: 'fade', motion: 'slow', seconds: 3 },
+  ],
+  45: [
+    { role: 'hook', layoutId: 'void', transition: 'fade', motion: 'slow', seconds: 3 },
+    { role: 'reveal', layoutId: 'mirage', transition: 'fade', motion: 'slow', seconds: 5 },
+    { role: 'development', layoutId: 'spectrum', transition: 'cut', motion: 'pulse', seconds: 8 },
+    { role: 'development', layoutId: 'afterimage', transition: 'cut', motion: 'slow', seconds: 7 },
+    { role: 'peak', layoutId: 't3', transition: 'flash', motion: 'pulse', seconds: 9 },
+    { role: 'development', layoutId: 't1', transition: 'cut', motion: 'build', seconds: 8 },
+    { role: 'payoff', layoutId: 't5', transition: 'fade', motion: 'slow', seconds: 5 },
   ],
 }
 
@@ -260,7 +277,7 @@ function materialize(specs: SceneSpec[], total: number): StoryboardScene[] {
 
 /** Preset narrativo de 15 s ou 30 s, esticado/encolhido para a duração real do trecho. */
 export function createStoryboardPreset(
-  kind: 15 | 30,
+  kind: 15 | 30 | 45,
   hook: HookSettings,
   duration: number = kind,
 ): StoryboardScene[] {

@@ -5,7 +5,7 @@ import { RECIPES } from '../recipes/recipes'
 import type { RecipeId } from '../recipes/recipes'
 import { applyPlatformToConfig } from '../platform/platform.profiles'
 import { getClipEnd } from './project.types'
-import { DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
+import { DEFAULT_CLIP_SECONDS, DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
 import type { ClipAnalysis } from '../audio/offline-analysis'
 import type { HookSettings, StoryboardScene } from '../storyboard/storyboard.types'
 import {
@@ -42,6 +42,7 @@ interface ProjectState {
   setFps: (fps: number) => void
   setClipStart: (seconds: number, audioDuration: number | null) => void
   setClipDuration: (seconds: number, audioDuration: number | null) => void
+  setClipRange: (start: number, end: number, audioDuration: number | null) => void
   setVisual: (patch: Partial<VisualSettings>) => void
   setGlitch: (level: GlitchLevel) => void
   setType: (patch: Partial<TypeSettings>) => void
@@ -52,7 +53,7 @@ interface ProjectState {
 
   /* ações — storyboard */
   setStoryboardEnabled: (enabled: boolean) => void
-  applyStoryboardPreset: (kind: 15 | 30) => void
+  applyStoryboardPreset: (kind: 15 | 30 | 45) => void
   setAutoStoryboard: (analysis: ClipAnalysis) => void
   setHook: (patch: Partial<HookSettings>) => void
   updateScene: (id: string, patch: Partial<StoryboardScene>) => void
@@ -130,10 +131,22 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     set((state) => {
       // Limite = o que resta da faixa a partir do início escolhido, até MAX_CLIP_SECONDS.
       // Não usa o fim atual: senão reduzir a duração uma vez travaria o valor para sempre.
-      const maxEnd = Math.min(MAX_CLIP_SECONDS, audioDuration ?? MAX_CLIP_SECONDS)
-      const available = Math.max(0.5, maxEnd - state.config.clipStart)
+      const limit = Number.isFinite(audioDuration ?? Infinity)
+        ? (audioDuration as number)
+        : state.config.clipStart + MAX_CLIP_SECONDS
+      const available = Math.max(0.5, Math.min(limit - state.config.clipStart, MAX_CLIP_SECONDS))
       const clipDuration = clamp(seconds, Math.min(0.5, available), available)
       return { config: fitStoryboard({ ...state.config, clipDuration }) }
+    }),
+
+  setClipRange: (start, end, audioDuration) =>
+    set((state) => {
+      const duration = audioDuration ?? Infinity
+      const limit = Number.isFinite(duration) ? duration : start + MAX_CLIP_SECONDS
+      const clipStart = clamp(start, 0, Math.max(0, limit - 0.5))
+      const clipEnd = clamp(end, clipStart + 0.5, Math.min(limit, clipStart + MAX_CLIP_SECONDS))
+      const clipDuration = clamp(clipEnd - clipStart, 0.5, MAX_CLIP_SECONDS)
+      return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
     }),
 
   setVisual: (patch) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, ...patch } } })),
@@ -381,7 +394,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       audioMeta: null,
       audioStatus: 'idle',
       audioError: null,
-      config: fitStoryboard({ ...config, clipStart: 0, clipDuration: MAX_CLIP_SECONDS }),
+      config: fitStoryboard({ ...config, clipStart: 0, clipDuration: DEFAULT_CLIP_SECONDS }),
     })
   },
 

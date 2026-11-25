@@ -5,8 +5,10 @@ import { createDefaultStoryboard } from '../storyboard/storyboard.utils'
 export const APP_NAME = 'DRAZYX VISUALIZER STUDIO'
 
 /** Limite de duração de divulgação (Reels/Shorts/TikTok). */
-export const MAX_CLIP_SECONDS = 30
+export const MAX_CLIP_SECONDS = 45
 export const MIN_CLIP_SECONDS = 5
+/** Duração inicial do clipe social (o usuário pode estender até 45 s). */
+export const DEFAULT_CLIP_SECONDS = 30
 
 export const VISUAL_LIMITS = {
   intensity: { min: 0, max: 1, step: 0.01 },
@@ -52,7 +54,9 @@ export const DEFAULT_PROJECT: ProjectConfig = {
   templateId: 'mirage',
   palette: { ...DEFAULT_PALETTE },
   clipStart: 0,
-  clipDuration: MAX_CLIP_SECONDS,
+  // O máximo é 45 s, mas o preset social começa em 30 s para não esticar o
+  // storyboard padrão sem escolha do usuário.
+  clipDuration: DEFAULT_CLIP_SECONDS,
   visual: {
     intensity: 0.72,
     particleCount: 0.6,

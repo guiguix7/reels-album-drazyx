@@ -48,10 +48,30 @@ describe('project.store', () => {
     expect(useProjectStore.getState().config.clipDuration).toBeLessThanOrEqual(5)
   })
 
-  it('setClipDuration limita a 30s', () => {
+  it('setClipDuration aceita 45s e limita acima disso', () => {
     const s = useProjectStore.getState()
+    s.setClipDuration(45, 300)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
     s.setClipDuration(120, 300)
-    expect(useProjectStore.getState().config.clipDuration).toBe(30)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
+  })
+
+  it('setClipDuration usa o que resta a partir do início, não 45 s absolutos', () => {
+    const s = useProjectStore.getState()
+    s.setClipStart(90, 97.4)
+    expect(useProjectStore.getState().config.clipDuration).toBeCloseTo(7.4, 1)
+    s.setClipDuration(20, 97.4)
+    expect(useProjectStore.getState().config.clipStart + useProjectStore.getState().config.clipDuration).toBeLessThanOrEqual(97.4)
+  })
+
+  it('setClipRange respeita o áudio restante e o teto de 45s', () => {
+    const s = useProjectStore.getState()
+    s.setClipRange(0, 50, 97.4)
+    expect(useProjectStore.getState().config.clipDuration).toBe(45)
+    s.setClipRange(90, 97.4, 97.4)
+    const config = useProjectStore.getState().config
+    expect(config.clipStart).toBeGreaterThanOrEqual(90)
+    expect(config.clipStart + config.clipDuration).toBeLessThanOrEqual(97.4)
   })
 
   it('áudio de 2 s não cria range impossível', () => {

@@ -4,6 +4,7 @@ import { getClipEnd, getClipReadiness } from '../../features/project/project.typ
 import { MAX_CLIP_SECONDS, MIN_CLIP_SECONDS, VISUAL_LIMITS } from '../../features/project/project.defaults'
 import { formatTime, formatTimePrecise } from '../../lib/format-time'
 import { Panel, Slider } from '../ui/ui'
+import { WaveformTimeline } from './WaveformTimeline'
 import styles from './panels.module.css'
 
 function clipSecondsLabel(seconds: number): string {
@@ -32,6 +33,7 @@ export function ClipPanel(): JSX.Element {
       title="Trecho do vídeo"
       hint={`Escolha o pedaço da faixa que vira vídeo (até ${MAX_CLIP_SECONDS}s).`}
     >
+      <WaveformTimeline />
       <div className={styles.clipSummary}>
         <span className={styles.clipRange}>
           {formatTime(config.clipStart)} → {formatTime(clipEnd)}

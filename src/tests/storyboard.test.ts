@@ -27,8 +27,8 @@ function expectCoverage(scenes: StoryboardScene[], total: number): void {
 }
 
 describe('storyboard presets', () => {
-  it('cobre exatamente 15 s e 30 s com papéis narrativos', () => {
-    for (const kind of [15, 30] as const) {
+  it('cobre exatamente 15 s, 30 s e 45 s com papéis narrativos', () => {
+    for (const kind of [15, 30, 45] as const) {
       const scenes = createStoryboardPreset(kind, DEFAULT_HOOK, kind)
       expectCoverage(scenes, kind)
       expect(scenes[0].role).toBe('hook')

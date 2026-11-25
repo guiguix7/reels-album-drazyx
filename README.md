@@ -37,7 +37,7 @@ npm run preview    # serve o build
    04 EDITORIAL COVER, 05 ALBUM PLAYER SPLIT, 06 VERTICAL TOTEM, 07 SYMMETRIC SPECTRUM,
    08 MONOCHROME FOCUS) ou um dos estilos originais (MIRAGE, padrão, AFTERIMAGE, VOID, SPECTRUM).
    A troca é imediata e não perde o áudio carregado.
-3. **Trecho do vídeo** → defina início e duração (máximo 30 s, mínimo 5 s).
+3. **Trecho do vídeo** → defina início e duração (máximo 45 s, mínimo 5 s), pela waveform ou pelos campos precisos.
 4. **Paleta** → as cores do vídeo saem automaticamente da capa (`Da capa`) ou você escolhe acento,
    secundária e brilho no modo `Manual`. `Extrair` recalcula a partir da capa atual.
 5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera, glitch e
