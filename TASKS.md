@@ -80,3 +80,16 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar até 45 s → gravar �
   - QA visual em contact sheet único (sem screenshots nativos por layout); codecs não foram re-testados e não houve benchmark em GPU fraca.
 - [x] Fase 8 — Regressão final + documentação — `text-metrics` testável, regressão de safe area/lote/CSV (117 testes), README com recipes/storyboard/movimento/lote/persistência/Retention Lab/limitações e QA real do fluxo individual (WAV → trecho de 5 s → WebM 1080×1920 com áudio, 5,16 s, manifest no IndexedDB) — commit `test: add comprehensive visualizer regression coverage`
   - Lote completo e round-trip visual do Retention Lab não foram re-executados nesta rodada; codecs não foram re-testados e não houve benchmark em GPU fraca.
+
+## Plano Product Quality (master prompt)
+
+- [x] Fase 0 — Baseline e reconciliação do repositório — commit `chore: establish product improvement baseline`
+- [x] Fase 1 — Correções críticas de template, Stage, MIRAGE, áudio curto e estado vazio — commit `fix: resolve critical template and rendering issues`
+- [x] Fase 2 — Workspace, onboarding, ação de gravação persistente, tipografia e alvos — commit `feat: improve editor workspace and onboarding UX`
+- [x] Fase 3 — Storyboard e seleção de trecho por waveform, limite social de 45 s — commit `feat: redesign storyboard and audio clip selection`
+- [x] Fase 4 — Composições específicas para 9:16, 1:1 e 16:9 — commit `feat: introduce format-specific visual compositions`
+- [x] Fase 5 — Elementos editáveis no Stage, inspetor, camadas e presets de composição — commit `feat: add comprehensive UI composition editing`
+- [x] Fase 6 — Modo Music video 16:9 com faixa inteira, player opcional e presets de câmera — commit `feat: introduce full-length landscape music video mode`
+  - A gravação real validada foi de 8 s em 1920×1080; a faixa completa de 02:27 e o comportamento de memória em gravações muito longas não foram medidos.
+- [ ] Fase 7 — Persistência de projeto com autosave, undo/redo e presets de marca
+- [ ] Fase 8 — QA final, screenshots de todos os formatos, export longo real e release verificável

@@ -4,6 +4,8 @@ import type { StoryboardConfig } from '../storyboard/storyboard.types'
 import type { MotionProfileId } from '../visualizer/motion/motion.types'
 
 export type AspectRatioId = '9:16' | '1:1' | '16:9'
+export type ProductionMode = 'social' | 'full'
+export type CameraPreset = 'auto' | 'static' | 'dolly-in' | 'dolly-out' | 'pan' | 'tilt' | 'orbit' | 'drift'
 export type PlatformId = 'custom' | 'tiktok' | 'reels' | 'shorts'
 export type OutputQuality = 'full' | 'light'
 export type GlitchLevel = 'off' | 'low' | 'medium'
@@ -80,7 +82,7 @@ export interface TypeSettings {
   tracking: number
 }
 
-export type CompositionElementType = 'text' | 'artwork' | 'shape' | 'waveform' | 'progress'
+export type CompositionElementType = 'text' | 'artwork' | 'shape' | 'waveform' | 'progress' | 'player'
 export type CompositionFont = 'title' | 'ui'
 export type CompositionMotion = 'none' | 'float' | 'pulse'
 
@@ -126,6 +128,11 @@ export interface CoverMeta {
 }
 
 export interface ProjectConfig {
+  /** Social clip (limite de 45 s) ou music video com a faixa inteira. */
+  productionMode: ProductionMode
+  /** Câmera global sobre a composição; `auto` mantém a câmera do template. */
+  cameraPreset?: CameraPreset
+  cameraIntensity?: number
   /** Perfil de plataforma aplicado ao export (configuração, sem integração externa). */
   platform: PlatformId
   aspectRatio: AspectRatioId

@@ -6,6 +6,7 @@ export const ELEMENT_TYPE_LABELS: Record<CompositionElementType, string> = {
   shape: 'Forma',
   waveform: 'Waveform',
   progress: 'Progresso',
+  player: 'Player',
 }
 
 let sequence = 0
@@ -29,8 +30,8 @@ export function createCompositionElement(
     type,
     name: ELEMENT_TYPE_LABELS[type],
     x: 50,
-    y: type === 'text' ? 38 : type === 'artwork' ? 70 : type === 'waveform' ? 76 : type === 'progress' ? 88 : 55,
-    width: type === 'artwork' ? 30 : type === 'waveform' ? 60 : type === 'progress' ? 55 : type === 'shape' ? 30 : 58,
+    y: type === 'text' ? 38 : type === 'artwork' ? 70 : type === 'waveform' ? 76 : type === 'progress' ? 88 : type === 'player' ? 95 : 55,
+    width: type === 'artwork' ? 30 : type === 'waveform' ? 60 : type === 'progress' ? 55 : type === 'shape' ? 30 : type === 'player' ? 64 : 58,
     height:
       type === 'artwork'
         ? Math.min(80, Math.max(8, 30 * aspectRatio))
@@ -40,13 +41,15 @@ export function createCompositionElement(
             ? 2.2
             : type === 'shape'
               ? 14
-              : 10,
+              : type === 'player'
+                ? 12
+                : 10,
     rotation: 0,
     opacity: 1,
     visible: true,
     locked: false,
     color: '#cf8aff',
-    text: type === 'text' ? 'SEU TEXTO' : '',
+    text: type === 'text' ? 'SEU TEXTO' : type === 'player' ? 'WAKE UP (SLOWED + REVERB)' : '',
     font: type === 'text' ? 'title' : 'ui',
     fontSize: 5,
     weight: 600,

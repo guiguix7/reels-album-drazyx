@@ -4,7 +4,7 @@ import { VISUAL_LIMITS } from '../../features/project/project.defaults'
 import { extractPaletteFromUrl } from '../../features/palette/palette'
 import { Button, ColorField, Notice, Panel, Segmented, Select, Slider, TextInput, Toggle } from '../ui/ui'
 import { MOTION_PROFILES, MOTION_PROFILE_OPTIONS } from '../../features/visualizer/motion/motion.profiles'
-import type { GlitchLevel, PaletteMode } from '../../features/project/project.types'
+import type { CameraPreset, GlitchLevel, PaletteMode } from '../../features/project/project.types'
 import styles from './panels.module.css'
 
 function percent(value: number): string {
@@ -15,6 +15,17 @@ const GLITCH_OPTIONS: Array<{ value: GlitchLevel; label: string }> = [
   { value: 'off', label: 'Off' },
   { value: 'low', label: 'Sutil' },
   { value: 'medium', label: 'Forte' },
+]
+
+const CAMERA_OPTIONS: Array<{ value: CameraPreset; label: string }> = [
+  { value: 'auto', label: 'Do template' },
+  { value: 'static', label: 'Estática' },
+  { value: 'dolly-in', label: 'Dolly in' },
+  { value: 'dolly-out', label: 'Dolly out' },
+  { value: 'pan', label: 'Pan horizontal' },
+  { value: 'tilt', label: 'Tilt vertical' },
+  { value: 'orbit', label: 'Órbita' },
+  { value: 'drift', label: 'Deriva cinematográfica' },
 ]
 
 const PALETTE_MODES: Array<{ value: PaletteMode; label: string }> = [
@@ -101,7 +112,10 @@ export function PalettePanel(): JSX.Element {
 
 export function VisualPanel(): JSX.Element {
   const visual = useProjectStore((s) => s.config.visual)
+  const cameraPreset = useProjectStore((s) => s.config.cameraPreset ?? 'auto')
+  const cameraIntensity = useProjectStore((s) => s.config.cameraIntensity ?? 1)
   const setVisual = useProjectStore((s) => s.setVisual)
+  const setCameraPreset = useProjectStore((s) => s.setCameraPreset)
   const setGlitch = useProjectStore((s) => s.setGlitch)
   const resetVisual = useProjectStore((s) => s.resetVisualToTemplateDefault)
 
@@ -133,6 +147,22 @@ export function VisualPanel(): JSX.Element {
         onChange={(motionProfile) => setVisual({ motionProfile })}
       />
       <p className={styles.panelNote}>{MOTION_PROFILES[visual.motionProfile].description}</p>
+      <Select
+        label="Câmera"
+        value={cameraPreset}
+        options={CAMERA_OPTIONS}
+        onChange={(preset) => setCameraPreset(preset as CameraPreset)}
+      />
+      <Slider
+        label="Força da câmera"
+        min={0}
+        max={2}
+        step={0.05}
+        value={cameraIntensity}
+        onChange={(value) => setCameraPreset(cameraPreset, value)}
+        format={percent}
+        hint="Amplitude do movimento de câmera escolhido; 100% mantém o preset no tamanho previsto."
+      />
       <Toggle
         label="Loop visual (fecha no início do trecho)"
         checked={visual.loopVisual}

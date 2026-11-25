@@ -1,12 +1,13 @@
 import { create } from 'zustand'
-import type { AspectRatioId, AudioMeta, CompositionElement, CompositionElementType, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import type { AspectRatioId, AudioMeta, CameraPreset, CompositionElement, CompositionElementType, CoverMeta, CoverPalette, GlitchLevel, OutputQuality, PaletteMode, PlatformId, ProductionMode, ProjectConfig, TemplateId, TypeSettings, VisualSettings } from './project.types'
+import { getMaxClipSeconds } from './clip-limit'
 import { createCompositionElement } from '../composition/composition.defaults'
 import { applyRecipeToConfig } from '../recipes/apply-recipe'
 import { RECIPES } from '../recipes/recipes'
 import type { RecipeId } from '../recipes/recipes'
 import { applyPlatformToConfig } from '../platform/platform.profiles'
 import { getClipEnd } from './project.types'
-import { DEFAULT_CLIP_SECONDS, DEFAULT_PALETTE, DEFAULT_PROJECT, MAX_CLIP_SECONDS, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
+import { DEFAULT_CLIP_SECONDS, DEFAULT_PALETTE, DEFAULT_PROJECT, TEMPLATE_DEFAULT_VISUAL, TEMPLATE_IDS } from './project.defaults'
 import type { ClipAnalysis } from '../audio/offline-analysis'
 import type { HookSettings, StoryboardScene } from '../storyboard/storyboard.types'
 import {
@@ -39,6 +40,7 @@ interface ProjectState {
   setConfig: (config: ProjectConfig) => void
   applyRecipe: (id: RecipeId) => void
   setPlatform: (id: PlatformId) => void
+  setProductionMode: (mode: ProductionMode) => void
   setTemplate: (id: TemplateId) => void
   setAspect: (aspect: AspectRatioId) => void
   setQuality: (quality: OutputQuality) => void
@@ -47,6 +49,7 @@ interface ProjectState {
   setClipDuration: (seconds: number, audioDuration: number | null) => void
   setClipRange: (start: number, end: number, audioDuration: number | null) => void
   setVisual: (patch: Partial<VisualSettings>) => void
+  setCameraPreset: (preset: CameraPreset, intensity?: number) => void
   setGlitch: (level: GlitchLevel) => void
   setType: (patch: Partial<TypeSettings>) => void
   setPalette: (patch: Partial<CoverPalette>) => void
@@ -113,8 +116,38 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   setPlatform: (id) =>
     set((state) => ({
-      config: applyPlatformToConfig(state.config, id),
+      config: applyPlatformToConfig(
+        id === 'custom' ? state.config : { ...state.config, productionMode: 'social' },
+        id,
+      ),
     })),
+
+  setProductionMode: (mode) =>
+    set((state) => {
+      const config = state.config
+      if (mode === 'full') {
+        const duration = state.audioMeta?.duration
+        return {
+          config: fitStoryboard({
+            ...config,
+            productionMode: mode,
+            platform: 'custom',
+            aspectRatio: '16:9',
+            clipStart: 0,
+            clipDuration: duration && duration > 0 ? duration : config.clipDuration,
+          }),
+        }
+      }
+      const max = getMaxClipSeconds({ ...config, productionMode: mode }, state.audioMeta?.duration ?? null)
+      return {
+        config: fitStoryboard({
+          ...config,
+          productionMode: mode,
+          aspectRatio: '9:16',
+          clipDuration: Math.min(config.clipDuration, max),
+        }),
+      }
+    }),
 
   setTemplate: (id) =>
     set((state) => {
@@ -147,8 +180,11 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       // Não usa o fim atual: senão reduzir a duração uma vez travaria o valor para sempre.
       const limit = Number.isFinite(audioDuration ?? Infinity)
         ? (audioDuration as number)
-        : state.config.clipStart + MAX_CLIP_SECONDS
-      const available = Math.max(0.5, Math.min(limit - state.config.clipStart, MAX_CLIP_SECONDS))
+        : state.config.clipStart + getMaxClipSeconds(state.config, null)
+      const available = Math.max(
+        0.5,
+        Math.min(limit - state.config.clipStart, getMaxClipSeconds(state.config, audioDuration ?? null)),
+      )
       const clipDuration = clamp(seconds, Math.min(0.5, available), available)
       return { config: fitStoryboard({ ...state.config, clipDuration }) }
     }),
@@ -156,14 +192,26 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setClipRange: (start, end, audioDuration) =>
     set((state) => {
       const duration = audioDuration ?? Infinity
-      const limit = Number.isFinite(duration) ? duration : start + MAX_CLIP_SECONDS
+      const maxSpan = getMaxClipSeconds(state.config, audioDuration ?? null)
+      const limit = Number.isFinite(duration) ? duration : start + maxSpan
       const clipStart = clamp(start, 0, Math.max(0, limit - 0.5))
-      const clipEnd = clamp(end, clipStart + 0.5, Math.min(limit, clipStart + MAX_CLIP_SECONDS))
-      const clipDuration = clamp(clipEnd - clipStart, 0.5, MAX_CLIP_SECONDS)
+      const clipEnd = clamp(end, clipStart + 0.5, Math.min(limit, clipStart + maxSpan))
+      const clipDuration = clamp(clipEnd - clipStart, 0.5, maxSpan)
       return { config: fitStoryboard({ ...state.config, clipStart, clipDuration }) }
     }),
 
   setVisual: (patch) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, ...patch } } })),
+
+  setCameraPreset: (cameraPreset, cameraIntensity) =>
+    set((state) => ({
+      config: {
+        ...state.config,
+        cameraPreset,
+        cameraIntensity: cameraIntensity == null
+          ? state.config.cameraIntensity ?? 1
+          : Math.max(0, Math.min(2, cameraIntensity)),
+      },
+    })),
 
   setGlitch: (level) => set((state) => ({ config: { ...state.config, visual: { ...state.config.visual, glitch: level } } })),
 
@@ -462,9 +510,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       }
       // Áudio novo pode ser mais curto: o trecho antigo não pode continuar fora da faixa.
       // O slider aceita 0,5 s; o recorder bloqueia com getClipReadiness se < 5 s.
-      const clipStart = clamp(config.clipStart, 0, Math.max(0, duration - 0.5))
-      const available = Math.max(0.5, Math.min(MAX_CLIP_SECONDS, duration - clipStart))
-      const clipDuration = clamp(config.clipDuration, Math.min(0.5, available), available)
+      const clipStart = config.productionMode === 'full' ? 0 : clamp(config.clipStart, 0, Math.max(0, duration - 0.5))
+      const available = Math.max(
+        0.5,
+        Math.min(getMaxClipSeconds(config, duration), duration - clipStart),
+      )
+      const clipDuration = config.productionMode === 'full'
+        ? duration
+        : clamp(config.clipDuration, Math.min(0.5, available), available)
       return {
         audioMeta: meta,
         audioError: null,

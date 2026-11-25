@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { VisualEngine } from './VisualEngine'
 import { setVisualEngine } from './engine-registry'
 import { useProjectStore } from '../project/project.store'
+import { useRecorderStore } from '../recording/recording.store'
 import { getClipEnd } from '../project/project.types'
 import { getOutputDimensions } from '../project/project.types'
 import { getAudioEngine } from '../audio/AudioEngine'
@@ -29,6 +30,8 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
   const storyboard = useProjectStore((s) => s.config.storyboard)
   const coverUrl = useProjectStore((s) => s.coverMeta?.objectUrl ?? null)
   const elements = useProjectStore((s) => s.config.elements)
+  const cameraPreset = useProjectStore((s) => s.config.cameraPreset ?? 'auto')
+  const cameraIntensity = useProjectStore((s) => s.config.cameraIntensity ?? 1)
 
   // Criação única do engine
   useEffect(() => {
@@ -46,6 +49,8 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
       // Apenas em desenvolvimento: permite inspecionar/auditar os layouts no navegador.
       ;(window as unknown as Record<string, unknown>).__drazyxEngine = engine
       ;(window as unknown as Record<string, unknown>).__drazyxStore = useProjectStore
+      ;(window as unknown as Record<string, unknown>).__drazyxRecorder = useRecorderStore
+      ;(window as unknown as Record<string, unknown>).__drazyxAudio = getAudioEngine()
     }
 
     const onVisibility = (): void => engine.handleVisibility(document.visibilityState === 'visible')
@@ -59,6 +64,10 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
     // canvasRef é estável durante a vida do componente.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    engineRef.current?.setCameraPreset(cameraPreset, cameraIntensity)
+  }, [cameraPreset, cameraIntensity])
 
   // Troca de template (ignorada enquanto o storyboard controla as cenas)
   useEffect(() => {

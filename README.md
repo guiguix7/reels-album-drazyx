@@ -37,15 +37,28 @@ npm run preview    # serve o build
    04 EDITORIAL COVER, 05 ALBUM PLAYER SPLIT, 06 VERTICAL TOTEM, 07 SYMMETRIC SPECTRUM,
    08 MONOCHROME FOCUS) ou um dos estilos originais (MIRAGE, padrão, AFTERIMAGE, VOID, SPECTRUM).
    A troca é imediata e não perde o áudio carregado.
-3. **Trecho do vídeo** → defina início e duração (máximo 45 s, mínimo 5 s), pela waveform ou pelos campos precisos.
+3. **Trecho do vídeo** → defina início e duração (máximo 45 s no social clip, mínimo 5 s), pela waveform ou pelos campos precisos. No modo Music video, a faixa inteira é permitida.
 4. **Paleta** → as cores do vídeo saem automaticamente da capa (`Da capa`) ou você escolhe acento,
    secundária e brilho no modo `Manual`. `Extrair` recalcula a partir da capa atual.
-5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera, glitch e
-   perfil de movimento; textos de artista, faixa, álbum, CTA e tagline — todo texto é desenhado dentro
-   do canvas do Stage.
-6. **Formato** → proporção (9:16 padrão), resolução (1080×1920 ou 720×1280) e FPS (30 para export).
+5. **Visual / Tipografia** → intensidade, partículas, força do grave, brilho, grão, câmera (presets
+   estática, dolly, pan, tilt, órbita e deriva), glitch e perfil de movimento; textos de artista, faixa,
+   álbum, CTA e tagline — todo texto é desenhado dentro do canvas do Stage.
+6. **Formato** → modo (Social clip ou Music video), proporção (9:16 padrão no social; 16:9 no music
+   video), resolução e FPS (30 para export).
 7. **Transporte** (barra inferior) → play/pause, seek, tempo atual e duração da faixa.
-8. **Gravação** → `Gravar trecho` inicia a captura, para sozinha no fim do trecho e libera preview + download.
+8. **Gravação** → `Gravar trecho` (ou `Gravar music video`) inicia a captura, para sozinha no fim do
+   trecho/faixa e libera preview + download.
+
+## Modos de produção
+
+- **Social clip** — 9:16 ou 1:1, trecho de até 45 s, storyboard e presets rápidos. O padrão continua 30 s.
+- **Music video** — 16:9, faixa inteira permitida (sem teto de 45 s), gravação longa e composição
+  horizontal. O modo usa o arquivo de áudio como fonte de duração e progresso; trocar o áudio mantém a
+  faixa inteira no modo completo.
+- **Player opcional** — o elemento `Player` (biblioteca de composição) desenha capa, título, progresso
+  real e tempo decorrido/total dentro do Stage. Arraste, redimensione e edite como qualquer elemento.
+- **Câmera** — presets globais (estática, dolly in/out, pan, tilt, órbita, deriva) com força ajustável;
+  `Do template` mantém a câmera original de cada composição.
 
 ## Recipes, storyboard e movimento
 
@@ -140,6 +153,9 @@ carregado e trecho válido.
   retomado por gesto do usuário.
 - A gravação gera um arquivo por vez; o lote baixa um link por job (não há ZIP nem download automático
   em massa).
+- No modo Music video os chunks do MediaRecorder ficam em memória até o download; faixas muito longas
+  exigem RAM livre proporcional ao tempo e à resolução. O pipeline foi validado com um arquivo real de
+  8 s em 1920×1080; a faixa completa de 02:27 não foi gravada nesta rodada.
 - A auditoria visual dos oito layouts foi feita em um contact sheet (`docs/qa/layouts-audit.jpg`),
   não em screenshots nativos por layout. Codecs não foram re-testados após essa revisão e não houve
   medição de performance em GPU fraca.

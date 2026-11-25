@@ -6,6 +6,8 @@ import type { SceneTransition, StoryboardConfig } from '../storyboard/storyboard
 import { effectiveType, effectiveVisual, findSceneAt } from '../storyboard/storyboard.utils'
 import { TEMPLATE_REGISTRY } from './templates/registry'
 import { applyMotionProfile, applyVisualLoop, hashSeed, loopBlend } from './motion/motion.utils'
+import { cameraPose } from './camera-presets'
+import type { CameraPreset } from '../project/project.types'
 import { AdaptiveResolution } from './performance'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
@@ -23,6 +25,8 @@ export class VisualEngine {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
   private camera: THREE.PerspectiveCamera
+  private cameraPreset: CameraPreset = 'auto'
+  private cameraIntensity = 1
   private finish: FinishPass
   private instance: TemplateInstance | null = null
   private templateId: TemplateId | null = null
@@ -169,6 +173,18 @@ export class VisualEngine {
   }
 
   /** Elementos declarativos por cima do template; vazio não altera nada. */
+  setCameraPreset(preset: CameraPreset, intensity: number): void {
+    this.cameraPreset = preset
+    this.cameraIntensity = Math.max(0, Math.min(2, intensity))
+  }
+
+  private applyCameraPreset(progress: number, time: number, intensity: number): void {
+    const pose = cameraPose(this.cameraPreset, progress, time, intensity)
+    if (!pose) return
+    this.camera.position.set(pose.x, pose.y, pose.z)
+    this.camera.lookAt(0, 0, 0)
+  }
+
   setElements(elements: CompositionElement[]): void {
     this.elements = elements
     this.rebuildComposition()
@@ -364,6 +380,7 @@ export class VisualEngine {
     }
     if (this.instance) this.instance.update(updateArgs)
     this.composition?.update(updateArgs)
+    this.applyCameraPreset(this.clip.progress, this.time, this.cameraIntensity)
 
     this.updateTransition(dt)
 

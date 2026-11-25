@@ -13,7 +13,7 @@ import type { CompositionPreset } from '../../features/composition/composition.p
 import { Button, ColorField, Notice, Panel, Select, Slider, TextInput, Toggle } from '../ui/ui'
 import styles from './panels.module.css'
 
-const TYPE_ORDER: CompositionElementType[] = ['text', 'artwork', 'shape', 'waveform', 'progress']
+const TYPE_ORDER: CompositionElementType[] = ['text', 'artwork', 'shape', 'waveform', 'progress', 'player']
 
 const FONT_OPTIONS: Array<{ value: 'title' | 'ui'; label: string }> = [
   { value: 'title', label: 'Título / display' },
@@ -197,6 +197,10 @@ export function CompositionPanel(): JSX.Element {
           <Slider label="Altura" min={1} max={100} step={1} value={selected.height} onChange={(height) => patch({ height })} format={(v) => `${v.toFixed(0)}%`} />
           <Slider label="Rotação" min={-180} max={180} step={1} value={selected.rotation} onChange={(rotation) => patch({ rotation })} format={(v) => `${v.toFixed(0)}°`} />
           <Slider label="Opacidade" min={0} max={1} step={0.01} value={selected.opacity} onChange={(opacity) => patch({ opacity })} format={(v) => `${Math.round(v * 100)}%`} />
+
+          {selected.type === 'player' ? (
+            <TextInput label="Faixa no player" value={selected.text} maxLength={90} onChange={(text) => patch({ text })} />
+          ) : null}
 
           {selected.type === 'text' ? (
             <>

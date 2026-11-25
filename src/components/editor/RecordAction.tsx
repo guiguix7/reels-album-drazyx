@@ -34,13 +34,14 @@ export function RecordAction({
     return () => window.clearInterval(id)
   }, [status])
 
+  const actionLabel = config.productionMode === 'full' ? 'Gravar music video' : 'Gravar clipe'
   const label = busy
     ? status === 'recording'
       ? `Gravando ${formatTimePrecise(elapsed)}`
       : status === 'processing'
         ? 'Finalizando...'
         : 'Preparando...'
-    : 'Gravar clipe'
+    : actionLabel
 
   return (
     <div className={styles.productionAction}>
@@ -56,7 +57,7 @@ export function RecordAction({
         title={!busy && readiness.reason ? readiness.reason : undefined}
         aria-describedby={!busy && readiness.reason ? 'record-block-reason' : undefined}
       >
-        {busy ? 'Cancelar' : 'Gravar clipe'}
+        {busy ? 'Cancelar' : actionLabel}
       </button>
       {!busy && readiness.reason ? (
         <span id="record-block-reason" className={styles.recordReason}>

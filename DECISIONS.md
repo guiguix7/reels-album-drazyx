@@ -98,6 +98,20 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
 - O lote reutiliza o mesmo pipeline da gravação individual, um job por vez, com
   manifest e download próprios; não há ZIP.
 
+## Modos de produção e câmera
+
+- `productionMode: 'social' | 'full'` no `ProjectConfig`. O modo é explícito na UI e não é inferido do
+  aspecto: social tem teto de 45 s; full aceita a faixa inteira e usa 16:9 como saída principal.
+- `getMaxClipSeconds` centraliza o limite (45 s no social, duração do áudio no full). O store reaplica o
+  limite em `setClipDuration`, `setClipRange` e `setAudioMeta`; nenhum desses caminhos pode divergir.
+- Ao entrar em full, o trecho vira a faixa inteira e a plataforma volta para `custom`; ao voltar ao
+  social, o formato volta a 9:16 e o trecho é reaplicado ao teto. Escolher uma plataforma social também
+  força o modo social.
+- Player é um elemento declarativo (`type: 'player'`) renderizado no WebGL: capa, título editável,
+  progresso e relógio vêm do áudio real; não há valores fabricados.
+- Câmera global é opcional (`auto` preserva o template). Presets são poses determinísticas por progresso
+  e tempo, aplicadas depois do update do template, com `lookAt` no centro para manter o enquadramento.
+
 ## Storyboard, persistência e processo
 
 - Storyboard: cenas tipadas com `role`, `layoutId`, `visualStyleId`, transição,

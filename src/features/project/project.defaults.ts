@@ -47,6 +47,9 @@ export const DEFAULT_PALETTE: PaletteSettings = {
 
 /** Preset inicial: primeiro lançamento Drazyx. */
 export const DEFAULT_PROJECT: ProjectConfig = {
+  productionMode: 'social',
+  cameraPreset: 'auto',
+  cameraIntensity: 1,
   platform: 'custom',
   aspectRatio: '9:16',
   quality: 'full',

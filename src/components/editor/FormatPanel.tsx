@@ -1,9 +1,14 @@
 import { useProjectStore } from '../../features/project/project.store'
 import { getOutputDimensions } from '../../features/project/project.types'
-import type { AspectRatioId, OutputQuality, PlatformId } from '../../features/project/project.types'
+import type { AspectRatioId, OutputQuality, PlatformId, ProductionMode } from '../../features/project/project.types'
 import { PLATFORM_OPTIONS, PLATFORM_PROFILES } from '../../features/platform/platform.profiles'
 import { Panel, Segmented, Select } from '../ui/ui'
 import styles from './panels.module.css'
+
+const MODES: Array<{ value: ProductionMode; label: string }> = [
+  { value: 'social', label: 'Social clip' },
+  { value: 'full', label: 'Music video' },
+]
 
 const ASPECTS: Array<{ value: AspectRatioId; label: string }> = [
   { value: '9:16', label: '9:16 Reels' },
@@ -27,19 +32,31 @@ export function FormatPanel(): JSX.Element {
   const setQuality = useProjectStore((s) => s.setQuality)
   const setFps = useProjectStore((s) => s.setFps)
   const setPlatform = useProjectStore((s) => s.setPlatform)
+  const setProductionMode = useProjectStore((s) => s.setProductionMode)
 
   const dims = getOutputDimensions(config.aspectRatio, config.quality)
   const platform = config.platform === 'custom' ? null : PLATFORM_PROFILES[config.platform]
 
   return (
     <Panel title="Formato" hint={`Saída atual: ${dims.width}×${dims.height} px`}>
-      <Select
-        label="Plataforma"
-        value={config.platform}
-        options={PLATFORM_OPTIONS}
-        onChange={(id) => setPlatform(id as PlatformId)}
-      />
-      {platform ? <p className={styles.panelNote}>{platform.note}</p> : null}
+      <div className={styles.inlineField}>
+        <span className={styles.rowLabel}>Modo</span>
+        <Segmented options={MODES} value={config.productionMode} onChange={(mode) => setProductionMode(mode)} />
+      </div>
+      <p className={styles.panelNote}>
+        {config.productionMode === 'full'
+          ? 'Music video: 16:9, faixa inteira permitida e gravação longa. Sem o teto social de 45 s.'
+          : 'Social clip: 9:16 ou 1:1, até 45 s, com storyboard e presets rápidos.'}
+      </p>
+      {config.productionMode === 'social' ? (
+        <Select
+          label="Plataforma"
+          value={config.platform}
+          options={PLATFORM_OPTIONS}
+          onChange={(id) => setPlatform(id as PlatformId)}
+        />
+      ) : null}
+      {platform && config.productionMode === 'social' ? <p className={styles.panelNote}>{platform.note}</p> : null}
       <div className={styles.inlineField}>
         <span className={styles.rowLabel}>Proporção</span>
         <Segmented options={ASPECTS} value={config.aspectRatio} onChange={(v) => setAspect(v)} />
