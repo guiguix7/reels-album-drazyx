@@ -1,5 +1,9 @@
 # TASKS — DRAZYX VISUALIZER STUDIO
 
+## Melhoria de produto (2026-11-25)
+
+- [x] Fase 0 — Baseline: branch `feat/product-quality-improvements`, `npm ci` + lint + typecheck + 117 testes + build verdes, produção reconciliada (`index-DZ5U_6t5.js`), `docs/IMPROVEMENT_BASELINE.md`
+
 Fluxo-alvo: carregar áudio → visualizar → selecionar 30 s → gravar → baixar vídeo com áudio.
 
 ## Fase 0 — Inspeção e planejamento
