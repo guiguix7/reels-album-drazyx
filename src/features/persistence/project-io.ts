@@ -31,6 +31,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Lê um arquivo exportado. Aceita versões antigas preenchendo campos ausentes
  * com os defaults atuais; rejeita arquivos que não são deste app.
  */
+export function mergeProjectConfig(config: Partial<ProjectConfig>): ProjectConfig {
+  return {
+    ...DEFAULT_PROJECT,
+    ...config,
+    platform: config.platform ?? DEFAULT_PROJECT.platform,
+    productionMode: config.productionMode ?? DEFAULT_PROJECT.productionMode,
+    cameraPreset: config.cameraPreset ?? DEFAULT_PROJECT.cameraPreset,
+    cameraIntensity: config.cameraIntensity ?? DEFAULT_PROJECT.cameraIntensity,
+    palette: { ...DEFAULT_PROJECT.palette, ...config.palette },
+    visual: { ...DEFAULT_PROJECT.visual, ...config.visual },
+    type: { ...DEFAULT_PROJECT.type, ...config.type },
+    storyboard: {
+      ...DEFAULT_PROJECT.storyboard,
+      ...config.storyboard,
+      hook: { ...DEFAULT_PROJECT.storyboard.hook, ...config.storyboard?.hook },
+      scenes: config.storyboard?.scenes?.length ? config.storyboard.scenes : DEFAULT_PROJECT.storyboard.scenes,
+    },
+  }
+}
+
 export function parseProjectFile(text: string): { name: string; config: ProjectConfig } {
   let raw: unknown
   try {
@@ -48,20 +68,7 @@ export function parseProjectFile(text: string): { name: string; config: ProjectC
   if (!config.aspectRatio || !config.templateId || !config.type || !config.visual) {
     throw new Error('Arquivo de projeto incompleto: faltam campos obrigatórios.')
   }
-  const merged: ProjectConfig = {
-    ...DEFAULT_PROJECT,
-    ...config,
-    platform: config.platform ?? DEFAULT_PROJECT.platform,
-    palette: { ...DEFAULT_PROJECT.palette, ...config.palette },
-    visual: { ...DEFAULT_PROJECT.visual, ...config.visual },
-    type: { ...DEFAULT_PROJECT.type, ...config.type },
-    storyboard: {
-      ...DEFAULT_PROJECT.storyboard,
-      ...config.storyboard,
-      hook: { ...DEFAULT_PROJECT.storyboard.hook, ...config.storyboard?.hook },
-      scenes: config.storyboard?.scenes?.length ? config.storyboard.scenes : DEFAULT_PROJECT.storyboard.scenes,
-    },
-  }
+  const merged = mergeProjectConfig(config)
   const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Projeto importado'
   return { name, config: merged }
 }

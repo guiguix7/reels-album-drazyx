@@ -93,3 +93,6 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar até 45 s → gravar �
   - A gravação real validada foi de 8 s em 1920×1080; a faixa completa de 02:27 e o comportamento de memória em gravações muito longas não foram medidos.
 - [ ] Fase 7 — Persistência de projeto com autosave, undo/redo e presets de marca
 - [ ] Fase 8 — QA final, screenshots de todos os formatos, export longo real e release verificável
+
+- [x] Fase 7 — Persistência e presets criativos: autosave local com restauração, salvar/sobrescrever projeto, undo/redo com Ctrl/Cmd+Z e presets de marca — commit `feat: add project persistence and creative presets`
+  - Autosave e histórico guardam somente configuração; áudio/capa são recarregados a cada sessão. Presets de marca não têm import/export próprio.

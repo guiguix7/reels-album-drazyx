@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useProjectStore } from '../../features/project/project.store'
 import { parseProjectFile, serializeProject } from '../../features/persistence/project-io'
+import { loadAutosave, writeAutosave } from '../../features/persistence/autosave'
+import { resetEditHistory } from '../../features/history/edit-history'
+import { applyBrandPreset, deleteBrandPreset, listBrandPresets, saveBrandPreset } from '../../features/presets/brand-presets'
+import type { BrandPreset } from '../../features/presets/brand-presets'
 import {
   deleteProject,
   duplicateProject,
@@ -31,8 +35,16 @@ function dateLabel(iso: string): string {
 export function ProjectPanel(): JSX.Element {
   const config = useProjectStore((s) => s.config)
   const setConfig = useProjectStore((s) => s.setConfig)
-  const [name, setName] = useState('Meu projeto')
+  const [restored] = useState(() => loadAutosave())
+  const [name, setName] = useState(restored?.name ?? 'Meu projeto')
+  const [autosaveAt, setAutosaveAt] = useState<string | null>(restored?.savedAt ?? null)
+  const [autosaveError, setAutosaveError] = useState(false)
+  const hydrated = useRef(false)
+  const [brandName, setBrandName] = useState('')
+  const [brandPresets, setBrandPresets] = useState<BrandPreset[]>(() => listBrandPresets())
+  const [brandError, setBrandError] = useState<string | null>(null)
   const [projects, setProjects] = useState<StoredProject[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -52,6 +64,30 @@ export function ProjectPanel(): JSX.Element {
     void refresh()
   }, [refresh])
 
+  // Restaura o último autosave uma vez; mídia (áudio/capa) é sempre da sessão.
+  useEffect(() => {
+    if (restored) {
+      setConfig(restored.config)
+      // Restauração não é uma edição: não deve aparecer no desfazer.
+      resetEditHistory()
+    }
+    hydrated.current = true
+  }, [restored, setConfig])
+
+  useEffect(() => {
+    if (!hydrated.current) return
+    const timer = window.setTimeout(() => {
+      const savedAt = writeAutosave(name, config)
+      if (savedAt) {
+        setAutosaveAt(savedAt)
+        setAutosaveError(false)
+      } else {
+        setAutosaveError(true)
+      }
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [config, name])
+
   const run = async (action: () => Promise<void>): Promise<void> => {
     setBusy(true)
     setError(null)
@@ -66,7 +102,8 @@ export function ProjectPanel(): JSX.Element {
 
   const handleSave = (): Promise<void> =>
     run(async () => {
-      await saveProject(name, config)
+      const saved = await saveProject(name, config, activeId ?? undefined)
+      setActiveId(saved.id)
       await refresh()
     })
 
@@ -90,10 +127,17 @@ export function ProjectPanel(): JSX.Element {
       }
     >
       <TextInput label="Nome" value={name} maxLength={60} onChange={setName} />
+      <p className={styles.panelNote}>
+        {autosaveError
+          ? 'Autosave indisponível: armazenamento local cheio ou bloqueado. Use Exportar JSON.'
+          : autosaveAt
+            ? `Autosave ativo · ${dateLabel(autosaveAt)}`
+            : 'Autosave ativo: a configuração volta ao reabrir (sem áudio/capa).'}
+      </p>
 
       <div className={styles.sbToolbar}>
         <Button variant="primary" onClick={() => void handleSave()} disabled={busy}>
-          Salvar projeto
+          {activeId ? 'Salvar alterações' : 'Salvar projeto'}
         </Button>
         <Button
           onClick={() => downloadText(`${name.trim() || 'drazyx-projeto'}.json`, serializeProject(name, config))}
@@ -117,6 +161,75 @@ export function ProjectPanel(): JSX.Element {
       </div>
 
       {error ? <Notice tone="error">{error}</Notice> : null}
+
+      <div className={styles.brandPresetBlock}>
+        <p className={styles.groupLabel}>Presets de marca</p>
+        <p className={styles.panelNote}>
+          Paleta, tipografia, movimento, template e câmera reutilizáveis entre lançamentos. Áudio, capa e
+          nomes de faixa continuam sendo do projeto atual.
+        </p>
+        <div className={styles.projectRename}>
+          <input
+            className={styles.numberInput}
+            value={brandName}
+            maxLength={40}
+            placeholder="Nome do preset"
+            onChange={(e) => setBrandName(e.target.value)}
+            aria-label="Nome do preset de marca"
+          />
+          <Button
+            onClick={() => {
+              try {
+                saveBrandPreset(brandName, config)
+                setBrandPresets(listBrandPresets())
+                setBrandName('')
+                setBrandError(null)
+              } catch {
+                setBrandError('Não foi possível salvar o preset neste navegador.')
+              }
+            }}
+            disabled={busy}
+          >
+            Salvar marca
+          </Button>
+        </div>
+        {brandError ? <Notice tone="error">{brandError}</Notice> : null}
+        {brandPresets.length > 0 ? (
+          <ul className={styles.projectList}>
+            {brandPresets.map((preset) => (
+              <li key={preset.id} className={styles.projectItem}>
+                <div className={styles.projectHead}>
+                  <span className={styles.projectName}>{preset.name}</span>
+                  <span className={styles.projectDate}>{preset.templateId}</span>
+                </div>
+                <div className={styles.projectActions}>
+                  <Button
+                    onClick={() => {
+                      setConfig(applyBrandPreset(config, preset))
+                      setBrandError(null)
+                    }}
+                    disabled={busy}
+                  >
+                    Aplicar
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      deleteBrandPreset(preset.id)
+                      setBrandPresets(listBrandPresets())
+                    }}
+                    disabled={busy}
+                  >
+                    Excluir
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.panelNote}>Nenhum preset de marca salvo ainda.</p>
+        )}
+      </div>
 
       {projects.length === 0 ? (
         <p className={styles.panelNote}>Nenhum projeto salvo ainda.</p>
@@ -158,6 +271,7 @@ export function ProjectPanel(): JSX.Element {
                     void run(async () => {
                       setConfig(project.config)
                       setName(project.name)
+                      setActiveId(project.id)
                     })
                   }
                   disabled={busy}
@@ -189,6 +303,7 @@ export function ProjectPanel(): JSX.Element {
                   onClick={() =>
                     void run(async () => {
                       await deleteProject(project.id)
+                      if (activeId === project.id) setActiveId(null)
                       await refresh()
                     })
                   }

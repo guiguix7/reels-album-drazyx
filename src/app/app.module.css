@@ -37,6 +37,35 @@
   color: var(--text-dim);
 }
 
+.historyControls {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.historyButton {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font: 600 15px/1 var(--font-ui);
+  cursor: pointer;
+}
+
+.historyButton:hover:not(:disabled) {
+  border-color: var(--surface-line-strong);
+  color: var(--text);
+}
+
+.historyButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .topbarNote {
   margin: 0 0 0 auto;
   font-size: 12px;

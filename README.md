@@ -80,10 +80,17 @@ npm run preview    # serve o build
 
 ## Projetos e Retention Lab
 
-- **Projetos** são salvos no IndexedDB deste navegador (salvar, carregar, duplicar, renomear e excluir).
-  Áudio e capa não são persistidos: são Object URLs da sessão e precisam ser recarregados após abrir um
-  projeto. `Exportar JSON`/`Importar JSON` levam a configuração entre navegadores, com schema versionado
-  e merge de defaults para arquivos antigos.
+- **Projetos** são salvos no IndexedDB deste navegador (salvar/sobrescrever, carregar, duplicar, renomear
+  e excluir). Áudio e capa não são persistidos: são Object URLs da sessão e precisam ser recarregados
+  após abrir um projeto. `Exportar JSON`/`Importar JSON` levam a configuração entre navegadores, com
+  schema versionado e merge de defaults para arquivos antigos.
+- **Autosave** salva a configuração no `localStorage` 700 ms após cada alteração e a restaura ao reabrir
+  (sem mídia). Se o armazenamento estiver cheio/bloqueado, o painel avisa e o JSON continua disponível.
+- **Desfazer/refazer** cobre alterações de configuração — posição e tamanho de elementos, texto, camadas,
+  cenas, template, paleta e formato — com snapshots coalescidos; `Ctrl/Cmd+Z` e `Ctrl/Cmd+Shift+Z`.
+  Buffers de áudio/vídeo nunca entram no histórico.
+- **Presets de marca** salvam paleta, visual, tipografia (escala, tracking, flags e CTA), template,
+  aspecto, câmera e elementos editáveis; aplicar não troca artista/faixa/álbum do projeto atual.
 - Cada gravação (individual ou job do lote) registra um **manifest** local com variante, hook, layouts,
   movimento, CTA, plataforma, resolução, FPS, duração e tamanho do arquivo.
 - O **Retention Lab** aceita métricas digitadas ou um CSV com cabeçalho (`variante`/`label` e `views`;

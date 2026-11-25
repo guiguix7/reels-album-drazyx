@@ -35,6 +35,9 @@ describe('project file', () => {
     }
     const parsed = parseProjectFile(JSON.stringify(legacy))
     expect(parsed.config.platform).toBe(DEFAULT_PROJECT.platform)
+    expect(parsed.config.productionMode).toBe('social')
+    expect(parsed.config.cameraPreset).toBe('auto')
+    expect(parsed.config.cameraIntensity).toBe(1)
     expect(parsed.config.visual.motionProfile).toBe(DEFAULT_PROJECT.visual.motionProfile)
     expect(parsed.config.visual.loopVisual).toBe(DEFAULT_PROJECT.visual.loopVisual)
     expect(parsed.config.palette.mode).toBe(DEFAULT_PROJECT.palette.mode)

@@ -112,6 +112,19 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
 - Câmera global é opcional (`auto` preserva o template). Presets são poses determinísticas por progresso
   e tempo, aplicadas depois do update do template, com `lookAt` no centro para manter o enquadramento.
 
+## Persistência, histórico e marca
+
+- Autosave usa `localStorage` (configuração pequena, leitura síncrona no boot) e fica separado do
+  IndexedDB de projetos. Mídia nunca é serializada; o aviso de recarregar áudio/capa permanece.
+- O botão de projeto guarda o id salvo na sessão: o primeiro clique cria, os seguintes sobrescrevem o
+  mesmo registro. Duplicar continua criando um id novo.
+- Undo/redo é um histórico de snapshots da `ProjectConfig` (40 posições, coalescência de 350 ms), não
+  um command log. Isso cobre qualquer editor que passe pelo store e evita armazenar buffers; em troca,
+  uma sessão contínua de digitação vira um passo de undo.
+- Presets de marca são globais e guardam somente decisões reutilizáveis (paleta, visual, flags/medidas
+  tipográficas, CTA, template, aspecto, câmera e elementos). Artista, faixa e álbum ficam no projeto.
+- A restauração do autosave limpa o histórico para não transformar o boot em um passo de undo.
+
 ## Storyboard, persistência e processo
 
 - Storyboard: cenas tipadas com `role`, `layoutId`, `visualStyleId`, transição,

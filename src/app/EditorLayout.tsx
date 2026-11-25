@@ -18,6 +18,7 @@ import { RecordPanel } from '../components/editor/RecordPanel'
 import { RecipePanel } from '../components/editor/RecipePanel'
 import { BatchPanel } from '../components/editor/BatchPanel'
 import { RecordAction } from '../components/editor/RecordAction'
+import { HistoryControls } from '../components/editor/HistoryControls'
 import { Onboarding } from '../components/editor/Onboarding'
 import styles from './app.module.css'
 
@@ -35,6 +36,7 @@ export function EditorLayout(): JSX.Element {
           <span className={styles.brandMark}>DRAZYX</span>
           <span className={styles.brandRest}>VISUALIZER STUDIO</span>
         </div>
+        <HistoryControls />
         <p className={styles.topbarNote}>{APP_NAME} — local-first · nada sai do seu navegador</p>
         <RecordAction onStart={startRecording} onCancel={cancelRecording} />
       </header>

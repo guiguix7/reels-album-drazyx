@@ -1185,6 +1185,14 @@
   gap: 6px;
 }
 
+.brandPresetBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-line);
+}
+
 .numberGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
