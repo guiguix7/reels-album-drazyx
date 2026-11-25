@@ -8,6 +8,7 @@ import { radialGlowTexture } from '../objects/textures'
 import { derivePalette, safeArea } from './template-utils'
 import type { PaletteColors } from './template-utils'
 import { mixHex } from '../../palette/palette'
+import { coverSide, getFormatMode } from './composition'
 
 /**
  * LAYOUT 03 — OFFSET CINEMA
@@ -29,22 +30,6 @@ export const Template03: VisualTemplate = {
     const background = track(new GradientBackground())
     background.setColors('#0d0a17', '#070810', '#2c1f52')
     ctx.scene.add(background.mesh)
-
-    // Capa ampliada como textura de fundo (muito sutil, "respira" com os graves)
-    const bgCoverGeometry = new THREE.PlaneGeometry(1, 1)
-    const bgCoverMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.1, depthWrite: false, toneMapped: false })
-    const bgCover = new THREE.Mesh(bgCoverGeometry, bgCoverMaterial)
-    bgCover.position.set(0, 0.6, -4)
-    bgCover.renderOrder = -5
-    ctx.scene.add(bgCover)
-    disposables.push(bgCoverGeometry, bgCoverMaterial)
-
-    const dimmerMaterial = new THREE.MeshBasicMaterial({ color: '#070810', transparent: true, opacity: 0.45, depthWrite: false, toneMapped: false })
-    const dimmer = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), dimmerMaterial)
-    dimmer.position.set(0, 0.6, -3.8)
-    dimmer.renderOrder = -4
-    ctx.scene.add(dimmer)
-    disposables.push(dimmerMaterial)
 
     // Badge circular com glow (canto superior esquerdo)
     const badgeGlowMaterial = new THREE.SpriteMaterial({ map: radialGlowTexture(), color: '#b84dff', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })
@@ -101,19 +86,10 @@ export const Template03: VisualTemplate = {
         if (ctx.assets.coverTexture !== lastTexture) {
           lastTexture = ctx.assets.coverTexture
           cover.setTexture(lastTexture)
-          bgCoverMaterial.map = lastTexture
-          bgCoverMaterial.needsUpdate = true
         }
 
         const bass = frame.bass * visual.bassForce
         background.update(time, 0.28 + visual.glow * 0.35 + bass * 0.18, 0)
-
-        // Fundo com capa ampliada respirando
-        const bgPulse = 1 + bass * 0.04
-        bgCover.scale.set(9.5 * bgPulse, 9.5 * bgPulse, 1)
-        // Capa fantasma só como textura de fundo: baixa o bastante para não competir com o texto.
-        bgCoverMaterial.opacity = 0.035 + frame.energy * 0.035 + frame.beatPulse * 0.03
-        dimmer.scale.set(10, 11, 1)
 
         // Badge pulsando com o áudio
         const badgePulse = 1 + bass * 0.22 + frame.beatPulse * 0.1
@@ -127,8 +103,10 @@ export const Template03: VisualTemplate = {
         badgeGlow.position.copy(badge.position)
         badgeGlow.position.z = 0
 
+        const mode = getFormatMode(viewW, viewH)
+        const landscape = mode === 'landscape'
         const textX = badgeX + 0.42
-        const textWidth = viewW * 0.52
+        const textWidth = landscape ? viewW * 0.36 : mode === 'square' ? viewW * 0.44 : viewW * 0.84 * 0.9
         const titleH = trackTitle.set([type.showTrack ? type.trackTitle : ''], textWidth, {})
         trackTitle.setOpacity(type.showTrack ? 0.96 : 0)
         trackTitle.mesh.position.set(textX, safe.topY - 0.42, 0)
@@ -137,13 +115,15 @@ export const Template03: VisualTemplate = {
         artist.setOpacity(type.showArtist ? 0.85 : 0)
         artist.mesh.position.set(textX, safe.topY - 0.36 - titleH, 0)
 
-        // Capa grande à direita, levemente inclinada — limitada pela altura em 16:9.
-        const coverSize = Math.min(viewW * 0.62, viewH * 0.52)
+        // Capa grande: direita em paisagem/quadrado, centro-baixo em retrato.
+        const coverSize = coverSide(viewW, viewH, mode, 0.62, 0.4, 0.32)
+        const coverX = landscape ? viewW * 0.22 : mode === 'square' ? viewW * 0.25 : 0
+        const coverY = landscape ? 0.1 : mode === 'square' ? 0 : -0.45
         cover.setSize(coverSize, coverSize)
         cover.setGlowIntensity(0.25 + visual.glow * 0.45 + bass * 0.3)
-        cover.group.position.set(viewW * 0.05, 0.35 + Math.sin(time * 0.45) * 0.07, 0)
-        cover.group.rotation.z = -0.018
-        cover.group.rotation.y = Math.sin(time * 0.18) * 0.04
+        cover.group.position.set(coverX, coverY + Math.sin(time * 0.45) * 0.06, 0)
+        cover.group.rotation.z = -0.01
+        cover.group.rotation.y = Math.sin(time * 0.18) * 0.02
         cover.group.scale.setScalar(1 + bass * 0.03)
 
         // Waveform na base (barras brancas/acento)
@@ -153,9 +133,9 @@ export const Template03: VisualTemplate = {
         bars.setOpacity(0.75 + frame.energy * 0.25)
 
         const ctaOpacity = type.showCta && args.clip.progress > 0.82 ? Math.min(1, (args.clip.progress - 0.82) / 0.08) : 0
-        cta.set([type.ctaText], viewW * 0.8, { color: pal.glow })
+        cta.set([type.ctaText], viewW * 0.6, { color: pal.glow })
         cta.setOpacity(ctaOpacity)
-        cta.mesh.position.set(0, barBaseY - 0.42, 0)
+        cta.mesh.position.set(0, safe.bottomY + 0.12, 0)
 
         // Câmera quase fixa com parallax mínimo
         const camSpeed = 0.2 + visual.cameraSpeed * 0.5

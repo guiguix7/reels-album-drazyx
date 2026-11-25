@@ -3,6 +3,13 @@
 Decisões de produto e engenharia que governam a evolução do app.
 Tooling de agentes/OpenCode não pertence a este arquivo.
 
+## 2026-11-25 — Fase 4: composição por formato
+
+- O formato é derivado do aspecto real do palco (`getFormatMode`), não do rótulo da UI: retrato abaixo de 0,8, paisagem acima de 1,2, quadrado no meio.
+- Templates recebem tamanhos de capa limitados pela altura (`coverSide`) e reposicionam blocos conforme o formato. Não há escala uniforme de coordenadas de retrato para 16:9.
+- Em 16:9, MIRAGE, T6 e T8 usam split editorial (arte de um lado, texto do outro); T4 empilha texto e arte em retrato/quadrado. Em 9:16, T2 troca waveforms laterais por uma waveform larga.
+- O fundo de capa ampliada e o dimmer do T3 foram removidos: eram profundidade 2.5D arbitrária sem função narrativa. As rotações de capa restantes são mínimas e não alteram a leitura.
+
 ## 2026-11-25 — Fase 3: trecho, waveform e storyboard
 
 - O máximo social é 45 s, mas o projeto nasce com 30 s; `clearAudio` volta a 30 s. A duração padrão não deve consumir o novo máximo sem escolha do usuário.

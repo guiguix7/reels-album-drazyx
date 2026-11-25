@@ -88,6 +88,8 @@ npm run preview    # serve o build
   o download.
 - A tipografia de todos os layouts é limitada a 60% da altura do palco, para que títulos e metadados
   mantenham a mesma hierarquia em 9:16, 1:1 e 16:9.
+- Cada formato tem composição própria: em 16:9, MIRAGE/T6/T8 viram split editorial; em retrato, T4/T6
+  empilham texto e arte e T2 troca as waveforms laterais por uma waveform larga.
 
 Atalhos: `Espaço` = play/pause (quando nenhum campo de texto está focado). A gravação exige áudio
 carregado e trecho válido.
