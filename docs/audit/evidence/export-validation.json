@@ -1,0 +1,45 @@
+{
+  "environment": "Chrome visível (aba compartilhada), deploy https://reels-album-drazyx.vercel.app/",
+  "input": {
+    "audio": "outfoxing.mp3 (1.831.788 bytes, duração 01:37, BPM 81)",
+    "cover": "PNG sintética 1080x1080 criada no navegador (457.434 bytes)",
+    "clip": "5,0 s a partir de 00:00",
+    "format": "9:16, 1080x1920, 30 fps"
+  },
+  "result": {
+    "fileName": "Drazyx_Wake-Up-Slowed-Reverb_5s_Visualizer.webm",
+    "bytes": 1822390,
+    "mimeType": "video/webm",
+    "durationSeconds": 5.099,
+    "width": 1080,
+    "height": 1920,
+    "ebml": true,
+    "vp9": true,
+    "vp8": false,
+    "aOpus": true,
+    "opusHead": true,
+    "audioDecodedBytesAfterPlay": 280011,
+    "videoDecodedBytesAfterPlay": 2247187,
+    "validationWarnings": []
+  },
+  "automationAttempts": [
+    {
+      "mode": "Playwright headless (Chrome)",
+      "result": "falha: 'A gravação terminou sem conteúdo' (Blob vazio), apesar de status 'Gravando'"
+    },
+    {
+      "mode": "Playwright headed (Chrome, bringToFront)",
+      "result": "mesma falha de conteúdo vazio"
+    },
+    {
+      "mode": "Aba visível do navegador compartilhado, clique real",
+      "result": "sucesso"
+    }
+  ],
+  "limitations": [
+    "O arquivo remoto não foi baixado para inspeção com ffprobe; a validação usa metadados do <video>, tamanho/MIME do Blob e cabeçalhos VP9/Opus no WebM.",
+    "720p e 60 fps não foram gravados.",
+    "Trecho de 30 s não foi gravado.",
+    "A gravação depende de a aba estar visível/ativa neste ambiente."
+  ]
+}
