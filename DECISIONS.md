@@ -125,6 +125,15 @@ Tooling de agentes/OpenCode não pertence a este arquivo.
   tipográficas, CTA, template, aspecto, câmera e elementos). Artista, faixa e álbum ficam no projeto.
 - A restauração do autosave limpa o histórico para não transformar o boot em um passo de undo.
 
+## QA e release
+
+- QA visual usa contact sheets gerados a partir do próprio canvas WebGL (12 templates × 3 formatos),
+  além de screenshots do editor em desktop e mobile; as imagens ficam em `docs/qa/`.
+- O relatório distingue o que foi executado do que permanece limitação: a captura longa nesta máquina
+  rendeu ~10,6 fps reais (1.571 frames em 147,49 s), então 30 fps não são declarados como comprovados.
+- Push e deploy não fazem parte do fluxo local sem credenciais/configuração de Vercel; a produção não é
+  considerada sincronizada só porque o build local passou.
+
 ## Storyboard, persistência e processo
 
 - Storyboard: cenas tipadas com `role`, `layoutId`, `visualStyleId`, transição,

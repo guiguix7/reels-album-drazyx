@@ -96,3 +96,6 @@ Fluxo-alvo: carregar áudio → visualizar → selecionar até 45 s → gravar �
 
 - [x] Fase 7 — Persistência e presets criativos: autosave local com restauração, salvar/sobrescrever projeto, undo/redo com Ctrl/Cmd+Z e presets de marca — commit `feat: add project persistence and creative presets`
   - Autosave e histórico guardam somente configuração; áudio/capa são recarregados a cada sessão. Presets de marca não têm import/export próprio.
+
+- [x] Fase 8 — QA final e regressão: lint/typecheck, 153 testes, build, contact sheets dos 12 templates em 9:16/1:1/16:9, matriz de áudio, autosave/undo/presets no navegador, clipe curto e faixa completa reais — commit `test: validate product improvements and regression coverage`
+  - Deploy/push não executados (sem configuração/credenciais); produção não está sincronizada. FPS da faixa longa ficou em ~10,6 nesta máquina.

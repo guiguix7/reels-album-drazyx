@@ -161,8 +161,9 @@ carregado e trecho válido.
 - A gravação gera um arquivo por vez; o lote baixa um link por job (não há ZIP nem download automático
   em massa).
 - No modo Music video os chunks do MediaRecorder ficam em memória até o download; faixas muito longas
-  exigem RAM livre proporcional ao tempo e à resolução. O pipeline foi validado com um arquivo real de
-  8 s em 1920×1080; a faixa completa de 02:27 não foi gravada nesta rodada.
+  exigem RAM livre proporcional ao tempo e à resolução. O pipeline foi validado com a faixa completa de
+  02:27 em 1920×1080 (VP9/Opus, 134 MB). Nesta máquina a captura longa rendeu ~10,6 fps reais
+  (1.571 frames / 147,49 s), não os 30 fps nominais; um clipe curto de 8 s não apresentou avisos.
 - A auditoria visual dos oito layouts foi feita em um contact sheet (`docs/qa/layouts-audit.jpg`),
   não em screenshots nativos por layout. Codecs não foram re-testados após essa revisão e não houve
   medição de performance em GPU fraca.
