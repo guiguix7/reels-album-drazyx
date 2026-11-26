@@ -1,0 +1,125 @@
+.devicePerformancePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+  padding: 12px;
+  border: 1px solid var(--border, #e2e4ea);
+  border-radius: 8px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #1a1d23);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border, #e2e4ea);
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.subtitle {
+  color: var(--muted, #6b7077);
+  font-size: 12px;
+}
+
+.paragraph {
+  margin: 0;
+  color: var(--text, #1a1d23);
+  font-size: 13px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option {
+  border: 1px solid var(--border, #e2e4ea);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+  min-width: 0;
+}
+
+.option:hover {
+  background: var(--surface-hover, #f7f8fa);
+  border-color: var(--border-hover, #d8dce2);
+}
+
+.optionSelected {
+  border-color: var(--accent, #5b5fff);
+  background: var(--accent-soft, #f0f1ff);
+}
+
+.optionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.optionId {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #6b7077);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.optionLabel {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.optionPressure {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted, #6b7077);
+}
+
+.optionDescription {
+  display: block;
+  color: var(--text, #1a1d23);
+  font-size: 12px;
+  margin-top: 4px;
+  min-width: 0;
+}
+
+.optionHint {
+  display: block;
+  color: var(--accent, #5b5fff);
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.footnote {
+  margin: 8px 0 0;
+  color: var(--muted, #6b7077);
+  font-size: 12px;
+  line-height: 1.4;
+  padding-top: 6px;
+  border-top: 1px solid var(--border, #e2e4ea);
+}

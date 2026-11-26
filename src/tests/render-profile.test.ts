@@ -4,24 +4,6 @@ import { FinishPass } from '../features/visualizer/objects/finish-pass'
 import { RENDER_PROFILES, chooseProfileFromCapabilities } from '../features/visualizer/render-profile'
 import type { FinishParams } from '../features/visualizer/objects/finish-pass'
 
-function makeFinishPass(options: { samples: number; type: 'half-float' | 'byte' }) {
-  const renderer = {
-    domElement: document.createElement('canvas'),
-    setRenderTarget: vi.fn(),
-    clear: vi.fn(),
-    render: vi.fn(),
-    dispose: vi.fn(),
-    setSize: vi.fn(),
-    outputColorSpace: THREE.SRGBColorSpace,
-    toneMapping: THREE.ACESFilmicToneMapping,
-    toneMappingExposure: 1,
-    setPixelRatio: vi.fn(),
-    setClearColor: vi.fn(),
-  } as unknown as THREE.WebGLRenderer
-  const finish = new FinishPass(renderer, 100, 100, options)
-  return { finish, renderer }
-}
-
 describe('render profile selection', () => {
   it('devolve um perfil explícito quando não for auto', () => {
     expect(chooseProfileFromCapabilities('export', null)).toBe('export')
@@ -82,8 +64,26 @@ describe('finish pass profile modes', () => {
   })
 
   it('muda as configurações do render target ao reconstruir com outro perfil', () => {
-    const quick = makeFinishPass({ samples: 4, type: 'half-float' })
-    expect(quick.finish).toBeDefined()
-    quick.finish.setEnabled(false)
+    const { finish } = makeFinishPass({ samples: 4, type: 'half-float' })
+    finish.setEnabled(false)
+    expect(finish).toBeDefined()
   })
 })
+
+function makeFinishPass(options: { samples: number; type: 'half-float' | 'byte' }) {
+  const renderer: THREE.WebGLRenderer = {
+    domElement: document.createElement('canvas'),
+    setRenderTarget: vi.fn(),
+    clear: vi.fn(),
+    render: vi.fn(),
+    dispose: vi.fn(),
+    setSize: vi.fn(),
+    outputColorSpace: THREE.SRGBColorSpace,
+    toneMapping: THREE.ACESFilmicToneMapping,
+    toneMappingExposure: 1,
+    setPixelRatio: vi.fn(),
+    setClearColor: vi.fn(),
+  } as unknown as THREE.WebGLRenderer
+  const finish = new FinishPass(renderer, 100, 100, options)
+  return { finish, renderer }
+}

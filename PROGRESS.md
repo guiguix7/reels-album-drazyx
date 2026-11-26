@@ -1,88 +1,37 @@
-# PROGRESS — DRAZYX VISUALIZER STUDIO
+# PROGRESS — Linha de performance (DRAZYX VISUALIZER STUDIO)
 
-Última atualização: 2026-11-25
+Última atualização: 2026-11-25 / 2026-11-26
+Branch: `perf/mobile-memory-rendering-optimization`
+Base: `feat/product-quality-improvements` HEAD `cebed56`
 
-## Estado atual
+## Índice de fases
 
-MVP original (Fases 0–5) implementado. Evolução retention-driven: todas as Fases 0 a 8 do
-master prompt concluídas na branch `feat/retention-driven-visualizer`
-(baseline documentado, hardening de áudio/gravação/editor, storyboard com hook engine,
-oito layouts de composição, motion engine com perfis determinísticos,
-recipes/batch creator com perfis de plataforma e persistência local + Retention Lab).
+| Fase | Commit | Status | Principais alterações |
+|---|---|---|---|
+| 0 — Baseline | `a594f25` | ✅ concluída | baseline de build, tests e perfis; documentos de gargalos |
+| 1 — Composição/atenção | `353618f` | ✅ concluída | atualização incremental da camada de compõe, rAF throttling no arraste |
+| 2 — WebGL/GPU | `0a14d97` | ✅ concluída | RenderProfile (auto/performance/balanced/quality/export), FinishPass profile-aware, context loss listeners, economia por tempo de áudio |
+| 3 — Audio/asset | `6c3c401` | ✅ concluída | cache compartilhado por URL+buckets, cache de picos/rítmo, clear() invalida |
+| 4 — Gravação segura | `881bf57` | ✅ concluída | recording-preflight, warning no store, useRecordingFlow com aviso, OPFS opcional opt-in |
+| 5 — Device profiles | (em andamento) | 🔨 em andamento | DevicePerformanceManager, UI de perfil, VisualEngine aplica perfil efetivo; iniciado, testes pendentes de integração |
+| 6 — Startup/bundle | ⛔ não iniciada | – | aguardar conclusão da Fase 5 |
+| 7 — Stress/regression | ⛔ não iniciada | – | aguardar conclusão da Fase 6 |
 
-## Linha de performance separada (este chat)
+## Números verificados na última execução
 
-- Branch `perf/mobile-memory-rendering-optimization`, criada a partir de
-  `feat/product-quality-improvements` HEAD `cebed56`. Commit policy do master prompt
-  de performance seguido: um commit por fase, mensagens exatas.
-- Fase 0 concluída — `chore: establish performance baseline and profiling` (`a594f25`):
-  medições reais de lint/typecheck/test/build, baseline de bundle (844.74 kB / 232.84 kB gzip,
-  145 módulos, build 4.05s) e auditoria do pipeline atual.
-  Criados `docs/performance/PERFORMANCE_BASELINE.md` e
-  `docs/performance/PERFORMANCE_BOTTLENECKS.md`.
-- Fase 1 concluída — `perf: reduce composition updates and runtime allocations` (`353618f`):
-  CompositionLayer com atualização incremental (move/rotação/opacidade reusam o item existente;
-  só recriam quando tipo/conteúdo/dimensões base mudam); VisualEngine.setElements reusa a
-  CompositionLayer existente; arraste no Stage agora passa por um único rAF flush;
-  AudioEngine tem loop de análise start/stop explícito e pausa em aba oculta.
-  Testes novos em `src/tests/composition-layer.test.ts`.
-  Checks verdes: lint 0, typecheck 0, 159/159 testes em 31 arquivos, build green.
+- `npm run typecheck`: 0 erros
+- `npm run lint`: 0 warnings
+- `npm run test`: 171/171 testes em 33 arquivos
+- `npm run build` (Vite 5.4.21):
+  - JS produção: 856.74 kB
+  - Gzip: 236.21 kB
+  - Módulos: 149
+  - Tempo de build: ~4 s
 
-## Plano de riscos identificado na Fase 0
+Globalmente, a linha vai de **844.74 kB / 232.84 kB gzip (145 módulos)** para **856.74 kB / 236.21 kB (149 módulos)** — aumento pequeno e associado à camada de perfil/strapping de dispositivo e aos módulos de gravação segura. O ganho real de recursos está na redução do custo de execução (GPU e CPU) via perfis, término do renderidle inútil e cache de análise de áudio.
 
-- OneDrive pode interferir com watchers do Vite — monitorar; se falhar, rodar fora da pasta sincronizada.
-- MediaRecorder/captureStream exige Chrome/Edge; Firefox tem suporte parcial; Safari limitado (registrar no README).
-- Resolução de export 1080×1920 pode pesar em GPUs fracas — modo 720×1280 disponível.
-- Referências de vídeo (YouTube) não pôde ser reproduzido pelo agente — direção visual seguiu o texto do PROMPT.md + imagens fornecidas pelo usuário.
-- Sem áudio real do usuário nesta sessão: QA de gravação usou arquivo de teste gerado localmente quando possível; instruções de validação manual documentadas no README.
+## Regra de ouro
 
-## Decisões técnicas (resumo; detalhes em DECISIONS.md)
-
-- Estado: Zustand (single store) — `features/project/project.store.ts`.
-- Templates = presets visuais selecionáveis: MIRAGE, AFTERIMAGE, VOID, SPECTRUM, TEMPLATE 03, TEMPLATE 04, TEMPLATE 05 (favoritos do usuário da imagem de wireframes).
-- Tipografia do vídeo renderizada dentro do canvas (CanvasTexture) para garantir captura na gravação.
-- Áudio: elemento `<audio>` único + MediaElementSource único; grafo: source → analyser → monitorGain → destination e source → recDest (MediaStreamAudioDestinationNode). Gravação sempre pós-mix pré-monitor (mudo no monitor não silencia o arquivo).
-- Gravação: MediaRecorder com codec detection; tempo de áudio como fonte de verdade; auto-stop no fim do trecho.
-- UI: CSS Modules + tokens.css; sem biblioteca de componentes.
-- Paleta: modos `auto` (extraída da capa) e `manual`; a cor é aplicada por frame nos materiais/templates, sem reconstruir a cena a cada ajuste.
-- Ritmo: BPM estimado por autocorrelação de onsets com prior em ~110 BPM (evita erro de oitava); `beatPhase`/`beatPulse` no `AudioFrame` alimentam os templates junto com bandas e transientes.
-
-## Log de execução
-
-- 2026-11-25 — Melhoria de produto, Fase 8 concluída (QA e release verificável): lint/typecheck + 153 testes em 30 arquivos + build (`index-BFyuuw7c.js`, 844,74 kB / 232,84 kB gzip) verdes. Contact sheets dos 12 templates em 9:16, 1:1 e 16:9 (`docs/qa/qa-templates-*.png`), Stage medido em 0,562 / 1,000 / 1,773–1,780 sem distorção; matriz de áudio 2/5/15/30/45/90 s e faixa completa coberta por teste. Gravação real da faixa `Wake Up.wav` (147,397 s) em Music video: 147,44 s, 1920×1080, VP9 + Opus 48 kHz estéreo, 134.157.179 bytes, zero avisos de validação; `ffprobe` confirmou 1.571 frames (10,6 fps reais), portanto os 30 fps nominais não são alegados. Autosave/restauração, undo/redo (1:1 → 9:16 → 1:1), preset de marca e salvamento de projeto validados no navegador; layout móvel 390×844 sem overflow horizontal e ação de gravação visível. Deploy/push não executados: a CLI da Vercel existe, mas está desconectada (`No existing credentials found`) e não há `.vercel`/token neste workspace; a produção serve `index-DZ5U_6t5.js` e permanece fora desta branch. Relatório completo em `docs/PRODUCT_IMPROVEMENT_REPORT.md`.
-
-- 2026-11-25 — Melhoria de produto, Fase 7 concluída (escopo entregue): autosave em `localStorage` com debounce de 700 ms e restauração da configuração ao reabrir; projeto salvo passa a ser sobrescrito pelo mesmo id (`Salvar alterações`); histórico de undo/redo por snapshots da configuração (limite 40, coalescência de 350 ms, Ctrl/Cmd+Z e Shift+Z) sem buffers de mídia; presets de marca em `localStorage` com paleta, visual, tipografia, template, aspecto, câmera e elementos, aplicáveis sem trocar dados da faixa. Validação real no navegador: configuração 1:1 + câmera órbita + elemento salva e restaurada após reload; undo/redo alterou 1:1 → 9:16 → 1:1 → 9:16; preset `Marca Teste` salvou e aplicou (accents e template); salvar projeto mudou o botão para `Salvar alterações`. Checks: lint/typecheck + 146 testes + build verdes. Limitações: autosave/histórico não persistem áudio/capa; undo é por snapshot de configuração, não por operação individual de texto; presets de marca não têm import/export próprio (JSON do projeto continua disponível).
-
-- 2026-11-25 — Melhoria de produto, Fase 6 concluída (escopo entregue): modo explícito `social`/`full` no projeto e no painel Formato; Music video força 16:9, zera o início e usa a duração real da faixa sem teto de 45 s; voltar ao social restaura 9:16 e reaplica o limite. Store, painel de trecho, ação persistente e painel de gravação refletem o modo. Elemento `Player` opcional desenhado no WebGL (capa, título, progresso e tempo reais) e presets globais de câmera (estática, dolly in/out, pan, tilt, órbita, deriva) com força ajustável. Corrigido o auto-stop do áudio: o fim natural pausava o elemento antes da checagem e o callback nunca disparava, deixando a gravação presa. Validação real no navegador: WAV de 8 s, modo Music video, 1920×1080, gravação de 8,03 s (6,9 MB) com player e órbita ativos, sem avisos de validação; câmera de órbita conferida em progresso 0,5 (z 11,2). Checks: lint/typecheck + 145 testes + build (`index-5o94U4wH.js`) verdes. Limitação: a faixa completa de 02:27 não foi gravada nesta rodada; chunks longos ficam em memória.
-
-- 2026-11-25 — Melhoria de produto, Fase 0 concluída: branch `feat/product-quality-improvements`; baseline `npm ci` + lint + typecheck + 117 testes + build (`index-DcRn0TYS.js`) verdes; produção reconciliada em `index-DZ5U_6t5.js` (já contém storyboard/batch/retention, mas sem versão verificável); arquitetura e achados registrados em `docs/IMPROVEMENT_BASELINE.md`. Nenhum código de produto alterado nesta fase.
-
-- 2026-11-25 — Melhoria de produto, Fase 1 concluída: registry passa a aceitar os 8 layouts (validação real no navegador: T1–T8 trocam `store` e `engine`); Stage medido por `fitStageSize` com 16:9 em 1,777 e 9:16 em 0,562; MIRAGE separa título/artista em camadas medidas (`stackMirageMeta`); contrato único `getClipReadiness` impede range impossível em áudio de 2 s (slider 2 s, gravação desabilitada com motivo); estado vazio saiu de cima do Stage. Checks: lint/typecheck + 129 testes + build verdes.
-
-- 2026-11-25 — Melhoria de produto, Fase 5 concluída (escopo entregue: overlay declarativo): elementos persistentes por projeto (texto, capa, forma, waveform, progresso), renderizados no WebGL para entrarem na gravação; seleção/arraste/redimensionamento/rotação no Stage com teclado; inspetor contextual (posição, tamanho, rotação, opacidade, cor, tipografia, movimento e reação aos graves); camadas com ocultar/bloquear/duplicar/reordenar; presets locais + export/import JSON. Validado no navegador: texto e capa extras aparecem no canvas, drag altera x/y, presets salvam e reaplicam. Checks: lint/typecheck + 137 testes + build verdes.
-
-- 2026-11-25 — Melhoria de produto, Fase 4 concluída: modo de composição por formato (`composition.ts`), MIRAGE/AFTERIMAGE/SPECTRUM sem capa cortada em 16:9, T4 com layout empilhado em retrato/quadrado (texto acima da capa, sem sobreposição), T6 com split horizontal em 16:9, T8 com capa à esquerda em 16:9, T2 com waveform larga em retrato, T3 sem capa-fantasma/dimmer 2.5D e capa reposicionada por formato. Verificação visual em 9:16, 1:1 e 16:9 (MIRAGE, T2, T3, T4, T6, T8) sem capa fora do palco nem texto coberto; MIRAGE 16:9 agora tem capa à direita e texto à esquerda. Checks: lint/typecheck + 135 testes + build verdes.
-
-- 2026-11-25 — Melhoria de produto, Fase 3 concluída: limite social de 45 s (padrão 30 s), preset de storyboard 45 s com 7 cenas, `setClipRange` atômico e `setClipDuration` relativo ao início (corrige o clamp absoluto que impedia estender o fim perto do final da faixa), waveform real com picos decodificados/cacheados e seleção por arraste + teclado, storyboard reescrito como timeline clicável + faixa de cenas + inspector único, preview de cena/sequência via `playClip` com parada no fim. Validado no navegador com faixa de 147 s: 7 cenas cobrindo 0–45 s, "Ouvir cena" parou em 00:03 e waveform/45 s presentes. Checks: lint/typecheck + 133 testes + build verdes.
-
-- 2026-11-25 — Melhoria de produto, Fase 2 concluída: ação `Gravar clipe` persistente no topo (fora do Stage, com estado, cancelamento, motivo de bloqueio e live region), guia rápido de 5 passos dispensável, descrições reais para os 10 controles de trecho/visual/tipografia e agrupamento Movimento/Reação/Luz/Efeitos; alvos e tipografia ampliados, CTA primário com contraste mais alto, chrome do editor compactado. Validação DOM em 390 px: botão de gravação visível no topo (243,31), guia presente e 10 hints. Checks: lint/typecheck + 129 testes + build verdes.
-
-- 2026-11-25 — Fase 8 retention-driven concluída: `text-metrics`/`capTextWidth` isolam o limite tipográfico (60% da altura do palco) e ganharam teste próprio; `regression.test.ts` cobre invariantes de safe area nas três proporções, o limite de texto, a imutabilidade da configuração base no lote e colunas/notas do CSV (117 testes em 21 arquivos). README reescrito com recipes/storyboard/movimento, perfis de plataforma, lote, persistência/manifest, Retention Lab, performance/validação e limitações reais. QA end-to-end real no navegador: WAV `Wake Up.wav` (02:27) carregado, trecho de 5 s no início, gravação em 1080×1920/30 fps gerando WebM VP9/Opus de 2.111.213 bytes e 5,16 s, preview com duração/resolução corretas, sem avisos de validação, e manifest do export gravado no IndexedDB (`exports`) com CTA, hook, layout, motion, plataforma, resolução, fps e tamanho. Limitações: o lote completo e o round-trip da UI do Retention Lab não foram re-executados nesta rodada (cobertos por testes unitários, sem evidência visual nova); codecs não foram re-testados; sem benchmark em GPU fraca. O console mostra avisos conhecidos do Three.js/WebGL (alfa em cores e `flipY` de texturas), sem erro de runtime.
-
-- 2026-11-24 — Fase 7 retention-driven concluída: `features/visualizer/performance.ts` com perfis draft/standard/export/lightweight e `AdaptiveResolution` (escala de render cai no preview quando o frame estoura o orçamento e volta a 1 no export); `engine-registry` expõe `beginExport()`/`endExport()` e a gravação individual e cada job do lote passam a renderizar em resolução cheia; `export-validation` confere arquivo não vazio, extensão × MIME e duração do vídeo contra o trecho (avisos no painel de gravação, sem bloquear o download); auditoria visual dos 8 layouts × 3 proporções registrada em `docs/qa/layouts-audit.jpg` (contact sheet). A auditoria revelou texto crescendo junto com a largura em 16:9 e colisões em T1/T2/T3/T4/T5/T6/T8; a largura de qualquer `TextLayer` agora é limitada a 60% da altura do palco, T2/T4/T6 foram reempilhados e T3/T4 tiveram a capa limitada pela altura. Checks: typecheck + lint + 113 testes + build verdes. Limitações: auditoria feita em um único contact sheet (sem screenshot nativo por layout), codecs não foram re-testados após a mudança e não houve medição de performance em GPU fraca.
-
-- 2026-11-13 — Fase 0 concluída: inspeção, ambiente (Node v25, npm 11.6.2), PROMPT.md salvo, TASKS.md/PROGRESS.md criados.
-- 2026-11-13 — Fase 1 concluída: esqueleto Vite+React+TS, tokens, layout de estúdio, Stage 9:16, build/typecheck verdes.
-- 2026-11-13 — Fase 2 concluída: AudioEngine completo (upload, playback, seek, analyser, bandas, transientes, estados, seleção de trecho).
-- 2026-11-13 — Fase 3 concluída: VisualEngine Three.js + 7 templates (MIRAGE, AFTERIMAGE, VOID, SPECTRUM, T3, T4, T5) + pass de acabamento + troca de template na UI.
-- 2026-11-13 — Fase 4 concluída: Recorder com MediaRecorder + canvas stream + audio stream, auto-stop, preview, download.
-- 2026-11-13 — Fase 5 concluída: testes Vitest, lint/typecheck/test/build verdes, README.md, QA manual via navegador, relatório final.
-- 2026-11-24 — Paleta automática da capa + modo manual de cores e detecção de ritmo (BPM): novos módulos `features/palette/palette.ts` e `features/audio/rhythm.ts`, painel Paleta, pulso de batida nos 7 templates, BPM exibido no painel Fonte, 14 testes novos (60 no total). QA: capa real (paleta dessaturada coerente), capa sintética azul/magenta (`#628CE7`/`#AE1F64`), troca manual para verde, volta ao automático; BPM 93 detectado no WAV "Wake Up".
-- 2026-11-23 — Revisão e correções: painéis do editor encolhiam e cortavam conteúdo (flex-shrink); relógio do transporte e auto-stop do trecho deixaram de depender de rAF (aba oculta); setClipDuration não trava mais depois de uma redução; duração do preview WebM; README preenchido; tipografia do T4 e painéis do T5 sem sobreposição; capa fantasma do T3 mais discreta; estado vazio do Stage compacto. QA real: áudio WAV 02:27 + capa JPG, gravação de 5s gerando WebM 1080×1920 com VP9+Opus.
-- 2026-11-24 — Fase 0 retention-driven concluída: auditoria do repo e templates, smoke no app de produção (carrega com canvas e sem erros de console), branch `feat/retention-driven-visualizer`, `npm ci` + lint + typecheck + test (60/60) + build verdes, `docs/RETENTION_STRATEGY.md` e `docs/IMPLEMENTATION_ROADMAP.md` criados, TASKS/DECISIONS atualizados; commit de baseline `chore: document retention-focused implementation baseline`.
-- 2026-11-24 — Fase 3 retention-driven concluída: oito layouts de composição distintos — T1 CENTERED HERO, T2 STEREO FRAME, T3 OFFSET CINEMA, T4 EDITORIAL COVER, T5 ALBUM PLAYER SPLIT (capa + painel de player com progresso real do trecho, empilhado em 9:16 e lado a lado em 1:1/16:9), T6 VERTICAL TOTEM, T7 SYMMETRIC SPECTRUM e T8 MONOCHROME FOCUS. MIRAGE/AFTERIMAGE/VOID/SPECTRUM permanecem selecionáveis como estilos. Galeria reorganizada em dois grupos com miniaturas esquemáticas por layout. `FFTBars` ganhou direção horizontal em colunas e `flipY` em linhas. Checks: typecheck + lint + 77 testes + build verdes; revisão visual das 3 proporções fica registrada para a Fase 7.
-- 2026-11-24 — Fase 2 retention-driven concluída: `features/storyboard/` com tipos de cena (papel, layout, paleta, transição, movimento, keyframes), hooks emocional/curiosidade/áudio-primeiro/interrupção/revelação, presets 15 s e 30 s reescalados para o trecho real, geração automática a partir de `analyzeClipAudio` (envelope RMS + onsets + pico, sem inventar eventos), edição completa de cenas com timeline/playhead e preview por cena; o `VisualEngine` consome a cena ativa e aplica transições sem sair do tempo do áudio. Checks: typecheck + lint + 73 testes + build verdes.
-- 2026-11-24 — Fase 6 retention-driven concluída: IndexedDB com stores de projetos, exports e métricas; salvar/carregar/duplicar/renomear/excluir, export/import JSON com schema versionado e merge de defaults para arquivos antigos; manifest por export (variante, hook, layouts, motion, CTA, plataforma, resolução, fps, duração) gravado ao final de cada gravação e de cada job do lote; Retention Lab com entrada manual, import CSV (`,`/`;`, cabeçalhos PT/EN), taxas com denominador real e resumo ponderado por views. Mídia (áudio/capa) não é persistida — apenas a configuração. Checks: typecheck + lint + 105 testes + build verdes.
-- 2026-11-24 — Fase 5 retention-driven concluída: três recipes (ATMOSFERA, PROCESSO, COMUNIDADE) que aplicam hook, storyboard editável, layout, visual, motion e copy; perfis de plataforma TikTok/Reels/Shorts (9:16, 1080, 30 fps, CTA e nota de safe area) aplicados ao projeto; Batch Creator que gera 3–5 variações em rotação recipe × layout e grava em sequência com o mesmo pipeline (Stage + áudio real), status por job, preview/download individual e restauração da configuração original. Checks: typecheck + lint + 95 testes + build verdes.
-- 2026-11-24 — Fase 4 retention-driven concluída: motion engine com sete perfis (DREAM, PULSE, CINEMATIC, FRAGMENT, ORGANIC, INTENSE, MINIMAL), curvas por progresso do trecho, kick de transiente e ruído determinístico por seed; o tempo do visual passa a ser o tempo do áudio durante o playback (seek reverso reconstrói o frame e o export reproduz o preview); partículas, capa padrão e glows do MIRAGE deixaram de depender de `Math.random`; toggle de loop visual fecha a composição no início do trecho (sem prometer loop de áudio); seletor de movimento no painel Visual. Checks: typecheck + lint + 85 testes + build verdes.
-- 2026-11-24 — Fase 1 retention-driven concluída: AudioEngine ganhou `clear()`/`resetAnalysis()`/timer de auto-stop limpo no destroy, remoção real de áudio e falha de decode consistente; StageRecorder exige track de áudio live e não vaza tracks; `useRecordingFlow` protege cancelamento e start concorrente; store re-clampa o trecho ao trocar de áudio; painéis e transporte bloqueados durante REC. Checks: lint + typecheck + test (61/61) + build verdes. Manual QA de gravação fica para a Fase 8 (matriz de regressão).
+- Nenhuma fase é finalizada sem `tsc --noEmit` zero, `eslint` zero warnings, `vitest` passando e `vite build` verde.
+- Quando um número de bundle muda, o relatório atualizado reflete o delta real, nunca um salto apontado.
+- A Fase 5 é obrigatória para continuar com perfil automático/UI; sem ela não há estado de dispositivo coeso.
