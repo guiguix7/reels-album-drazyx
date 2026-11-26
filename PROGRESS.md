@@ -1,6 +1,6 @@
 # PROGRESS — DRAZYX VISUALIZER STUDIO
 
-Última atualização: 2026-11-24
+Última atualização: 2026-11-25
 
 ## Estado atual
 
@@ -9,6 +9,24 @@ master prompt concluídas na branch `feat/retention-driven-visualizer`
 (baseline documentado, hardening de áudio/gravação/editor, storyboard com hook engine,
 oito layouts de composição, motion engine com perfis determinísticos,
 recipes/batch creator com perfis de plataforma e persistência local + Retention Lab).
+
+## Linha de performance separada (este chat)
+
+- Branch `perf/mobile-memory-rendering-optimization`, criada a partir de
+  `feat/product-quality-improvements` HEAD `cebed56`. Commit policy do master prompt
+  de performance seguido: um commit por fase, mensagens exatas.
+- Fase 0 concluída — `chore: establish performance baseline and profiling` (`a594f25`):
+  medições reais de lint/typecheck/test/build, baseline de bundle (844.74 kB / 232.84 kB gzip,
+  145 módulos, build 4.05s) e auditoria do pipeline atual.
+  Criados `docs/performance/PERFORMANCE_BASELINE.md` e
+  `docs/performance/PERFORMANCE_BOTTLENECKS.md`.
+- Fase 1 concluída — `perf: reduce composition updates and runtime allocations` (`353618f`):
+  CompositionLayer com atualização incremental (move/rotação/opacidade reusam o item existente;
+  só recriam quando tipo/conteúdo/dimensões base mudam); VisualEngine.setElements reusa a
+  CompositionLayer existente; arraste no Stage agora passa por um único rAF flush;
+  AudioEngine tem loop de análise start/stop explícito e pausa em aba oculta.
+  Testes novos em `src/tests/composition-layer.test.ts`.
+  Checks verdes: lint 0, typecheck 0, 159/159 testes em 31 arquivos, build green.
 
 ## Plano de riscos identificado na Fase 0
 
