@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useProjectStore } from '../project/project.store'
 import type { CompositionElement } from '../project/project.types'
 import styles from './stage.module.css'
@@ -18,6 +18,11 @@ interface DragState {
 /**
  * Handles de manipulação direta sobre o Stage. O desenho real (e a gravação)
  * continuam no WebGL; este overlay só converte gestos em configuração.
+ *
+ * Durante o arraste, os eventos de ponteiro são propagados via rAF para não
+ * inundar o Zustand/React a cada sub-pixél. Como a CompositionLayer agora
+ * atualiza os itens in place, cada atualização é barata em vez de reconstruir
+ * a composição inteira.
  */
 export function CompositionOverlay(): JSX.Element {
   const elements = useProjectStore((s) => s.config.elements)
@@ -27,6 +32,11 @@ export function CompositionOverlay(): JSX.Element {
   const removeElement = useProjectStore((s) => s.removeElement)
   const overlayRef = useRef<HTMLDivElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
+  const pendingRef = useRef<{
+    id: string
+    patch: Partial<CompositionElement>
+  } | null>(null)
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -63,6 +73,20 @@ export function CompositionOverlay(): JSX.Element {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [selectedId, selectElement, updateElement, removeElement])
 
+  const flushPending = useCallback((): void => {
+    const pending = pendingRef.current
+    if (!pending) return
+    pendingRef.current = null
+    rafRef.current = null
+    updateElement(pending.id, pending.patch)
+  }, [updateElement])
+
+  const scheduleFlush = useCallback((): void => {
+    pendingRef.current ??= null
+    if (rafRef.current != null) return
+    rafRef.current = requestAnimationFrame(flushPending)
+  }, [flushPending])
+
   const beginDrag = (
     event: React.PointerEvent<HTMLElement>,
     element: CompositionElement,
@@ -94,24 +118,46 @@ export function CompositionOverlay(): JSX.Element {
     if (rect.width <= 0 || rect.height <= 0) return
     const dx = event.clientX - drag.startX
     const dy = event.clientY - drag.startY
+    const scaleX = 100 / rect.width
+    const scaleY = 100 / rect.height
+    let patch: Partial<CompositionElement>
     if (drag.mode === 'move') {
-      updateElement(drag.id, {
-        x: drag.x + (dx / rect.width) * 100,
-        y: drag.y + (dy / rect.height) * 100,
-      })
+      patch = {
+        x: drag.x + dx * scaleX,
+        y: drag.y + dy * scaleY,
+      }
     } else if (drag.mode === 'resize') {
-      updateElement(drag.id, {
-        width: Math.max(2, drag.width + (dx / rect.width) * 100),
-        height: Math.max(1, drag.height + (dy / rect.height) * 100),
-      })
+      patch = {
+        width: Math.max(2, drag.width + dx * scaleX),
+        height: Math.max(1, drag.height + dy * scaleY),
+      }
     } else {
-      updateElement(drag.id, { rotation: drag.rotation + dx * 0.5 })
+      patch = { rotation: drag.rotation + dx * 0.5 }
     }
+    pendingRef.current = { id: drag.id, patch }
+    scheduleFlush()
   }
 
   const endDrag = (): void => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    const pending = pendingRef.current
+    pendingRef.current = null
+    if (pending) updateElement(pending.id, pending.patch)
     dragRef.current = null
   }
+
+  // Garante que um rAF pendente não fique órfão se o overlay desmontar.
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+    }
+  }, [])
 
   if (!elements.length) return <div ref={overlayRef} className={styles.compositionOverlay} aria-hidden="true" />
 

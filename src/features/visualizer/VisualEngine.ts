@@ -185,11 +185,21 @@ export class VisualEngine {
     this.camera.lookAt(0, 0, 0)
   }
 
+  /**
+   * Atualiza os elementos editáveis. Evita reconstruir a composição quando a
+   * mudança for ordinária (posição/size/rotação/opacidade/índice) e só
+   * reconstrói quando o tipo, conteúdo, estrutura ou dimensões base mudarem.
+   */
   setElements(elements: CompositionElement[]): void {
     this.elements = elements
+    if (this.composition) {
+      this.composition.setElements(elements, this.assets, this.viewWidth, this.viewHeight)
+      return
+    }
     this.rebuildComposition()
   }
 
+  /** Reconstrução completa — usada na troca de template/capa/aspecto e no início. */
   private rebuildComposition(): void {
     this.composition?.dispose()
     this.composition = null

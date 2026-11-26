@@ -94,7 +94,7 @@ export class AudioEngine {
     // leem o relógio do próprio áudio (fonte de verdade) e disparam o fim.
     this.audio.addEventListener('timeupdate', () => this.checkClipEnd())
     this.clipTimer = window.setInterval(() => this.checkClipEnd(), 250)
-    this.startLoop()
+    this.setActive(true)
   }
 
   /* ---------- assinaturas de estado (uso com useSyncExternalStore) ---------- */
@@ -403,6 +403,13 @@ export class AudioEngine {
     return this.frame
   }
 
+  /** Pausa a análise quando a aba fica oculta (economia sem quebrar o relógio). O tempo
+   * do áudio continua sendo a fonte de verdade; o loop só não consome CPU/GPU enquanto
+   * não há necessidade de espaço para análise visível. */
+  handleVisibility(visible: boolean): void {
+    this.setActive(visible)
+  }
+
   /* ---------- loop de análise ---------- */
 
   private startLoop(): void {
@@ -411,6 +418,17 @@ export class AudioEngine {
       this.analyze()
     }
     this.rafHandle = requestAnimationFrame(tick)
+  }
+
+  /** Ativa/desativa o loop de análise. O app chama quando a aba ganha/perde visibilidade. */
+  setActive(active: boolean): void {
+    if (active && this.rafHandle == null) {
+      this.lastAnalysisTime = performance.now() / 1000
+      this.startLoop()
+    } else if (!active && this.rafHandle != null) {
+      cancelAnimationFrame(this.rafHandle)
+      this.rafHandle = null
+    }
   }
 
   private analyze(): void {
@@ -495,6 +513,7 @@ export class AudioEngine {
   /* ---------- limpeza ---------- */
 
   destroy(): void {
+    this.setActive(false)
     this.rhythmToken++
     if (this.rafHandle != null) cancelAnimationFrame(this.rafHandle)
     this.rafHandle = null

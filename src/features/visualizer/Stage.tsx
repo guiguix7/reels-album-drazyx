@@ -53,7 +53,11 @@ export function Stage({ canvasRef }: { canvasRef: React.RefObject<HTMLCanvasElem
       ;(window as unknown as Record<string, unknown>).__drazyxAudio = getAudioEngine()
     }
 
-    const onVisibility = (): void => engine.handleVisibility(document.visibilityState === 'visible')
+    const onVisibility = (): void => {
+      const visible = document.visibilityState === 'visible'
+      engine.handleVisibility(visible)
+      getAudioEngine().handleVisibility(visible)
+    }
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
