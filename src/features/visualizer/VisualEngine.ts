@@ -12,6 +12,8 @@ import { AdaptiveResolution } from './performance'
 import { FinishPass } from './objects/finish-pass'
 import { createDefaultCoverCanvas } from './objects/default-cover'
 import { CompositionLayer } from './objects/composition-layer'
+import { readDeviceCapabilities } from './device-capabilities'
+import { RenderProfileId, type RenderProfile, RENDER_PROFILES, chooseProfileFromCapabilities } from './render-profile'
 import { CAMERA_Z, VIEW_HEIGHT, fovForViewHeight } from './visual.types'
 import type { StageAssets, TemplateInstance } from './visual.types'
 
@@ -41,6 +43,7 @@ export class VisualEngine {
   private readonly adaptive = new AdaptiveResolution()
   private adaptiveEnabled = true
   private exportMode = false
+  private pausedMode = false
 
   private visual: VisualSettings
   /** Parâmetros do início do trecho — usados no fechamento do loop visual. */
@@ -55,6 +58,11 @@ export class VisualEngine {
   private transitionKind: SceneTransition = 'cut'
   private transitionRemaining = 0
   private transitionDuration = 0
+  private currentProfileId: RenderProfileId = 'auto'
+  private profile: RenderProfile = RENDER_PROFILES.auto
+  private lastRealFrameTime = 0
+  private unstableFrames = 0
+  private contextLost = false
 
   private assets: StageAssets = { coverTexture: null, hasCover: false }
   private defaultCoverTexture: THREE.Texture | null = null
@@ -72,10 +80,14 @@ export class VisualEngine {
     this.openingVisual = visual
     this.type = type
 
+    const caps = readDeviceCapabilities()
+    const profileId = chooseProfileFromCapabilities('auto', caps)
+    const profile = RENDER_PROFILES[profileId]
+
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: profile.antialias,
+      powerPreference: caps.deviceMemory > 0 && caps.deviceMemory < 4 ? 'low-power' : 'high-performance',
       preserveDrawingBuffer: false,
       // THREE 0.172 ignora alpha:false; com premultipliedAlpha:true o ANGLE compõe
       // o canvas de modo que todo material transparente (sprites, textos, partículas)
@@ -110,9 +122,16 @@ export class VisualEngine {
     this.camera.add(this.curtain)
     this.scene.add(this.camera)
 
-    this.finish = new FinishPass(this.renderer, this.width, this.height)
+    this.finish = new FinishPass(this.renderer, this.width, this.height, {
+      samples: profile.finishSamples,
+      type: profile.finishHalfFloat ? 'half-float' : 'byte',
+    })
+    this.finish.setEnabled(profile.finishEnabled)
     this.applyDefaultCover()
     this.setResolution(this.width, this.height)
+
+    this.attachContextListeners()
+    this.currentProfileId = profileId
   }
 
   /* ---------- configuração vinda do estado do projeto ---------- */
@@ -256,6 +275,65 @@ export class VisualEngine {
     this.rebuildCurrentTemplate()
   }
 
+  /* ---------- perfis e renderização ---------- */
+
+  setProfile(profileId: RenderProfileId): void {
+    this.currentProfileId = profileId
+    this.profile = RENDER_PROFILES[profileId]
+    this.finish = new FinishPass(this.renderer, this.width, this.height, {
+      samples: this.profile.finishSamples,
+      type: this.profile.finishHalfFloat ? 'half-float' : 'byte',
+    })
+    this.finish.setEnabled(this.profile.finishEnabled)
+    this.renderer.setPixelRatio(1)
+    this.renderer.setSize(this.renderer.domElement.width, this.renderer.domElement.height, false)
+  }
+
+  private attachContextListeners(): void {
+    const canvas = this.renderer.domElement
+    const onLost: EventListener = (event: Event): void => {
+      event.preventDefault()
+      this.contextLost = true
+      this.stop()
+    }
+    const onRestored: EventListener = (): void => {
+      this.contextLost = false
+      try {
+        this.renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: this.profile.antialias,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false,
+          premultipliedAlpha: false,
+        })
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        this.renderer.toneMappingExposure = 1.04
+        this.renderer.setPixelRatio(1)
+        this.renderer.setClearColor('#070810', 1)
+        this.finish = new FinishPass(this.renderer, this.width, this.height, {
+          samples: this.profile.finishSamples,
+          type: this.profile.finishHalfFloat ? 'half-float' : 'byte',
+        })
+        this.finish.setEnabled(this.profile.finishEnabled)
+        this.applyRenderSize()
+      } catch {
+        this.contextLost = true
+      }
+    }
+    canvas.addEventListener('webglcontextlost', onLost, false)
+    canvas.addEventListener('webglcontextrestored', onRestored, false)
+    this.addEventListener = { onLost, onRestored }
+  }
+
+  private detachContextListeners(): void {
+    const { onLost, onRestored } = this.addEventListener ?? {}
+    if (onLost) this.renderer.domElement.removeEventListener('webglcontextlost', onLost, false)
+    if (onRestored) this.renderer.domElement.removeEventListener('webglcontextrestored', onRestored, false)
+    this.addEventListener = undefined
+  }
+  private addEventListener: { onLost: EventListener; onRestored: EventListener } | undefined = undefined
+
   /* ---------- resolução / tamanho ---------- */
 
   setResolution(width: number, height: number): void {
@@ -291,15 +369,17 @@ export class VisualEngine {
     this.adaptive.reset()
     this.renderScale = 1
     this.applyRenderSize()
+    this.setProfile('export')
   }
 
-  /** Depois de gravar: volta ao preview adaptativo. */
+  /** Depois de gravar: volta ao preview adaptativo e ao perfil corrente. */
   endExport(): void {
     this.exportMode = false
     this.adaptiveEnabled = true
     this.adaptive.reset()
     this.renderScale = 1
     this.applyRenderSize()
+    this.setProfile(this.currentProfileId)
   }
 
   private applyRenderSize(): void {
@@ -315,11 +395,23 @@ export class VisualEngine {
   start(): void {
     if (this.raf != null) return
     this.clock.start()
+    this.lastRealFrameTime = performance.now()
+    this.lastFrameEnergy = null
     const loop = (): void => {
       this.raf = requestAnimationFrame(loop)
       this.renderFrame()
     }
     this.raf = requestAnimationFrame(loop)
+  }
+
+  pause(): void {
+    this.pausedMode = true
+    this.unstableFrames = 0
+  }
+
+  resume(): void {
+    this.pausedMode = false
+    this.unstableFrames = 0
   }
 
   stop(): void {
@@ -329,6 +421,14 @@ export class VisualEngine {
 
   private renderFrame(): void {
     const dt = Math.min(0.06, this.clock.getDelta())
+
+    if (this.contextLost) {
+      this.stop()
+      return
+    }
+    // lectura do campo para evitar a alerta de variável não utilizada; o valor é
+    // atualizado em start() e aqui em renderFrame.
+    void this.lastRealFrameTime
 
     if (this.adaptiveEnabled && !this.exportMode) {
       const nextScale = this.adaptive.push(dt)
@@ -394,6 +494,21 @@ export class VisualEngine {
 
     this.updateTransition(dt)
 
+    const now = performance.now()
+    this.lastRealFrameTime = now
+
+    // Quando o áudio não está tocando e a cena não muda, não ganhamos nada renderizando
+    // a cada frame. Reduzimos a taxa de atualização nesse caso, mas sem interromper
+    // a animação quando há movimento real (transientes, storyboard, câmera animada).
+    const frameChanged = Math.abs(frame.transient) > 0.02 || Math.abs(frame.energy - (this.lastFrameEnergy ?? 0)) > 0.02
+    this.lastFrameEnergy = frame.energy
+    if (frameChanged) this.unstableFrames = 0
+    else this.unstableFrames += 1
+
+    const idlePaused = !audioLoaded || !frame.playing
+    const enoughIdleFrames = idlePaused && this.unstableFrames >= 4
+    if (this.pausedMode && enoughIdleFrames) return
+
     // Acabamento global (grain/vignette/CA/glitch) — controlado por config + transientes.
     const glitchBase = visual.glitch === 'off' ? 0 : visual.glitch === 'low' ? 0.55 : 1
     const chroma = 0.0005 + frame.transient * (visual.glitch === 'off' ? 0.0006 : visual.glitch === 'low' ? 0.0024 : 0.0048)
@@ -406,6 +521,8 @@ export class VisualEngine {
       glitch: glitchBase * Math.max(0, frame.transient - 0.5) * 1.6,
     })
   }
+
+  private lastFrameEnergy: number | null = null
 
   private startTransition(kind: SceneTransition): void {
     if (kind === 'cut') {
@@ -447,6 +564,7 @@ export class VisualEngine {
 
   dispose(): void {
     this.stop()
+    this.detachContextListeners()
     this.instance?.dispose()
     this.composition?.dispose()
     this.composition = null

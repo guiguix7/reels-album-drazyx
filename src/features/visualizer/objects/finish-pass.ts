@@ -1,9 +1,12 @@
 import * as THREE from 'three'
 
-/**
- * Pass de acabamento: cena → render target (linear) → quad final com
+/** Pass de acabamento: cena → render target (linear) → quad final com
  * aberração cromática, grain, vignette, scanlines e glitch controlado,
  * convertendo para sRGB na saída.
+ *
+ * O custo pode ser reduzido pelo perfil de renderização: sem MSAA, sem
+ * half-float e, no limite, sem o pass intermediário (renderização direta no
+ * canvas). A qualidade de export mantém o caminho completo.
  */
 
 const vertexShader = /* glsl */ `
@@ -72,22 +75,37 @@ export interface FinishParams {
   glitch: number
 }
 
+export interface FinishPassOptions {
+  /** Amostragem do render target. 0 = sem MSAA. */
+  samples: number
+  /** Tipo do render target. */
+  type: 'half-float' | 'byte'
+}
+
 export class FinishPass {
   private renderer: THREE.WebGLRenderer
   private target: THREE.WebGLRenderTarget
   private scene = new THREE.Scene()
   private camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
   private material: THREE.ShaderMaterial
+  private mesh: THREE.Mesh
   private width: number
   private height: number
+  private readonly type: number
+  private readonly samples: number
+  private enabled: boolean
 
-  constructor(renderer: THREE.WebGLRenderer, width: number, height: number) {
+  constructor(renderer: THREE.WebGLRenderer, width: number, height: number, options: FinishPassOptions) {
     this.renderer = renderer
     this.width = width
     this.height = height
+    this.samples = options.samples
+    this.type = options.type === 'half-float' ? THREE.HalfFloatType : THREE.UnsignedByteType
+    this.enabled = true
+
     this.target = new THREE.WebGLRenderTarget(width, height, {
-      type: THREE.HalfFloatType,
-      samples: 4,
+      type: this.type as unknown as THREE.TextureDataType,
+      samples: this.samples,
     })
     this.material = new THREE.ShaderMaterial({
       vertexShader,
@@ -105,7 +123,12 @@ export class FinishPass {
       depthWrite: false,
       toneMapped: false,
     })
-    this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material))
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material)
+    this.scene.add(this.mesh)
+  }
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled
   }
 
   setSize(width: number, height: number): void {
@@ -124,6 +147,13 @@ export class FinishPass {
     u.uScan.value = params.scan
     u.uGlitch.value = params.glitch
 
+    if (!this.enabled) {
+      this.renderer.setRenderTarget(null)
+      this.renderer.clear()
+      this.renderer.render(scene, camera)
+      return
+    }
+
     this.renderer.setRenderTarget(this.target)
     this.renderer.clear()
     this.renderer.render(scene, camera)
@@ -136,8 +166,7 @@ export class FinishPass {
   dispose(): void {
     this.target.dispose()
     this.material.dispose()
-    this.scene.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) obj.geometry.dispose()
-    })
+    this.mesh.geometry.dispose()
+    this.scene.clear()
   }
 }
