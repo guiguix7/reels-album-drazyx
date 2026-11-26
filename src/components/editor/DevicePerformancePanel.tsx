@@ -2,7 +2,6 @@ import { useCallback } from 'react'
 import type { RenderProfileId } from '../../features/visualizer/render-profile'
 import type { DevicePerformanceManager, ProfileOption } from '../../features/visualizer/device-performance'
 import styles from './device-performance-panel.module.css'
-import { useMemo } from 'react'
 
 interface Props {
   manager: DevicePerformanceManager
@@ -36,7 +35,7 @@ export function DevicePerformancePanel({ manager, selectedProfile, className }: 
       </div>
       <p className={styles.paragraph}>
         {manager.capabilities
-          ? `Detecção do dispositivo: ${manager.capabilities.deviceMemory > 0 ? `${manager.capabilities.deviceMemory} GB` : 'indeterminado'} GB de memória, ${manager.capabilities.hardwareConcurrency} núcleos indicados.`
+          ? `Detecção do dispositivo: ${manager.capabilities.deviceMemory > 0 ? `${manager.capabilities.deviceMemory} GB` : 'indeterminado'} de memória, ${manager.capabilities.hardwareConcurrency} núcleos indicados.`
           : 'Detecção do dispositivo indisponível. Use os perfis abaixo para ajustar.'}
       </p>
       <ul className={styles.list}>
