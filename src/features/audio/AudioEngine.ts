@@ -8,7 +8,7 @@ import {
   spectralFlux,
   TransientDetector,
 } from './audio.utils'
-import { detectRhythmFromBuffer } from './rhythm'
+import { analyzeLocalRhythm, invalidateAnalysis } from './audio-analysis'
 import type { AudioEngineMeta, AudioFrame } from './audio.types'
 import { BAR_COUNT } from './audio.types'
 
@@ -236,6 +236,7 @@ export class AudioEngine {
     this.audio.removeAttribute('src')
     this.audio.load()
     if (this.objectUrl) {
+      invalidateAnalysis(this.objectUrl)
       URL.revokeObjectURL(this.objectUrl)
       this.objectUrl = null
     }
@@ -298,16 +299,12 @@ export class AudioEngine {
    * Roda depois do ready; falhas só deixam o visual sem pulso de batida.
    */
   private async detectRhythm(): Promise<void> {
-    const ctx = this.ctx
     const url = this.objectUrl
-    if (!ctx || !url) return
+    if (!url) return
     const token = ++this.rhythmToken
     try {
-      const response = await fetch(url)
-      const data = await response.arrayBuffer()
-      const buffer = await ctx.decodeAudioData(data)
+      const result = await analyzeLocalRhythm(url)
       if (token !== this.rhythmToken) return
-      const result = detectRhythmFromBuffer(buffer)
       if (result.bpm > 0) {
         this.frame.bpm = result.bpm
         this.patchMeta({ bpm: result.bpm })

@@ -34,27 +34,14 @@ export function computeWaveformPeaks(
   return max > 0 ? raw.map((value) => Math.sqrt(value / max)) : raw.map(() => 0)
 }
 
-const cache = new Map<string, number[]>()
+import { loadWaveformPeaks as loadWaveformPeaksShared } from './audio-analysis'
 
-/** Decodifica o object URL local e devolve picos; o resultado fica em cache por URL. */
+/** Decodifica o object URL local e devolve picos; o resultado fica em cache por URL.
+ * A partir de agora usa o cache compartilhado de análise local (audio-analysis.ts),
+ * que decodifica o mesmo arquivo uma única vez e serve também o ritmo." */
 export async function loadWaveformPeaks(
   url: string,
   buckets = DEFAULT_WAVEFORM_BUCKETS,
 ): Promise<number[]> {
-  const key = `${url}|${buckets}`
-  const cached = cache.get(key)
-  if (cached) return cached
-  const response = await fetch(url)
-  if (!response.ok) throw new Error('Não foi possível ler o áudio para a waveform.')
-  const data = await response.arrayBuffer()
-  const context = new AudioContext()
-  try {
-    const buffer = await context.decodeAudioData(data)
-    const channels = Array.from({ length: buffer.numberOfChannels }, (_, index) => buffer.getChannelData(index))
-    const peaks = computeWaveformPeaks(channels, buffer.sampleRate, buckets)
-    cache.set(key, peaks)
-    return peaks
-  } finally {
-    void context.close()
-  }
+  return loadWaveformPeaksShared(url, buckets)
 }
