@@ -20,9 +20,11 @@ interface RecorderStore {
   status: RecorderStatus
   statusMessage: string | null
   error: string | null
+  warning: string | null
   preview: RecordedPreview | null
   setStatus: (status: RecorderStatus, statusMessage?: string | null) => void
   setError: (error: string) => void
+  setWarning: (warning: string | null) => void
   setResult: (result: RecorderResult, fileName: string, warnings?: string[]) => void
   reset: () => void
 }
@@ -31,15 +33,21 @@ export const useRecorderStore = create<RecorderStore>((set, get) => ({
   status: 'idle',
   statusMessage: null,
   error: null,
+  warning: null,
   preview: null,
   setStatus: (status, statusMessage = null) =>
-    set({ status, statusMessage, error: status === 'error' ? get().error : null }),
-  setError: (error) => set({ status: 'error', error }),
+    set({ status, statusMessage, error: status === 'error' ? get().error : null, warning: status === 'error' ? null : get().warning }),
+  setError: (error) => set({ status: 'error', error, warning: null }),
+  setWarning: (warning) => set((state) => ({
+    warning: warning ?? state.warning,
+    status: state.status,
+  })),
   setResult: (result, fileName, warnings = []) => {
     const previous = get().preview
     if (previous) URL.revokeObjectURL(previous.url)
     set({
       status: 'done',
+      warning: null,
       preview: {
         url: URL.createObjectURL(result.blob),
         fileName,
@@ -56,6 +64,6 @@ export const useRecorderStore = create<RecorderStore>((set, get) => ({
   reset: () => {
     const previous = get().preview
     if (previous) URL.revokeObjectURL(previous.url)
-    set({ status: 'idle', statusMessage: null, error: null, preview: null })
+    set({ status: 'idle', statusMessage: null, error: null, warning: null, preview: null })
   },
 }))

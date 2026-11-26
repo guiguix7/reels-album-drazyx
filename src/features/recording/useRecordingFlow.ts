@@ -10,6 +10,14 @@ import { validateRecording } from './export-validation'
 import { beginVisualExport, endVisualExport } from '../visualizer/engine-registry'
 import { buildExportManifest } from '../persistence/manifest.types'
 import { saveExportManifest } from '../persistence/db'
+import { estimateRecording } from './recording-preflight'
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1_000_000_000) return `${(bytes / 1_000_000_000).toFixed(1)} GB`
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`
+  if (bytes >= 1_000) return `${(bytes / 1_000).toFixed(0)} KB`
+  return `${bytes} B`
+}
 
 /**
  * Orquestra o fluxo de gravação:
@@ -58,11 +66,36 @@ export function useRecordingFlow(
     }
     const effective = readiness.effective
 
+    const dims = getOutputDimensions(config.aspectRatio, config.quality)
+    const navigatorDeviceMemory = (navigator as { deviceMemory?: number }).deviceMemory
+    const estimate = estimateRecording(
+      {
+        width: dims.width,
+        height: dims.height,
+        fps: config.fps,
+        videoBitsPerSecond: config.quality === 'full' ? 12_000_000 : 6_000_000,
+        audioBitsPerSecond: 192_000,
+        durationSeconds: effective,
+      },
+      navigatorDeviceMemory != null ? { deviceMemory: navigatorDeviceMemory } : undefined,
+    )
     recStore.reset() // limpa preview anterior, se houver
     recStore.setStatus('preparing', 'Preparando gravação...')
     cancelledRef.current = false
 
-    // Garante AudioContext + track de áudio ANTES de capturar (gesto do usuário já aconteceu).
+    if (!estimate.seemsSafe && estimate.alternatives.length > 0) {
+      recStore.setWarning(
+        `Esta gravação pode usar muita memória (~${formatBytes(estimate.estimatedMemoryBytes)}). ` +
+          `Uma alternativa mais leve: ${estimate.alternatives[0].label}.`,
+      )
+      recStore.setStatus('preparing', 'Preparando gravação (atenção à memória)...')
+      return
+    }
+
+    const exportDims = getOutputDimensions(config.aspectRatio, config.quality)
+    recorderRef.current?.setCanvasSize(exportDims.width, exportDims.height)
+    // Export sempre em resolução cheia: preview adaptativo não reduz o arquivo.
+    beginVisualExport()
     let audioTrack: MediaStreamTrack | null = null
     try {
       audioTrack = engine.getRecordingTrack()
@@ -72,14 +105,11 @@ export function useRecordingFlow(
         await engine.ensureRunning()
       }
     } catch (err) {
+      endVisualExport()
       recStore.setError(`Não foi possível preparar o áudio para gravação: ${err instanceof Error ? err.message : 'erro desconhecido'}`)
       return
     }
 
-    const dims = getOutputDimensions(config.aspectRatio, config.quality)
-    recorderRef.current?.setCanvasSize(dims.width, dims.height)
-    // Export sempre em resolução cheia: preview adaptativo não reduz o arquivo.
-    beginVisualExport()
     const started = recorderRef.current?.start({
       canvas,
       fps: config.fps,
@@ -109,8 +139,8 @@ export function useRecordingFlow(
           extension: result.extension,
         })
         const warnings = validateRecording(result, {
-          width: dims.width,
-          height: dims.height,
+          width: exportDims.width,
+          height: exportDims.height,
           clipSeconds: effective,
         })
         recStore.setResult(result, fileName, warnings)
